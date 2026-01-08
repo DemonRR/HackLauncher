@@ -434,6 +434,19 @@ function openItemModal(itemId = null) {
     if (currentCategoryId) {
       document.getElementById('item-category').value = currentCategoryId;
     }
+    
+    // 重置图标类型为Font Awesome
+    switchIconType('fa');
+    
+    // 清除之前的图片数据
+    document.getElementById('icon-image-preview').src = '';
+    document.getElementById('icon-image-preview-container').classList.add('hidden');
+    document.getElementById('icon-image-placeholder').classList.remove('hidden');
+    document.getElementById('item-image-path').value = '';
+    document.getElementById('icon-image-input').value = '';
+    
+    // 重置图标输入框
+    document.getElementById('item-icon').value = 'fa-terminal';
   }
   
   // 显示模态框
@@ -993,6 +1006,7 @@ function initContextMenu() {
       currentItemId = itemId;
       document.getElementById('confirm-title').textContent = '确认删除';
       document.getElementById('confirm-message').textContent = `你确定要删除 "${item.name}" 吗？`;
+      document.getElementById('confirm-ok-btn').textContent = '确认删除';
       document.getElementById('confirm-modal').classList.remove('hidden');
     }
     contextMenu.classList.add('hidden');

@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               // 确认覆盖现有配置
               document.getElementById('confirm-title').textContent = '确认导入';
               document.getElementById('confirm-message').textContent = '导入将覆盖现有配置，是否继续？';
+              document.getElementById('confirm-ok-btn').textContent = '确认导入';
               document.getElementById('confirm-ok-btn').onclick = async () => {
                 try {
                   AppConfig = newConfig;
@@ -176,9 +177,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 打开设置模态框
 async function openSettingsModal() {
   try {
+    // 从主进程获取最新的环境配置
     const envConfig = await window.api.getEnvironment();
+    
+    // 更新界面
     document.getElementById('python-path').value = envConfig.python || '';
     document.getElementById('java-path').value = envConfig.java || '';
+    
+    // 同时更新AppConfig，确保数据一致性
+    AppConfig.environment = envConfig;
+    
     document.getElementById('settings-modal').classList.remove('hidden');
   } catch (error) {
     console.error('获取环境配置失败:', error);
@@ -200,12 +208,19 @@ async function saveSettings() {
       customPaths: []
     };
 
+    // 更新主进程中的环境配置
     await window.api.saveEnvironment(envConfig);
     
+    // 同步更新AppConfig中的环境配置
+    AppConfig.environment = envConfig;
+    
+    // 确保设置对象存在
     AppConfig.settings = AppConfig.settings || {};
     AppConfig.settings.themeColor = AppConfig.settings.themeColor || '#165DFF';
     
+    // 保存完整配置
     await saveConfig();
+    
     showNotification('成功', '设置已保存', 'success');
     closeSettingsModal();
   } catch (error) {

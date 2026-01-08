@@ -447,6 +447,23 @@ body.dark .bg-primary\/10 {
   background-color: rgba(96, 165, 250, 0.15);
 }
 
+/* 设置模态框关于部分暗色主题样式 */
+body.dark #settings-modal h4 {
+  color: #ffffff;
+}
+
+body.dark #settings-modal .text-sm {
+  color: #cbd5e1;
+}
+
+body.dark #settings-modal p {
+  color: #cbd5e1;
+}
+
+body.dark #settings-modal span.text-primary {
+  color: #60a5fa;
+}
+
 /* 项目卡片悬停效果优化 */
 .hover-scale {
   transform: scale(1);

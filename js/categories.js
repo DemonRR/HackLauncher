@@ -141,6 +141,7 @@ function renderCategories() {
       currentCategoryIdForEdit = category.id;
       document.getElementById('confirm-title').textContent = '确认删除';
       document.getElementById('confirm-message').textContent = `你确定要删除分类 "${category.name}" 吗？`;
+      document.getElementById('confirm-ok-btn').textContent = '确认删除';
       document.getElementById('confirm-modal').classList.remove('hidden');
     });
     
@@ -286,4 +287,71 @@ async function deleteCategory(categoryId) {
   // 更新UI
   renderCategories();
   renderItems();
+}
+
+// 保存分类
+async function saveCategory() {
+  try {
+    const categoryId = document.getElementById('category-id').value;
+    const categoryName = document.getElementById('category-name').value.trim();
+    const categoryIcon = document.getElementById('category-icon').value.trim();
+    
+    // 验证
+    let isValid = true;
+    
+    // 重置错误提示
+    document.getElementById('category-name-error').classList.add('hidden');
+    document.getElementById('category-name-duplicate-error').classList.add('hidden');
+    
+    if (!categoryName) {
+      document.getElementById('category-name-error').classList.remove('hidden');
+      isValid = false;
+    }
+    
+    // 检查名称是否已存在
+    if (categoryName && isCategoryNameExists(categoryName, categoryId)) {
+      document.getElementById('category-name-duplicate-error').classList.remove('hidden');
+      isValid = false;
+    }
+    
+    if (!isValid) return;
+    
+    if (categoryId) {
+      // 更新现有分类
+      const index = AppConfig.categories.findIndex(c => c.id === categoryId);
+      if (index !== -1) {
+        AppConfig.categories[index].name = categoryName;
+        AppConfig.categories[index].icon = categoryIcon;
+        // 更新关联的项目
+        AppConfig.items.forEach(item => {
+          if (item.categoryId === categoryId) {
+            item.categoryName = categoryName;
+          }
+        });
+        showNotification('成功', '分类已更新', 'success');
+      }
+    } else {
+      // 创建新分类
+      const newCategory = {
+        id: Date.now().toString(),
+        name: categoryName,
+        icon: categoryIcon || 'fa-folder'
+      };
+      AppConfig.categories.push(newCategory);
+      showNotification('成功', '分类已添加', 'success');
+    }
+    
+    // 保存配置
+    await saveConfig();
+    
+    // 重新渲染分类和项目
+    renderCategories();
+    renderItems();
+    
+    // 关闭模态框
+    document.getElementById('category-modal').classList.add('hidden');
+  } catch (error) {
+    console.error('保存分类失败:', error);
+    showNotification('错误', '保存分类失败: ' + error.message, 'error');
+  }
 }

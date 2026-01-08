@@ -182,7 +182,7 @@
       <div class="border-t border-light-2 p-3">
         <div class="flex justify-end space-x-3">
           <button type="button" onclick="document.getElementById('category-modal').classList.add('hidden')" class="px-4 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">取消</button>
-          <button type="button" onclick="document.getElementById('category-form').submit()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">保存</button>
+          <button type="button" onclick="saveCategory()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">保存</button>
         </div>
       </div>
     </div>
@@ -419,10 +419,10 @@
         
         <!-- 关于 -->
         <div class="mb-6">
-          <h4 class="text-md font-medium text-dark mb-3 flex items-center">
+          <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
             <i class="fas fa-info-circle mr-2 text-primary"></i> 关于
           </h4>
-          <div class="text-sm text-dark-2">
+          <div class="text-sm text-gray-600 dark:text-gray-400">
             <p>版本: 1.0.0</p>
             <p class="mt-1">渗透武器库 - Windows 专用启动器管理工具</p>
             <p class="mt-1">作者: <span class="text-primary hover:underline cursor-pointer" onclick="openExternalLink('https://github.com/DemonRR')">DemonRR</span></p>
