@@ -1,0 +1,22 @@
+{
+    "general": {
+        "validation_threads": 100,
+        "failure_threshold": 3,
+        "auto_retest_enabled": false,
+        "auto_retest_interval": 10
+    },
+    "auto_fetch": {
+        "fofa": {
+            "enabled": true,
+            "key": "",
+            "query": "protocol==\"socks5\" && country==\"CN\" && banner=\"Method:No\"",
+            "size": 500
+        },
+        "hunter": {
+            "enabled": false,
+            "key": "",
+            "query": "app.name=\"SOCKS5\"",
+            "size": 100
+        }
+    }
+}

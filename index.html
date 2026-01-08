@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>渗透武器库</title>
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/32x32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/48x48.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="icons/64x64.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="icons/128x128.png">
+  <link rel="icon" type="image/png" sizes="256x256" href="icons/256x256.png">
+  <link rel="apple-touch-icon" sizes="256x256" href="icons/256x256.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" rel="stylesheet">
+  <link href="assets/css/styles.css" rel="stylesheet">
+  
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: 'var(--theme-color, #165DFF)',
+            secondary: '#36CFC9',
+            success: '#52C41A',
+            warning: '#FAAD14',
+            danger: '#FF4D4F',
+            dark: '#1D2129',
+            'dark-2': '#4E5969',
+            'light-1': '#F2F3F5',
+            'light-2': '#E5E6EB',
+            'light-3': '#C9CDD4',
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          ringColor: {
+            primary: 'var(--theme-color, #165DFF)',
+          },
+          borderColor: {
+            primary: 'var(--theme-color, #165DFF)',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col light">
+  <!-- 顶部导航 -->
+  <header class="bg-white shadow-sm sticky top-0 z-10 light">
+    <div class="px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+          <i class="fas fa-dragon text-primary text-2xl"></i> <!-- 替换为龙图标 -->
+          <h1 class="text-xl font-bold text-primary">渗透武器库</h1>
+        </div>
+      <div class="flex items-center space-x-4">
+        <button id="theme-toggle-btn" class="flex items-center text-dark-2 hover:text-primary transition-custom">
+          <i class="fas fa-moon mr-1"></i> 主题
+        </button>
+        <button id="export-btn" class="flex items-center text-dark-2 hover:text-primary transition-custom">
+          <i class="fas fa-upload mr-1"></i> 导出
+        </button>
+        <button id="import-btn" class="flex items-center text-dark-2 hover:text-primary transition-custom">
+          <i class="fas fa-download mr-1"></i> 导入
+        </button>
+        <button id="settings-btn" class="flex items-center text-dark-2 hover:text-primary transition-custom">
+          <i class="fas fa-cog mr-1"></i> 设置
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow px-2 py-6 flex flex-col md:flex-row gap-6">
+    <!-- 左侧边栏 - 分类列表 -->
+    <aside class="md:w-72 flex-shrink-0 bg-white rounded-xl shadow-custom p-4 h-fit sticky top-24 light">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold">分类管理</h2>
+        <button id="add-category-btn" class="text-primary hover:text-primary/80 transition-custom">
+          <i class="fa fa-plus"></i>
+        </button>
+      </div>
+      
+      <!-- 分类列表区域单独设置滚动 -->
+      <div class="scroll-container overflow-y-auto max-h-[calc(100vh-240px)] pr-1">
+        <div id="categories-list" class="space-y-1">
+          <!-- 分类列表将在这里动态生成 -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右侧内容区 - 项目列表 -->
+    <section id="items-section" class="flex-grow">
+      <!-- 在项目列表标题旁边添加搜索框 -->
+      <div id="items-header" class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">项目列表</h2>
+        <div class="flex items-center space-x-4">
+          <div class="relative">
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="搜索项目..." 
+              class="pl-9 pr-4 py-2 rounded-lg border border-light-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
+            >
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-light-3"></i> <!-- 替换为 v5 类名 -->
+          </div>
+          <button id="add-item-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center transition-custom shadow-sm">
+            <i class="fas fa-plus mr-2"></i> 新建项目
+          </button>
+        </div>
+      </div>
+      
+      <!-- 空状态 -->
+      <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16">
+        <div class="w-20 h-20 bg-light-1 rounded-full flex items-center justify-center mb-4">
+          <i class="fas fa-rocket text-3xl text-primary/50"></i>
+        </div>
+        <h3 class="text-lg font-medium text-dark-2 mb-2">暂无项目</h3>
+        <p class="text-light-3 mb-4">添加您的第一个启动器项目，快速访问常用应用和命令</p>
+        <button id="empty-add-item-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center transition-custom shadow-sm">
+          <i class="fas fa-plus mr-2"></i> 添加项目
+        </button>
+      </div>
+      
+      <!-- 项目网格 -->
+      <div id="items-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+        <!-- 项目卡片将在这里动态生成 -->
+      </div>
+    </section>
+  </main>
+
+  <!-- 通知组件 -->
+  <div id="notification" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-x-full transition-all duration-300 flex items-center max-w-sm z-50">
+    <div id="notification-icon" class="mr-3 text-xl"></div>
+    <div class="flex-grow">
+      <h3 id="notification-title" class="font-medium text-dark"></h3>
+      <p id="notification-message" class="text-sm text-dark-2"></p>
+    </div>
+    <button onclick="document.getElementById('notification').classList.add('translate-x-full')" class="ml-3 text-light-3 hover:text-dark-2 transition-custom">
+      <i class="fa fa-times"></i>
+    </button>
+  </div>
+
+  <!-- 添加/编辑分类模态框 -->
+  <div id="category-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] flex flex-col transform transition-all" style="min-width: 300px;">
+      <!-- 固定的标题栏 -->
+      <div class="flex justify-between items-center p-3 border-b border-light-2">
+        <h3 id="category-modal-title" class="text-lg font-semibold">添加分类</h3>
+        <button onclick="document.getElementById('category-modal').classList.add('hidden')" class="text-light-3 hover:text-dark-2 transition-custom">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- 可滚动的内容区域 -->
+      <div class="flex-grow overflow-y-auto p-3">
+        <form id="category-form">
+          <input type="hidden" id="category-id">
+          
+          <div class="mb-4">
+            <label for="category-name" class="block text-sm font-medium text-dark-2 mb-1">分类名称</label>
+            <input type="text" id="category-name" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入分类名称">
+            <p id="category-name-error" class="text-danger text-xs mt-1 hidden">请输入分类名称</p>
+            <p id="category-name-duplicate-error" class="text-danger text-xs mt-1 hidden">分类名称已存在</p>
+          </div>
+          
+          <div class="mb-4">
+            <label for="category-icon" class="block text-sm font-medium text-dark-2 mb-1">图标</label>
+            <div class="relative">
+              <input type="text" id="category-icon" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom pl-9" placeholder="fa-folder">
+              <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-2">
+                <i id="category-icon-preview" class="fa fa-folder"></i>
+              </div>
+            </div>
+            <p class="text-xs text-light-3 mt-1">查看所有图标: <a href="https://fontawesome.com/" target="_blank" class="text-primary hover:underline">Font Awesome 图标库</a></p>
+          </div>
+        </form>
+      </div>
+      
+      <!-- 固定的底部按钮区域 -->
+      <div class="border-t border-light-2 p-3">
+        <div class="flex justify-end space-x-3">
+          <button type="button" onclick="document.getElementById('category-modal').classList.add('hidden')" class="px-4 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">取消</button>
+          <button type="button" onclick="document.getElementById('category-form').submit()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加/编辑项目模态框 -->
+  <div id="item-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] flex flex-col transform transition-all" style="min-width: 300px;">
+      <!-- 固定的标题栏 -->
+      <div class="flex justify-between items-center p-3 border-b border-light-2">
+        <h3 id="item-modal-title" class="text-lg font-semibold">添加项目</h3>
+        <button onclick="document.getElementById('item-modal').classList.add('hidden')" class="text-light-3 hover:text-dark-2 transition-custom">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- 可滚动的内容区域 -->
+      <div class="flex-grow overflow-y-auto p-3">
+        <form id="item-form">
+          <input type="hidden" id="item-id">
+          
+          <div class="mb-4">
+            <label for="item-name" class="block text-sm font-medium text-dark-2 mb-1">项目名称</label>
+            <input type="text" id="item-name" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入项目名称">
+            <p id="item-name-error" class="text-danger text-xs mt-1 hidden">请输入项目名称</p>
+          </div>
+          
+          <!-- 在项目表单中添加终端选项 -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">项目类型</label>
+            <select id="item-type" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+              <option value="command">命令行</option>
+              <option value="application">应用程序</option>
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="file">文件</option>
+              <option value="folder">文件夹</option>
+              <option value="url">URL</option>
+            </select>
+          </div>
+
+          <!-- 命令类型专用选项 -->
+          <div id="run-in-terminal-option" class="mb-4 hidden">
+            <label class="flex items-center">
+              <input type="checkbox" id="run-in-terminal" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+              <span class="ml-2 text-sm text-gray-700">在终端中打开</span>
+            </label>
+          </div>
+          
+          <div class="mb-4">
+            <label for="item-command" class="block text-sm font-medium text-dark-2 mb-1">命令/路径</label>
+            <div id="item-command-container" class="flex space-x-2">
+              <input type="text" id="item-command-input" class="flex-grow px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入命令或路径">
+              <textarea id="item-command-textarea" rows="3" class="flex-grow px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom resize-none hidden" placeholder="输入命令，每行一条"></textarea>
+              <button type="button" onclick="browseItemPath()" class="px-3 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom flex-shrink-0">
+                <i class="fas fa-folder-open"></i>
+              </button>
+            </div>
+            <p id="command-help-text" class="text-xs text-light-3 mt-1 hidden">命令行类型每行输入一条命令</p>
+            <p id="item-command-error" class="text-danger text-xs mt-1 hidden">请输入命令或路径</p>
+          </div>
+          
+          <div id="launch-params-container" class="mb-4 hidden">
+            <label for="item-launch-params" class="block text-sm font-medium text-dark-2 mb-1">启动参数</label>
+            <input type="text" id="item-launch-params" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入启动参数（可选）">
+          </div>
+          
+          <div class="mb-4">
+            <label for="item-category" class="block text-sm font-medium text-dark-2 mb-1">所属分类</label>
+            <select id="item-category" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom">
+              <option value="">未分类</option>
+              <!-- 分类选项将在这里动态生成 -->
+            </select>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-dark-2 mb-1">图标</label>
+            
+            <!-- 图标类型切换标签 -->
+            <div class="flex space-x-2 mb-2">
+              <button type="button" id="icon-type-fa" class="flex-1 px-3 py-1.5 text-sm rounded-lg bg-primary text-white transition-custom" onclick="switchIconType('fa')">
+                <i class="fas fa-icons mr-1"></i> Font Awesome
+              </button>
+              <button type="button" id="icon-type-image" class="flex-1 px-3 py-1.5 text-sm rounded-lg border border-light-2 custom-hover transition-custom" onclick="switchIconType('image')">
+                <i class="fas fa-image mr-1"></i> 选择图片
+              </button>
+            </div>
+            
+            <!-- Font Awesome 图标输入 -->
+            <div id="fa-icon-section" class="relative">
+              <input type="text" id="item-icon" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom pl-9" placeholder="fa-terminal">
+              <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-2">
+                <i id="item-icon-preview" class="fa fa-terminal"></i>
+              </div>
+            </div>
+            
+            <!-- 图片选择区域 -->
+            <div id="image-icon-section" class="hidden">
+              <div id="icon-image-dropzone" class="border-2 border-dashed border-light-2 rounded-lg p-4 text-center hover:border-primary transition-custom cursor-pointer" onclick="document.getElementById('icon-image-input').click()">
+                <input type="file" id="icon-image-input" class="hidden" accept="image/*" onchange="handleIconImageUpload(event)">
+                <div id="icon-image-preview-container" class="hidden mb-2">
+                  <img id="icon-image-preview" class="w-16 h-16 mx-auto object-contain rounded-lg" src="" alt="图标预览">
+                  <button type="button" onclick="event.stopPropagation(); removeIconImage()" class="text-xs text-danger mt-1 hover:underline">移除图片</button>
+                </div>
+                <div id="icon-image-placeholder">
+                  <i class="fas fa-folder-open text-2xl text-light-3 mb-2"></i>
+                  <p class="text-sm text-light-3">点击浏览选择图片</p>
+                  <p class="text-xs text-light-3 mt-1">支持 ICO、PNG、JPG、SVG（建议 64x64）</p>
+                </div>
+              </div>
+              <input type="text" id="item-image-path" class="hidden" placeholder="">
+            </div>
+            
+            <p id="fa-icon-help" class="text-xs text-light-3 mt-1">查看所有图标: <a href="https://fontawesome.com/" target="_blank" class="text-primary hover:underline">Font Awesome 图标库</a></p>
+            <p id="image-icon-help" class="text-xs text-light-3 mt-1 hidden">支持 ICO、PNG、JPG、SVG 格式，建议使用正方形图片</p>
+          </div>
+          
+          <div id="description-container" class="mb-4">
+            <label for="item-description" class="block text-sm font-medium text-dark-2 mb-1">工具描述</label>
+            <input type="text" id="item-description" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入工具描述（可选）">
+          </div>
+        </form>
+      </div>
+      
+      <!-- 固定的底部按钮区域 -->
+      <div class="border-t border-light-2 p-3">
+        <div class="flex justify-end space-x-3">
+          <button type="button" id="item-modal-close" class="px-4 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">取消</button>
+          <button type="submit" id="item-submit-btn" form="item-form" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">添加项目</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认模态框 -->
+  <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] flex flex-col transform transition-all" style="min-width: 300px;">
+      <!-- 可滚动的内容区域 -->
+      <div class="flex-grow overflow-y-auto p-3">
+        <div class="text-center mb-4">
+          <div class="w-12 h-12 bg-danger/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fa fa-exclamation-triangle text-danger text-xl"></i>
+          </div>
+          <h3 id="confirm-title" class="text-lg font-semibold">确认删除</h3>
+          <p id="confirm-message" class="text-dark-2 mt-2">你确定要删除这个项目吗？</p>
+        </div>
+      </div>
+      
+      <!-- 固定的底部按钮区域 -->
+      <div class="border-t border-light-2 p-3">
+        <div class="flex justify-center space-x-3">
+          <button id="confirm-cancel-btn" class="px-4 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">取消</button>
+          <button id="confirm-ok-btn" class="px-4 py-2 bg-danger text-white rounded-lg hover:bg-danger/90 transition-custom">确认删除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置模态框 -->
+  <div id="settings-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] flex flex-col transform transition-all">
+      <!-- 固定的标题栏 -->
+      <div class="flex justify-between items-center p-3 border-b border-light-2">
+        <h3 class="text-lg font-semibold">设置</h3>
+        <button onclick="closeSettingsModal()" class="text-light-3 hover:text-dark-2 transition-custom">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- 可滚动的内容区域 -->
+      <div class="flex-grow overflow-y-auto p-3">
+        <!-- 外观设置 -->
+        <div class="mb-6">
+          <h4 class="text-md font-medium text-dark mb-3 flex items-center">
+            <i class="fas fa-palette mr-2 text-primary"></i> 外观
+          </h4>
+          
+          <!-- 主题颜色选择 -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-dark-2 mb-2">主题颜色</label>
+            <div class="flex space-x-3">
+              <button onclick="setThemeColor('#165DFF')" class="color-option w-10 h-10 rounded-full bg-[#165DFF] ring-2 ring-offset-2 ring-[#165DFF] hover:scale-110 transition-transform" title="蓝色">
+                <i class="fas fa-check text-white opacity-0"></i>
+              </button>
+              <button onclick="setThemeColor('#10B981')" class="color-option w-10 h-10 rounded-full bg-[#10B981] ring-2 ring-offset-2 ring-transparent hover:scale-110 transition-transform" title="绿色">
+                <i class="fas fa-check text-white opacity-0"></i>
+              </button>
+              <button onclick="setThemeColor('#F59E0B')" class="color-option w-10 h-10 rounded-full bg-[#F59E0B] ring-2 ring-offset-2 ring-transparent hover:scale-110 transition-transform" title="橙色">
+                <i class="fas fa-check text-white opacity-0"></i>
+              </button>
+              <button onclick="setThemeColor('#EF4444')" class="color-option w-10 h-10 rounded-full bg-[#EF4444] ring-2 ring-offset-2 ring-transparent hover:scale-110 transition-transform" title="红色">
+                <i class="fas fa-check text-white opacity-0"></i>
+              </button>
+              <button onclick="setThemeColor('#8B5CF6')" class="color-option w-10 h-10 rounded-full bg-[#8B5CF6] ring-2 ring-offset-2 ring-transparent hover:scale-110 transition-transform" title="紫色">
+                <i class="fas fa-check text-white opacity-0"></i>
+              </button>
+              <button onclick="setThemeColor('#EC4899')" class="color-option w-10 h-10 rounded-full bg-[#EC4899] ring-2 ring-offset-2 ring-transparent hover:scale-110 transition-transform" title="粉色">
+                <i class="fas fa-check text-white opacity-0"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 环境配置 -->
+        <div class="mb-6">
+          <h4 class="text-md font-medium text-dark mb-3 flex items-center">
+            <i class="fas fa-code mr-2 text-primary"></i> 环境配置
+          </h4>
+          
+          <!-- Python 路径设置 -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-dark-2 mb-1">Python 路径</label>
+            <div class="flex space-x-2">
+              <input type="text" id="python-path" class="flex-grow px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入 Python 可执行文件路径">
+              <button onclick="browsePath('file')" class="px-3 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">
+                <i class="fas fa-folder-open"></i>
+              </button>
+            </div>
+            <p class="text-xs text-light-3 mt-1">例如: C:\Python39\python.exe</p>
+          </div>
+          
+          <!-- Java 路径设置 -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-dark-2 mb-1">Java 路径</label>
+            <div class="flex space-x-2">
+              <input type="text" id="java-path" class="flex-grow px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入 Java 可执行文件路径">
+              <button onclick="browsePath('folder')" class="px-3 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">
+                <i class="fas fa-folder-open"></i>
+              </button>
+            </div>
+            <p class="text-xs text-light-3 mt-1">例如: C:\Program Files\Java\jdk-11\bin\java.exe</p>
+          </div>
+        </div>
+        
+        <!-- 关于 -->
+        <div class="mb-6">
+          <h4 class="text-md font-medium text-dark mb-3 flex items-center">
+            <i class="fas fa-info-circle mr-2 text-primary"></i> 关于
+          </h4>
+          <div class="text-sm text-dark-2">
+            <p>版本: 1.0.0</p>
+            <p class="mt-1">渗透武器库 - Windows 专用启动器管理工具</p>
+            <p class="mt-1">作者: <span class="text-primary hover:underline cursor-pointer" onclick="openExternalLink('https://github.com/DemonRR')">DemonRR</span></p>
+            <p class="mt-1">仓库: <span class="text-primary hover:underline cursor-pointer" onclick="openExternalLink('https://github.com/DemonRR/HackLauncher.git')">GitHub</span></p>
+            <p class="mt-1">Bug反馈: <span class="text-primary hover:underline cursor-pointer" onclick="openExternalLink('https://github.com/DemonRR/HackLauncher/issues')">GitHub Issues</span></p>
+            <p class="mt-1">许可证: MIT</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 固定的底部按钮区域 -->
+      <div class="border-t border-light-2 p-3">
+        <div class="flex justify-end space-x-3">
+          <button onclick="closeSettingsModal()" class="px-4 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">取消</button>
+          <button onclick="saveSettings()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="js/config.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/categories.js"></script>
+  <script src="js/items.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/theme.js"></script>
+  
+  <script>
+    // 打开外部链接（使用系统默认浏览器）
+    function openExternalLink(url) {
+      try {
+        window.api.openUrl(url);
+      } catch (error) {
+        console.error('打开链接失败:', error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadConfig();
+      
+      const savedThemeColor = AppConfig.settings?.themeColor;
+      if (savedThemeColor) {
+        setTimeout(() => {
+          applyThemeColor(savedThemeColor);
+        }, 100);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+convert icons/linux/hacklauncher.png -resize 16x16 icons/linux/16x16.png
+convert icons/linux/hacklauncher.png -resize 32x32 icons/linux/32x32.png
+convert icons/linux/hacklauncher.png -resize 48x48 icons/linux/48x48.png
+convert icons/linux/hacklauncher.png -resize 64x64 icons/linux/64x64.png
+convert icons/linux/hacklauncher.png -resize 128x128 icons/linux/128x128.png
+convert icons/linux/hacklauncher.png -resize 256x256 icons/linux/256x256.png

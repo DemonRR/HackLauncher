@@ -1,0 +1,812 @@
+/* assets/css/styles.css */
+
+/* 主题颜色变量 */
+:root {
+  --theme-color: #165DFF;
+  --theme-color-light: rgba(22, 93, 255, 0.12);
+  --theme-color-hover: #0F4BD8;
+}
+
+/* 最小窗口尺寸限制 - 水平布局 (md以上) */
+@media (min-width: 768px) {
+  html, body {
+    min-width: 640px !important;
+    min-height: 700px !important;
+  }
+}
+
+/* 最小窗口尺寸限制 - 垂直布局 (768px以下) */
+@media (max-width: 767px) {
+  html, body {
+    min-width: 400px !important;
+    min-height: 800px !important;
+  }
+}
+
+/* 项目列表区域粘性定位 - 滚动时固定搜索框、新建按钮、刷新按钮 */
+#items-grid {
+  margin-top: 0;
+}
+
+#items-section {
+  position: relative;
+}
+
+#items-header {
+  position: sticky;
+  top: 60px;
+  z-index: 5;
+  background-color: inherit;
+  padding: 1rem 0;
+  margin-bottom: 0;
+}
+
+/* 确保粘性区域背景跟随主题 */
+body.light #items-header {
+  background-color: #f9fafb;
+}
+
+body.dark #items-header {
+  background-color: #0f172a;
+}
+
+/* 输入框 focus 状态使用主题颜色 */
+input:focus,
+select:focus,
+textarea:focus {
+  --tw-ring-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.3) !important;
+  border-color: var(--theme-color, #165DFF) !important;
+  box-shadow: 0 0 0 2px rgba(var(--theme-color-rgb, 22, 93, 255), 0.1) !important;
+}
+
+/* 之前的代码保持不变 */
+
+/* 暗主题样式 */
+body.dark {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+body.dark header {
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+body.dark header button,
+body.dark header .text-dark-2 {
+  color: #e2e8f0 !important;
+}
+
+body.dark header button:hover {
+  color: #60a5fa !important;
+}
+
+body.dark .bg-gray-100 {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark aside {
+  background-color: #1e293b;
+  border-right: 1px solid #334155;
+}
+
+body.dark .bg-white {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+body.dark input,
+body.dark select,
+body.dark textarea {
+  background-color: #27374D;
+  color: #DDE6ED;
+  border: 1px solid #526D82;
+  /* 移除自定义下拉箭头，使用浏览器默认样式 */
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark input::placeholder,
+body.dark select::placeholder,
+body.dark textarea::placeholder {
+  color: #9DB2BF;
+}
+
+body.dark input:focus,
+body.dark select:focus,
+body.dark textarea:focus {
+  border-color: #9DB2BF;
+  box-shadow: 0 0 0 2px rgba(157, 178, 191, 0.2);
+}
+
+/* 移除自定义下拉箭头 */
+select {
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark select {
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark .btn-primary {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+body.dark .btn-primary:hover {
+  background-color: #2563eb;
+}
+
+body.dark .btn-secondary {
+  background-color: #64748b;
+  color: #ffffff;
+}
+
+body.dark .btn-secondary:hover {
+  background-color: #475569;
+}
+
+body.dark .modal-content {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+body.dark .modal-header {
+  border-bottom: 1px solid #334155;
+}
+
+body.dark .modal-footer {
+  border-top: 1px solid #334155;
+}
+
+body.dark label {
+  color: #e2e8f0;
+}
+
+/* 项目卡片名称样式 */
+body.dark .font-medium.text-dark {
+  color: #ffffff; /* 确保项目卡片名称在暗主题下为白色 */
+}
+
+/* Tooltip 样式 */
+.group:hover .absolute {
+  z-index: 100;
+}
+
+/* 提醒信息样式 */
+body.dark #notification-title {
+  color: #ffffff; /* 提醒信息标题在暗主题下为白色 */
+}
+
+body.dark #notification-message {
+  color: #e2e8f0; /* 提醒信息内容在暗主题下为亮灰色 */
+}
+
+/* 分类列表样式 */
+.category-list-item {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.category-list-item i {
+  margin-right: 0.5rem;
+}
+
+body.light .category-list-item:hover {
+  background-color: #f1f5f9;
+}
+
+body.dark .category-list-item:hover {
+  background-color: #2a3a50;
+}
+
+/* 暗主题下分类列表选中状态样式 */
+body.dark .category-list-item.bg-primary\/10 {
+  background-color: var(--theme-color-light, rgba(22, 93, 255, 0.2)) !important;
+  color: var(--theme-color, #165DFF) !important;
+}
+
+body.dark .category-list-item.bg-primary\/10 i {
+  color: var(--theme-color, #165DFF) !important;
+}
+
+/* 右键菜单样式 */
+.context-menu {
+  position: fixed;
+  border-radius: 0.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 100;
+  min-width: 100px; /* 将最小宽度调小 */
+}
+
+body.light .context-menu {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+body.dark .context-menu {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+.context-menu-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.context-menu-item i {
+  margin-right: 0.5rem;
+}
+
+body.light .context-menu-item:hover {
+  background-color: #f1f5f9;
+}
+
+body.dark .context-menu-item:hover {
+  background-color: var(--theme-color-light, rgba(22, 93, 255, 0.2));
+  color: #93c5fd;
+}
+
+body.dark .context-menu-item:hover i {
+  color: #93c5fd;
+}
+
+body.dark .context-menu-item.text-danger:hover,
+body.dark .context-menu-item.text-danger:hover i {
+  color: #ef4444;
+}
+
+/* 搜索框样式 */
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 300px;
+}
+
+.search-container input {
+  width: 100%;
+  padding-left: 2.5rem; /* 为左侧图标留出空间 */
+}
+
+.search-container .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  pointer-events: none; /* 确保图标不会干扰输入 */
+}
+
+/* 项目卡片 Tooltip 样式 */
+body.light .item-tooltip {
+  background-color: #f8fafc;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body.dark .item-tooltip {
+  background-color: #334155;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.light .search-container .search-icon {
+  color: #94a3b8;
+}
+
+body.dark .search-container .search-icon {
+  color: #64748b;
+}
+
+/* 刷新按钮暗主题下的悬停样式 */
+body.dark #refresh-btn:hover {
+  background-color: #2a3a50; /* 更柔和的深蓝色 */
+}
+
+/* 过渡动画 */
+body, header, aside, .bg-white, input, select, textarea, .btn, .modal-content, .category-list-item, .context-menu-item {
+  transition: all 0.3s ease;
+}
+
+/* 暗主题下取消按钮的悬停样式 */
+body.dark #confirm-cancel-btn:hover,
+body.dark #item-modal-close:hover,
+body.dark button:hover[class*="browse"],
+body.dark button:hover[onclick*="browsePath"],
+body.dark button:hover[onclick*="browseItemPath"],
+body.dark #settings-modal button:hover[onclick*="closeSettingsModal"],
+body.dark #settings-modal button[onclick="closeSettingsModal()"]:hover {
+  background-color: #2a3a50;
+  color: #ffffff;
+}
+
+/* 暗主题下图标选择区域悬停样式 */
+body.dark #icon-image-dropzone:hover {
+  border-color: var(--theme-color, #165DFF);
+}
+
+body.dark #icon-image-dropzone:hover i,
+body.dark #icon-image-dropzone:hover p {
+  color: #e2e8f0 !important;
+}
+
+/* 暗色模式下移除图片按钮悬停样式 */
+body.dark button:hover[onclick*="removeIconImage"] {
+  color: var(--theme-color, #165DFF) !important;
+}
+
+/* 右键菜单标题截断样式 */
+.menu-title-truncate {
+  max-width: 150px; /* 可根据需要调整最大宽度 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 项目数量统计样式 */
+.item-count {
+  background-color: #F2F3F5; /* 亮主题下的背景色 */
+  color: #4E5969; /* 亮主题下的文字颜色 */
+}
+
+body.dark .item-count {
+  background-color: #27374D; /* 暗主题下的背景色 */
+  color: #DDE6ED; /* 暗主题下的文字颜色 */
+}
+
+
+
+/* 亮主题样式调整 */
+body {
+  background-color: #f4f4f4; /* 将背景色调整为稍微柔和的灰色 */
+}
+
+header {
+  background-color: #e9e9e9; /* 调整头部背景色 */
+  border-bottom: 1px solid #dcdcdc; /* 增加底部边框以增强层次感 */
+}
+
+aside {
+  background-color: #e9e9e9; /* 调整侧边栏背景色 */
+  border-right: 1px solid #dcdcdc; /* 增加右边框以增强层次感 */
+}
+
+.bg-white {
+  background-color: #ffffff; /* 保持白色背景，但可以考虑添加边框 */
+  border: 1px solid #dcdcdc; /* 增加边框以增强层次感 */
+}
+
+/* 项目卡片图标样式 */
+body.dark .bg-white .text-primary {
+  color: #60a5fa;
+}
+
+body.dark .bg-white .bg-primary\/10 {
+  background-color: rgba(96, 165, 250, 0.15);
+}
+
+/* 确保所有图标正确显示 */
+.fa, .fas, .far, .fad, .fal, .fab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  font-family: "Font Awesome 5 Free", "Font Awesome 5 Brands";
+  font-weight: 900;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 修复暗主题下模态框内图标颜色 */
+body.dark .modal-content .text-primary {
+  color: #60a5fa;
+}
+
+body.dark .modal-content button i {
+  color: inherit;
+}
+
+/* 项目卡片图标强制颜色 */
+.item-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-icon-container i {
+  color: #165DFF;
+  font-size: 1.25rem;
+}
+
+body.dark .item-icon-container i {
+  color: #60a5fa;
+}
+
+/* 确保背景色正确 */
+.bg-primary\/10 {
+  background-color: rgba(22, 93, 255, 0.1);
+}
+
+body.dark .bg-primary\/10 {
+  background-color: rgba(96, 165, 250, 0.15);
+}
+
+/* 项目卡片悬停效果优化 */
+.hover-scale {
+  transform: scale(1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0.3s ease;
+  z-index: 1;
+}
+
+.hover-scale:hover {
+  transform: scale(1.03);
+  z-index: 10;
+}
+
+/* 增强卡片悬停效果 */
+.bg-white.rounded-xl.shadow-sm.hover-scale {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bg-white.rounded-xl.shadow-sm.hover-scale:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: rgba(22, 93, 255, 0.2);
+  z-index: 10;
+}
+
+/* 暗主题下的卡片悬停效果 */
+body.dark .bg-white.rounded-xl.shadow-sm.hover-scale:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  border-color: rgba(96, 165, 250, 0.3);
+  z-index: 10;
+}
+
+/* 图标容器悬停效果 */
+.item-icon-container {
+  transition: all 0.3s ease;
+}
+
+.bg-white.rounded-xl.shadow-sm.hover-scale:hover .item-icon-container {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.2);
+}
+
+body.dark .bg-white.rounded-xl.shadow-sm.hover-scale:hover .item-icon-container {
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+}
+
+/* 收藏按钮增强效果 */
+.favorite-btn {
+  transition: all 0.2s ease;
+}
+
+.favorite-btn:hover {
+  transform: scale(1.2);
+}
+
+/* 分类徽章悬停效果 */
+.px-2.py-0\.5.bg-gray-100 {
+  transition: all 0.3s ease;
+}
+
+.bg-white.rounded-xl.shadow-sm.hover-scale:hover .px-2.py-0\.5.bg-gray-100 {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+body.dark .bg-white.rounded-xl.shadow-sm.hover-scale:hover .px-2.py-0\.5.dark\:bg-dark-2 {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 图标类型切换按钮 */
+#icon-type-fa, #icon-type-image {
+  font-weight: 500;
+}
+
+#icon-type-fa.active, #icon-type-image.active {
+  font-weight: 600;
+}
+
+/* 暗主题下图标类型按钮悬停效果（未选中状态） */
+body.dark #icon-type-fa:not([style*="background-color"]):hover,
+body.dark #icon-type-image:not([style*="background-color"]):hover {
+  background-color: #475569 !important;
+  border-color: #94a3b8 !important;
+}
+
+/* 暗主题下图标类型按钮选中状态悬停效果 */
+body.dark #icon-type-fa[style*="background-color"]:hover,
+body.dark #icon-type-image[style*="background-color"]:hover {
+  filter: brightness(0.9);
+}
+
+/* 暗主题下顶部导航按钮悬停样式 */
+body.dark header button[id$="-btn"]:hover,
+body.dark #theme-toggle-btn:hover,
+body.dark #export-btn:hover,
+body.dark #import-btn:hover,
+body.dark #settings-btn:hover {
+  color: var(--theme-color, #60a5fa) !important;
+}
+
+/* 自定义悬停类样式 */
+.custom-hover:hover {
+  background-color: #F2F3F5;
+}
+
+/* 图片上传区域样式 */
+#icon-image-dropzone {
+  background-color: transparent;
+}
+
+#icon-image-dropzone:hover {
+  background-color: rgba(22, 93, 255, 0.05);
+}
+
+body.dark #icon-image-dropzone:hover {
+  background-color: rgba(96, 165, 250, 0.1);
+  border-color: var(--theme-color, #165DFF);
+}
+
+body.dark #icon-image-dropzone:hover i,
+body.dark #icon-image-dropzone:hover p {
+  color: #e2e8f0 !important;
+}
+
+#icon-image-dropzone.dragover {
+  border-color: #165DFF;
+  background-color: rgba(22, 93, 255, 0.1);
+}
+
+body.dark #icon-image-dropzone.dragover {
+  border-color: var(--theme-color, #165DFF);
+  background-color: rgba(96, 165, 250, 0.15);
+}
+
+#icon-image-preview {
+  border: 2px solid #e2e8f0;
+}
+
+body.dark #icon-image-preview {
+  border-color: #334155;
+}
+
+input,
+select,
+textarea {
+  background-color: #ffffff; /* 保持输入框白色背景 */
+  color: #333333; /* 调整文本颜色 */
+  border: 1px solid #dcdcdc; /* 增加边框以增强层次感 */
+  /* 移除自定义下拉箭头，使用浏览器默认样式 */
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+input::placeholder,
+select::placeholder,
+textarea::placeholder {
+  color: #999999; /* 调整占位符文本颜色 */
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #999999; /* 调整聚焦时的边框颜色 */
+  box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.2); /* 增加聚焦时的阴影效果 */
+}
+
+.btn-primary {
+  background-color: #007bff; /* 保持主要按钮颜色 */
+  color: #ffffff; /* 保持主要按钮文本颜色 */
+}
+
+.btn-primary:hover {
+  background-color: #0056b3; /* 调整主要按钮悬停时的颜色 */
+}
+
+.btn-secondary {
+  background-color: #6c757d; /* 保持次要按钮颜色 */
+  color: #ffffff; /* 保持次要按钮文本颜色 */
+}
+
+.btn-secondary:hover {
+  background-color: #545b62; /* 调整次要按钮悬停时的颜色 */
+}
+
+.modal-content {
+  /* 可以根据需要调整模态框内容的样式 */
+}
+
+/* 暗主题样式保持不变 */
+body.dark {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+body.dark header {
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+body.dark aside {
+  background-color: #1e293b;
+  border-right: 1px solid #334155;
+}
+
+body.dark .bg-white {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+body.dark input,
+body.dark select,
+body.dark textarea {
+  background-color: #27374D;
+  color: #DDE6ED;
+  border: 1px solid #526D82;
+  /* 移除自定义下拉箭头，使用浏览器默认样式 */
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark input::placeholder,
+body.dark select::placeholder,
+body.dark textarea::placeholder {
+  color: #9DB2BF;
+}
+
+body.dark input:focus,
+body.dark select:focus,
+body.dark textarea:focus {
+  border-color: #9DB2BF;
+  box-shadow: 0 0 0 2px rgba(157, 178, 191, 0.2);
+}
+
+/* 移除自定义下拉箭头 */
+select {
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark select {
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark .btn-primary {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+body.dark .btn-primary:hover {
+  background-color: #2563eb;
+}
+
+body.dark .btn-secondary {
+  background-color: #64748b;
+  color: #ffffff;
+}
+
+body.dark .btn-secondary:hover {
+  background-color: #475569;
+}
+
+body.dark .modal-content {
+  /* 可以根据需要调整暗主题下模态框内容的样式 */
+}
+
+/* 美化滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.7);
+}
+
+/* 只在鼠标悬停在容器上时显示滚动条 */
+.scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  visibility: hidden;
+}
+
+.scroll-container:hover::-webkit-scrollbar-thumb {
+  visibility: visible;
+}
+
+/* 新增：暗主题下空状态图标背景颜色 */
+body.dark .bg-light-1 {
+  background-color: #27374D;
+}
+
+/* 复选框主题颜色样式 */
+input[type="checkbox"] {
+  accent-color: var(--theme-color, #165DFF);
+  cursor: pointer;
+  width: 1.2em;
+  height: 1.2em;
+  border: 2px solid var(--theme-color, #165DFF);
+  border-radius: 0.25em;
+  background-color: transparent;
+  transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--theme-color, #165DFF);
+  border-color: var(--theme-color, #165DFF);
+}
+
+input[type="checkbox"]:not(:checked) {
+  background-color: transparent;
+}
+
+input[type="checkbox"]:focus {
+  box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 22, 93, 255), 0.3);
+  outline: none;
+}
+
+input[type="checkbox"]:hover {
+  border-color: var(--theme-color-hover, #0F4BD8);
+}
+
+body.dark input[type="checkbox"] {
+  border-color: #60a5fa;
+}
+
+body.dark input[type="checkbox"]:checked {
+  background-color: #60a5fa;
+  border-color: #60a5fa;
+}
+
+body.dark input[type="checkbox"]:focus {
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3);
+}
+
+body.dark input[type="checkbox"]:hover {
+  border-color: #93c5fd;
+}
+
+/* 下拉列表选项悬停效果 */
+select option:hover,
+select option:focus {
+  background-color: var(--theme-color, #165DFF) !important;
+  color: #ffffff !important;
+}
+
+body.dark select option:hover,
+body.dark select option:focus {
+  background-color: #60a5fa !important;
+  color: #ffffff !important;
+}
