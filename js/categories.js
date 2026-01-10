@@ -6,6 +6,7 @@ let currentCategoryIdForEdit = null;
 function isCategoryNameExists(name, excludeId = null) {
   const normalizedName = name.trim().toLowerCase();
   return AppConfig.categories.some(category => 
+    category.name && 
     category.name.trim().toLowerCase() === normalizedName && 
     category.id !== excludeId
   );
@@ -15,6 +16,16 @@ function isCategoryNameExists(name, excludeId = null) {
 function renderCategories() {
   const categoriesList = document.getElementById('categories-list');
   categoriesList.innerHTML = '';
+
+  // 确保AppConfig.categories存在
+  if (!AppConfig.categories) {
+    AppConfig.categories = [];
+  }
+
+  // 确保AppConfig.items存在
+  if (!AppConfig.items) {
+    AppConfig.items = [];
+  }
 
   // 添加"全部项目"分类项
   const allCategoryItem = document.createElement('div');
@@ -88,6 +99,9 @@ function renderCategories() {
 
   // 添加用户自定义分类
   AppConfig.categories.forEach(category => {
+    // 跳过无效分类
+    if (!category || !category.id || !category.name) return;
+    
     const categoryItem = document.createElement('div');
     categoryItem.className = `flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-light-1 transition-custom category-list-item ${currentCategoryId === category.id && !showFavoritesOnly ? 'bg-primary/10 text-primary' : ''}`;
     categoryItem.dataset.id = category.id;
@@ -104,10 +118,11 @@ function renderCategories() {
     categoryContent.className = 'flex items-center space-x-2';
     
     const categoryIcon = document.createElement('i');
-    categoryIcon.className = `fa ${category.icon}`;
+    categoryIcon.className = `fa ${category.icon || 'fa-folder'}`;
     
     const categoryName = document.createElement('span');
     categoryName.textContent = category.name;
+    categoryName.className = 'truncate max-w-[80px]';
 
     // 添加项目数量统计，添加 item-count 类名
     const itemCount = document.createElement('span');
@@ -120,12 +135,12 @@ function renderCategories() {
     
     // 操作按钮容器
     const actionButtons = document.createElement('div');
-    actionButtons.className = 'flex items-center space-x-1 opacity-0 hover:opacity-100 transition-custom';
+    actionButtons.className = 'flex items-center space-x-0 opacity-0 hover:opacity-100 transition-custom';
     
     const editButton = document.createElement('button');
-    editButton.className = 'p-1 text-dark-2 hover:text-primary transition-custom';
+    editButton.className = 'p-0.5 text-dark-2 hover:text-primary transition-custom';
     // 更新为 Font Awesome v5 类名
-    editButton.innerHTML = '<i class="fas fa-pencil-alt"></i>'; 
+    editButton.innerHTML = '<i class="fas fa-pencil-alt text-sm"></i>'; 
     editButton.addEventListener('click', (e) => {
       e.stopPropagation();
       currentCategoryIdForEdit = category.id;
@@ -133,15 +148,14 @@ function renderCategories() {
     });
     
     const deleteButton = document.createElement('button');
-    deleteButton.className = 'p-1 text-dark-2 hover:text-danger transition-custom';
+    deleteButton.className = 'p-0.5 text-dark-2 hover:text-danger transition-custom';
     // 更新为 Font Awesome v5 类名
-    deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>'; 
+    deleteButton.innerHTML = '<i class="fas fa-trash-alt text-sm"></i>'; 
     deleteButton.addEventListener('click', (e) => {
       e.stopPropagation();
       currentCategoryIdForEdit = category.id;
       document.getElementById('confirm-title').textContent = '确认删除';
       document.getElementById('confirm-message').textContent = `你确定要删除分类 "${category.name}" 吗？`;
-      document.getElementById('confirm-ok-btn').textContent = '确认删除';
       document.getElementById('confirm-modal').classList.remove('hidden');
     });
     
@@ -203,7 +217,11 @@ function setupCategoryEvents() {
   document.getElementById('category-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const categoryId = document.getElementById('category-id').value;
+    let categoryId = document.getElementById('category-id').value;
+    // 将空字符串转换为null，确保isCategoryNameExists函数正确工作
+    if (categoryId === '') {
+      categoryId = null;
+    }
     const categoryName = document.getElementById('category-name').value.trim();
     const categoryIcon = document.getElementById('category-icon').value.trim();
     
@@ -228,6 +246,11 @@ function setupCategoryEvents() {
     if (!isValid) return;
     
     try {
+      // 确保categories数组存在
+      if (!AppConfig.categories) {
+        AppConfig.categories = [];
+      }
+      
       if (categoryId) {
         // 更新现有分类
         const index = AppConfig.categories.findIndex(c => c.id === categoryId);
@@ -235,11 +258,13 @@ function setupCategoryEvents() {
           AppConfig.categories[index].name = categoryName;
           AppConfig.categories[index].icon = categoryIcon;
           // 更新关联的项目
-          AppConfig.items.forEach(item => {
-            if (item.categoryId === categoryId) {
-              item.categoryName = categoryName;
-            }
-          });
+          if (AppConfig.items) {
+            AppConfig.items.forEach(item => {
+              if (item.categoryId === categoryId) {
+                item.categoryName = categoryName;
+              }
+            });
+          }
           showNotification('成功', '分类已更新', 'success');
         }
       } else {
@@ -287,71 +312,4 @@ async function deleteCategory(categoryId) {
   // 更新UI
   renderCategories();
   renderItems();
-}
-
-// 保存分类
-async function saveCategory() {
-  try {
-    const categoryId = document.getElementById('category-id').value;
-    const categoryName = document.getElementById('category-name').value.trim();
-    const categoryIcon = document.getElementById('category-icon').value.trim();
-    
-    // 验证
-    let isValid = true;
-    
-    // 重置错误提示
-    document.getElementById('category-name-error').classList.add('hidden');
-    document.getElementById('category-name-duplicate-error').classList.add('hidden');
-    
-    if (!categoryName) {
-      document.getElementById('category-name-error').classList.remove('hidden');
-      isValid = false;
-    }
-    
-    // 检查名称是否已存在
-    if (categoryName && isCategoryNameExists(categoryName, categoryId)) {
-      document.getElementById('category-name-duplicate-error').classList.remove('hidden');
-      isValid = false;
-    }
-    
-    if (!isValid) return;
-    
-    if (categoryId) {
-      // 更新现有分类
-      const index = AppConfig.categories.findIndex(c => c.id === categoryId);
-      if (index !== -1) {
-        AppConfig.categories[index].name = categoryName;
-        AppConfig.categories[index].icon = categoryIcon;
-        // 更新关联的项目
-        AppConfig.items.forEach(item => {
-          if (item.categoryId === categoryId) {
-            item.categoryName = categoryName;
-          }
-        });
-        showNotification('成功', '分类已更新', 'success');
-      }
-    } else {
-      // 创建新分类
-      const newCategory = {
-        id: Date.now().toString(),
-        name: categoryName,
-        icon: categoryIcon || 'fa-folder'
-      };
-      AppConfig.categories.push(newCategory);
-      showNotification('成功', '分类已添加', 'success');
-    }
-    
-    // 保存配置
-    await saveConfig();
-    
-    // 重新渲染分类和项目
-    renderCategories();
-    renderItems();
-    
-    // 关闭模态框
-    document.getElementById('category-modal').classList.add('hidden');
-  } catch (error) {
-    console.error('保存分类失败:', error);
-    showNotification('错误', '保存分类失败: ' + error.message, 'error');
-  }
 }

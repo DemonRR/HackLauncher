@@ -25,20 +25,52 @@
 
 /* 项目列表区域粘性定位 - 滚动时固定搜索框、新建按钮、刷新按钮 */
 #items-grid {
-  margin-top: 0;
+  margin-top: 1rem;
 }
 
 #items-section {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 80px);
+  background-color: transparent;
 }
 
+/* 固定在顶部的操作栏 */
 #items-header {
   position: sticky;
-  top: 60px;
+  top: 0;
   z-index: 5;
   background-color: inherit;
-  padding: 1rem 0;
+  padding: 0.75rem 0;
   margin-bottom: 0;
+  border-bottom: 1px solid transparent;
+}
+
+/* 滚动容器，包含卡片区域的所有内容（空状态和卡片网格） */
+#items-scroll-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+#items-scroll-container::-webkit-scrollbar-thumb {
+  visibility: hidden;
+}
+
+#items-scroll-container:hover::-webkit-scrollbar-thumb {
+  visibility: visible;
+}
+
+/* 确保items-scroll-container背景色为透明 */
+body.light #items-scroll-container {
+  background-color: transparent;
+}
+
+body.dark #items-scroll-container {
+  background-color: transparent;
 }
 
 /* 确保粘性区域背景跟随主题 */
@@ -171,18 +203,161 @@ body.dark .font-medium.text-dark {
   color: #ffffff; /* 确保项目卡片名称在暗主题下为白色 */
 }
 
+/* 关于部分样式 */
+body.dark #settings-modal .text-sm.text-dark-2 {
+  color: #cbd5e1; /* 确保关于部分文本在暗主题下为亮灰色 */
+}
+
+body.dark #settings-modal a.text-primary {
+  color: #60a5fa; /* 确保关于部分链接在暗主题下为蓝色 */
+}
+
+body.dark #settings-modal a.text-primary:hover {
+  color: #3b82f6; /* 确保关于部分链接悬停时在暗主题下为深蓝色 */
+}
+
+body.dark #settings-modal i {
+  color: #cbd5e1; /* 确保关于部分图标在暗主题下为亮灰色 */
+}
+
 /* Tooltip 样式 */
 .group:hover .absolute {
   z-index: 100;
 }
 
-/* 提醒信息样式 */
+/* 通知组件样式 */
+#notification {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background-color: #ffffff;
+  z-index: 9999;
+}
+
+/* 通知类型样式 */
+#notification.success {
+  background-color: #f0fdf4;
+  border-left: 4px solid #10b981;
+}
+
+#notification.error {
+  background-color: #fef2f2;
+  border-left: 4px solid #ef4444;
+}
+
+#notification.warning {
+  background-color: #fffbeb;
+  border-left: 4px solid #f59e0b;
+}
+
+#notification.info {
+  background-color: #eff6ff;
+  border-left: 4px solid #3b82f6;
+}
+
+/* 亮主题文字颜色 */
+#notification-title {
+  color: #1f2937;
+}
+
+#notification-message {
+  color: #6b7280;
+}
+
+/* 暗主题通知样式 */
+body.dark #notification {
+  background-color: #1f2937;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+body.dark #notification.success {
+  background-color: #1f2937;
+  border-left-color: #34d399;
+}
+
+body.dark #notification.error {
+  background-color: #1f2937;
+  border-left-color: #f87171;
+}
+
+body.dark #notification.warning {
+  background-color: #1f2937;
+  border-left-color: #fbbf24;
+}
+
+body.dark #notification.info {
+  background-color: #1f2937;
+  border-left-color: #60a5fa;
+}
+
 body.dark #notification-title {
-  color: #ffffff; /* 提醒信息标题在暗主题下为白色 */
+  color: #ffffff;
 }
 
 body.dark #notification-message {
-  color: #e2e8f0; /* 提醒信息内容在暗主题下为亮灰色 */
+  color: #e2e8f0;
+}
+
+/* 通知按钮样式 */
+#notification button {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+#notification button i {
+  color: inherit;
+}
+
+/* 日志按钮样式 */
+#notification-log-btn {
+  color: #64748b;
+}
+
+#notification-log-btn:hover {
+  color: var(--theme-color, #165DFF);
+  background-color: rgba(0, 0, 0, 0.05);
+  opacity: 1;
+}
+
+/* 关闭按钮样式（使用模态框关闭按钮样式） */
+#notification .modal-close-btn {
+  color: #64748b;
+}
+
+#notification .modal-close-btn:hover {
+  color: #1f2937;
+  background-color: rgba(0, 0, 0, 0.05);
+  opacity: 1;
+}
+
+/* 暗主题通知按钮样式 */
+body.dark #notification button {
+  opacity: 0.7;
+}
+
+body.dark #notification-log-btn {
+  color: #94a3b8;
+}
+
+body.dark #notification-log-btn:hover {
+  color: var(--theme-color, #165DFF);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark #notification .modal-close-btn {
+  color: #94a3b8;
+}
+
+body.dark #notification .modal-close-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* 分类列表样式 */
@@ -322,6 +497,7 @@ body, header, aside, .bg-white, input, select, textarea, .btn, .modal-content, .
 /* 暗主题下取消按钮的悬停样式 */
 body.dark #confirm-cancel-btn:hover,
 body.dark #item-modal-close:hover,
+body.dark button:hover[onclick*="category-modal"],
 body.dark button:hover[class*="browse"],
 body.dark button:hover[onclick*="browsePath"],
 body.dark button:hover[onclick*="browseItemPath"],
@@ -370,6 +546,20 @@ body.dark .item-count {
 /* 亮主题样式调整 */
 body {
   background-color: #f4f4f4; /* 将背景色调整为稍微柔和的灰色 */
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* 确保html元素也禁用滚动 */
+html {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* 确保main元素高度正确 */
+main {
+  flex-grow: 1;
+  overflow: hidden;
 }
 
 header {
@@ -422,6 +612,39 @@ body.dark .modal-content button i {
   color: inherit;
 }
 
+/* 模态框关闭按钮样式 */
+.modal-close-btn {
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+}
+
+.modal-close-btn:hover {
+  background: transparent;
+}
+
+/* 暗色主题下模态框关闭按钮样式 */
+body.dark .modal-close-btn {
+  color: #9ca3af;
+}
+
+body.dark .modal-close-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark .modal-close-btn i {
+  color: inherit;
+}
+
+body.dark .modal-close-btn:hover i {
+  color: inherit;
+}
+
 /* 项目卡片图标强制颜色 */
 .item-icon-container {
   display: flex;
@@ -445,23 +668,6 @@ body.dark .item-icon-container i {
 
 body.dark .bg-primary\/10 {
   background-color: rgba(96, 165, 250, 0.15);
-}
-
-/* 设置模态框关于部分暗色主题样式 */
-body.dark #settings-modal h4 {
-  color: #ffffff;
-}
-
-body.dark #settings-modal .text-sm {
-  color: #cbd5e1;
-}
-
-body.dark #settings-modal p {
-  color: #cbd5e1;
-}
-
-body.dark #settings-modal span.text-primary {
-  color: #60a5fa;
 }
 
 /* 项目卡片悬停效果优化 */

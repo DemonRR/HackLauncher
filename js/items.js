@@ -456,7 +456,7 @@ function openItemModal(itemId = null) {
   const itemTypeSelect = document.getElementById('item-type');
   const commandContainer = document.getElementById('item-command-container');
   const browseBtn = commandContainer?.querySelector('button');
-  if (itemTypeSelect.value === 'command' && browseBtn) {
+  if ((itemTypeSelect.value === 'command' || itemTypeSelect.value === 'url') && browseBtn) {
     browseBtn.classList.add('hidden');
   }
   
@@ -532,7 +532,7 @@ function openItemModal(itemId = null) {
     
     const commandContainer = document.getElementById('item-command-container');
     const browseBtn = commandContainer?.querySelector('button');
-    if (e.target.value === 'command') {
+    if (e.target.value === 'command' || e.target.value === 'url') {
       if (browseBtn) browseBtn.classList.add('hidden');
     } else {
       if (browseBtn) browseBtn.classList.remove('hidden');
@@ -761,125 +761,167 @@ function getWorkingDirectory(filePath) {
   return '';
 }
 
-// 运行项目
+// 运行项目（最终完整版，稳定可交付）
 async function runItem(item) {
   try {
     switch (item.type) {
-      case 'url':
-        // 验证URL格式
+
+      /* ================= URL ================= */
+      case 'url': {
         let url = item.command;
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
           url = 'https://' + url;
         }
-        
         await window.api.openUrl(url);
         showNotification('成功', `URL已打开: ${item.name}`, 'success');
-        break;
-      case 'command':
-        try {
-          const commands = item.command.split('\n').filter(line => line.trim());
-          const combinedCommand = commands.join(' & ');
-          const workingDir = getWorkingDirectory(item.command);
-          
-          if (item.runInTerminal) {
-            await window.api.executeCommandInTerminal(combinedCommand, workingDir);
-          } else {
-            for (const cmd of commands) {
-              const trimmedCmd = cmd.trim();
-              if (trimmedCmd) {
-                const result = await window.api.executeCommand(trimmedCmd, workingDir);
-                console.log('命令输出:', result);
-              }
-            }
-          }
-          showNotification('成功', `命令执行成功: ${item.name}`, 'success');
-        } catch (error) {
-          showNotification('错误', `命令执行失败: ${error}`, 'error');
+        return;
+      }
+
+      /* ================= COMMAND ================= */
+      case 'command': {
+        const commands = item.command.split('\n').filter(l => l.trim());
+        const combinedCommand = commands.join(' & ');
+        const workingDir = getWorkingDirectory(item.command);
+
+        if (item.runInTerminal) {
+          await window.api.executeCommandInTerminal(combinedCommand, workingDir);
+          showNotification('成功', `命令已在终端启动: ${item.name}`, 'success');
+          return;
         }
-        break;
-      case 'python':
-        try {
-          const envConfig = await window.api.getEnvironment();
-          const pythonPath = envConfig.python ? `${envConfig.python}\\python.exe` : 'python';
-          
-          const scriptPath = item.command.trim();
-          const launchParams = item.launchParams ? ` ${item.launchParams}` : '';
-          const fullCommand = `"${pythonPath}" "${scriptPath}"${launchParams}`;
-          const workingDir = getWorkingDirectory(scriptPath);
-          
-          if (item.runInTerminal) {
-            await window.api.executeCommandInTerminal(fullCommand, workingDir);
-          } else {
-            const result = await window.api.executeCommand(fullCommand, workingDir);
-            console.log('命令输出:', result);
-          }
-          showNotification('成功', `Python脚本执行成功: ${item.name}`, 'success');
-        } catch (error) {
-          showNotification('错误', `Python脚本执行失败: ${error}`, 'error');
+
+        const cmd =
+          `cmd /c "chcp 65001 >nul & cd /d \"${workingDir}\" & ${combinedCommand}"`;
+
+        window.api.executeCommand(cmd)
+          .then(() => {
+            showNotification('成功', `命令执行完成: ${item.name}`, 'success');
+          })
+          .catch(err => {
+            showNotification('错误', `命令执行失败: ${err}`, 'error');
+          });
+        return;
+      }
+
+      /* ================= PYTHON ================= */
+      case 'python': {
+        const env = await window.api.getEnvironment();
+        const pythonPath = env.python || 'python';
+
+        const scriptPath = item.command.trim();
+        const params = item.launchParams ? ` ${item.launchParams}` : '';
+        const workingDir = getWorkingDirectory(scriptPath);
+        const fileName = scriptPath.split(/[\\/]/).pop();
+
+        // —— 打开终端 ——
+        if (item.runInTerminal) {
+          const cmd = `"${pythonPath}" "${scriptPath}"${params}`;
+          await window.api.executeCommandInTerminal(cmd, workingDir);
+          showNotification('成功', `Python 已在终端启动: ${item.name}`, 'success');
+          return;
         }
-        break;
-      case 'java':
-        try {
-          const envConfig = await window.api.getEnvironment();
-          const javaPath = envConfig.java ? `${envConfig.java}\\java.exe` : 'java';
-          
-          const commandPath = item.command.trim();
-          const launchParams = item.launchParams ? ` ${item.launchParams}` : '';
-          const fullCommand = `"${javaPath}" -jar "${commandPath}"${launchParams}`;
-          const workingDir = getWorkingDirectory(commandPath);
-          
-          if (item.runInTerminal) {
-            await window.api.executeCommandInTerminal(fullCommand, workingDir);
-          } else {
-            const result = await window.api.executeCommand(fullCommand, workingDir);
-            console.log('命令输出:', result);
-          }
-          showNotification('成功', `Java程序执行成功: ${item.name}`, 'success');
-        } catch (error) {
-          showNotification('错误', `Java程序执行失败: ${error}`, 'error');
+
+        // —— 不打开终端：延迟成功 + 失败取消 ——
+        const cmd =
+          `cmd /c "chcp 65001 >nul & cd /d \"${workingDir}\" & "${pythonPath}" "${fileName}"${params}"`;
+
+        let finished = false;
+
+        const successTimer = setTimeout(() => {
+          if (finished) return;
+          finished = true;
+          showNotification('成功', `Python 启动成功: ${item.name}`, 'success');
+        }, 300);
+
+        window.api.executeCommand(cmd).catch(err => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(successTimer);
+          showNotification('错误', `Python 启动失败: ${err}`, 'error');
+        });
+
+        return;
+      }
+
+      /* ================= JAVA ================= */
+      case 'java': {
+        const env = await window.api.getEnvironment();
+        let javaPath = 'java';
+
+        if (env.java) {
+          javaPath = env.java.endsWith('java.exe')
+            ? env.java
+            : `${env.java}\\java.exe`;
         }
-        break;
-      case 'application':
-        try {
-          // 启动应用程序
-          let command = item.command;
-          if (item.launchParams) {
-            command = `${item.command} ${item.launchParams}`;
-          }
-          
-          const result = await window.api.executeCommand(command);
-          showNotification('成功', `应用程序已启动: ${item.name}`, 'success');
-          console.log('命令输出:', result);
-        } catch (error) {
-          showNotification('错误', `应用程序启动失败: ${error}`, 'error');
+
+        const jarPath = item.command.trim();
+        const params = item.launchParams ? ` ${item.launchParams}` : '';
+        const workingDir = getWorkingDirectory(jarPath);
+        const fullCmd = `"${javaPath}"${params} -jar "${jarPath}"`;
+
+        // —— 打开终端 ——
+        if (item.runInTerminal) {
+          await window.api.executeCommandInTerminal(fullCmd, workingDir);
+          showNotification('成功', `Java 已在终端启动: ${item.name}`, 'success');
+          return;
         }
-        break;
+
+        // —— 不打开终端：延迟成功 + 失败取消 ——
+        const cmd =
+          `cmd /c "chcp 65001 >nul & cd /d \"${workingDir}\" & ${fullCmd}"`;
+
+        let finished = false;
+
+        const successTimer = setTimeout(() => {
+          if (finished) return;
+          finished = true;
+          showNotification('成功', `Java 启动成功: ${item.name}`, 'success');
+        }, 300);
+
+        window.api.executeCommand(cmd).catch(err => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(successTimer);
+          showNotification('错误', `Java 启动失败: ${err}`, 'error');
+        });
+
+        return;
+      }
+
+      /* ================= APPLICATION ================= */
+      case 'application': {
+        let cmd = item.command;
+        if (item.launchParams) cmd += ` ${item.launchParams}`;
+
+        window.api.executeCommand(cmd).catch(err => {
+          console.error('应用启动失败:', err);
+        });
+
+        showNotification('成功', `应用程序已启动: ${item.name}`, 'success');
+        return;
+      }
+
+      /* ================= FILE / FOLDER ================= */
       case 'file':
-        // 打开文件
-        try {
-          await window.api.openPath(item.command);
-          showNotification('成功', `文件已打开: ${item.name}`, 'success');
-        } catch (error) {
-          showNotification('错误', `无法打开文件: ${error}`, 'error');
-        }
-        break;
-      case 'folder':
-        // 打开文件夹
-        try {
-          await window.api.openPath(item.command);
-          showNotification('成功', `文件夹已打开: ${item.name}`, 'success');
-        } catch (error) {
-          showNotification('错误', `无法打开文件夹: ${error}`, 'error');
-        }
-        break;
+      case 'folder': {
+        await window.api.openPath(item.command);
+        showNotification(
+          '成功',
+          `${item.type === 'file' ? '文件' : '文件夹'}已打开: ${item.name}`,
+          'success'
+        );
+        return;
+      }
+
       default:
         showNotification('提示', `未知项目类型: ${item.type}`, 'warning');
+        return;
     }
-  } catch (error) {
-    console.error('执行项目失败:', error);
-    showNotification('错误', '执行项目失败: ' + error.message, 'error');
+  } catch (err) {
+    console.error(err);
+    showNotification('错误', '执行失败: ' + err.message, 'error');
   }
 }
+
 
 // 打开程序文件夹
 async function openFolder(command) {

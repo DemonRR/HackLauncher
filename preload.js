@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('api', {
   executeCommandInTerminal: (command, cwd) => ipcRenderer.invoke('execute-command-in-terminal', command, cwd),
   openUrl: (url) => ipcRenderer.invoke('open-url', url),
   openPath: (path) => ipcRenderer.invoke('open-path', path),
+  openLogFile: () => ipcRenderer.invoke('open-log-file'),
   exportConfig: () => ipcRenderer.invoke('export-config'),
   importConfig: () => ipcRenderer.invoke('import-config'),
   saveEnvironment: (env) => ipcRenderer.invoke('save-environment', env),

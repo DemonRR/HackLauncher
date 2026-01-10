@@ -1,33 +1,27 @@
 {
   "name": "hacklauncher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "渗透工具箱",
   "productName": "HackLauncher",
   "main": "main.js",
-
   "scripts": {
-    "start": "electron . --no-sandbox",
-    "dev": "NODE_ENV=development electron .",
+    "start": "chcp 65001 >nul && electron . --no-sandbox",
+    "dev": "chcp 65001 >nul && NODE_ENV=development electron .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "lint": "eslint .",
     "build:clean": "rimraf dist && rimraf node_modules/.cache && rimraf node_modules/.rpt2_cache",
     "postinstall": "electron-builder install-app-deps"
   },
-
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^5.15.4",
-    "7zip-bin": "^5.1.1",
-    "axios": "^1.4.0",
-    "js-yaml": "^4.1.0",
-    "tailwindcss": "^3.4.17"
+    "iconv-lite": "^0.7.1",
+    "js-yaml": "^4.1.0"
   },
-
   "devDependencies": {
     "chalk": "^4.1.2",
     "cross-spawn": "^7.0.6",
     "electron": "^24.8.8",
-    "electron-builder": "^26.0.12",
+    "electron-builder": "^26.4.0",
     "eslint": "^8.0.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.26.0",
@@ -38,55 +32,39 @@
     "rimraf": "^3.0.2",
     "semver": "^6.3.1"
   },
-
   "build": {
     "appId": "com.demonrr.hacklauncher",
     "productName": "HackLauncher",
-
-    "forceCodeSigning": false,
-
     "directories": {
       "output": "dist",
       "buildResources": "build"
     },
-
     "files": [
       "**/*"
     ],
-
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico",
       "executableName": "HackLauncher",
       "requestedExecutionLevel": "asInvoker"
     },
-
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-
       "shortcutName": "渗透武器库",
-
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "menuCategory": false,
-
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico",
-
-      "include": "build/installer.nsh"
-    },
-
-    "asar": true
+      "installerHeaderIcon": "build/icon.ico"
+    }
   },
-
   "repository": {
     "type": "git",
     "url": "https://github.com/DemonRR/HackLauncher.git"
   },
-
   "keywords": [
     "hack",
     "渗透工具箱",
@@ -94,7 +72,6 @@
     "渗透工具",
     "武器库"
   ],
-
   "author": "DemonRR",
   "license": "MIT",
   "homepage": "https://github.com/DemonRR/HackLauncher.git",

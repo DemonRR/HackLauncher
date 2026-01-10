@@ -1,7 +1,9 @@
 const { app, BrowserWindow, Menu, shell, ipcMain, dialog } = require('electron');
 const path = require('path');
-const fs = require('fs').promises;
+const fs = require('fs');
+const fsPromises = require('fs').promises;
 const { exec, execSync, spawn } = require('child_process');
+const iconv = require('iconv-lite');
 
 try {
   require('child_process').execSync('chcp 65001', { stdio: 'ignore' });
@@ -12,7 +14,14 @@ if (process.platform === 'win32') {
   app.setAppUserModelId('com.demonrr.HackLauncher');
 }
 
-const CONFIG_PATH = path.join(app.getPath('userData'), 'config.json');
+// 获取用户主目录
+const USER_HOME = app.getPath('home');
+// 设置配置文件路径到 ~/.config 目录
+const CONFIG_DIR = path.join(USER_HOME, '.config', 'HackLauncher');
+// 设置配置文件路径
+const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
+// 设置日志文件路径
+const LOG_PATH = path.join(CONFIG_DIR, 'hacklauncher.log');
 
 let config = {
   categories: [],
@@ -27,14 +36,17 @@ let config = {
 
 async function loadConfig() {
   try {
-    const data = await fs.readFile(CONFIG_PATH, 'utf8');
+    // 确保配置目录存在
+    await fsPromises.mkdir(CONFIG_DIR, { recursive: true });
+    
+    const data = await fsPromises.readFile(CONFIG_PATH, 'utf8');
     config = JSON.parse(data);
     if (!config.environment) {
       config.environment = { python: '', java: '', customPaths: [] };
     }
-    console.log('配置文件加载成功');
+    logger.info('配置文件加载成功');
   } catch (error) {
-    console.error('加载配置文件失败:', error);
+    logger.error(`加载配置文件失败: ${error}`);
     config = { categories: [], items: [], theme: 'light', environment: { python: '', java: '', customPaths: [] } };
     await saveConfig();
   }
@@ -42,19 +54,19 @@ async function loadConfig() {
 
 async function saveConfig() {
   try {
-    await fs.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2));
-    console.log('配置文件保存成功');
+    await fsPromises.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2));
+    logger.info('配置文件保存成功');
   } catch (error) {
-    console.error('保存配置文件失败:', error);
+    logger.error(`保存配置文件失败: ${error}`);
   }
 }
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width: 1100,
+    height: 680,
     // 关键修改：将 png 改为 ico 格式（和 package.json 中一致）
-    icon: path.join(__dirname, 'icons', 'icon.ico'),
+    icon: path.join(__dirname, 'build', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -70,7 +82,7 @@ function createWindow() {
     win.webContents.openDevTools();
   }
 
-  console.log('主窗口已创建');
+  logger.info('主窗口已创建');
 }
 
 app.whenReady().then(async () => {
@@ -151,10 +163,66 @@ ipcMain.handle('delete-item', async (event, id) => {
 
 ipcMain.handle('execute-command', (event, command, cwd) => {
   return new Promise((resolve, reject) => {
+    // 使用spawn代替exec，直接处理流数据
+    const { spawn } = require('child_process');
     const options = cwd && cwd.trim() ? { cwd: cwd } : {};
-    exec(command, options, (error, stdout, stderr) => {
-      if (error) reject(error.message);
-      else resolve(stdout + stderr);
+    
+    // 打印执行的命令
+    logger.info(`执行命令: ${command}`);
+    
+    // 分割命令和参数
+    const parts = command.match(/([^"']+)|"([^"]*)"|'([^']*)'/g);
+    if (!parts) {
+      reject('无效的命令格式');
+      return;
+    }
+    
+    // 处理引号
+    const cmd = parts[0].replace(/^["']|["]$/g, '');
+    const args = parts.slice(1).map(arg => arg.replace(/^["']|["]$/g, ''));
+    
+    // 创建子进程，不指定encoding，让输出保持Buffer形式
+    const child = spawn(cmd, args, {
+      ...options,
+      shell: true // 使用shell来执行命令，处理管道等复杂情况
+    });
+    
+    let stdoutBuffer = Buffer.alloc(0);
+    let stderrBuffer = Buffer.alloc(0);
+    
+    // 收集stdout数据
+    child.stdout.on('data', (data) => {
+      stdoutBuffer = Buffer.concat([stdoutBuffer, data]);
+    });
+    
+    // 收集stderr数据
+    child.stderr.on('data', (data) => {
+      stderrBuffer = Buffer.concat([stderrBuffer, data]);
+    });
+    
+    // 处理子进程退出
+    child.on('close', (code) => {
+      // 处理输出数据
+      const processedStdout = detectAndConvertEncoding(stdoutBuffer);
+      const processedStderr = detectAndConvertEncoding(stderrBuffer);
+      
+      if (code !== 0) {
+        // 如果命令执行失败，将所有输出作为错误信息返回
+        const errorMessage = processedStdout + processedStderr || `命令执行失败，退出码: ${code}`;
+        // 记录错误信息到日志
+        logger.error(`命令执行失败: ${errorMessage}`);
+        reject(errorMessage);
+      } else {
+        // 如果命令执行成功，返回所有输出
+        resolve(processedStdout + processedStderr);
+      }
+    });
+    
+    // 处理子进程错误
+    child.on('error', (error) => {
+      const errorMessage = `创建子进程失败: ${error.message}`;
+      logger.error(errorMessage);
+      reject(errorMessage);
     });
   });
 });
@@ -170,26 +238,108 @@ ipcMain.handle('execute-command-in-terminal', async (event, command, cwd) => {
       // 如果有工作目录，使用 cd 命令切换后再执行
       // 使用双引号包裹路径，避免路径中的空格问题
       const escapedCwd = cwd.replace(/"/g, '\\"');
-      cmdCommand = `start "Runner" cmd /k "cd /d \"${escapedCwd}\" & ${command}"`;
+      cmdCommand = `start "Runner" cmd /k "chcp 65001 >nul & cd /d \"${escapedCwd}\" & ${command}"`;
     } else {
-      cmdCommand = `start "Runner" cmd /k "${command}"`;
+      cmdCommand = `start "Runner" cmd /k "chcp 65001 >nul & ${command}"`;
     }
     
-    console.log('执行终端命令:', cmdCommand);
+    logger.info(`执行终端命令: ${cmdCommand}`);
     
     exec(cmdCommand, {
       detached: true,
-      windowsHide: false
+      windowsHide: false,
+      encoding: 'utf8'
     });
     
     return '命令已在新的cmd窗口中启动';
   } catch (error) {
-    throw new Error(`执行命令失败: ${error.message}`);
+    const errorMessage = `执行命令失败: ${error.message}`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
   }
 });
 
 function escapeShell(cmd) {
   return cmd.replace(/([()%!^"<>&|])/g, '^$1');
+}
+
+// 日志记录函数
+function log(level, message) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `${timestamp} [${level.toUpperCase()}] ${message}\n`;
+  
+  // 输出到控制台
+  console[level === 'error' ? 'error' : 'log'](logMessage);
+  
+  // 只将命令相关的日志写入日志文件
+  const isCommandRelated = message.includes('执行命令:') || 
+                         message.includes('执行终端命令:') || 
+                         message.includes('命令执行失败:') ||
+                         message.includes('创建子进程失败:');
+  
+  if (isCommandRelated) {
+    try {
+      // 确保配置目录存在
+      if (!fs.existsSync(CONFIG_DIR)) {
+        fs.mkdirSync(CONFIG_DIR, { recursive: true });
+      }
+      
+      // 写入日志文件，使用UTF-8编码
+      fs.appendFileSync(LOG_PATH, logMessage, { encoding: 'utf8' });
+      
+      // 检查日志文件大小，如果超过10MB，进行简单的日志轮转
+      const stats = fs.statSync(LOG_PATH);
+      if (stats.size > 10 * 1024 * 1024) {
+        // 重命名旧日志文件
+        const oldLogPath = path.join(CONFIG_DIR, `hacklauncher.log.${Date.now()}`);
+        fs.renameSync(LOG_PATH, oldLogPath);
+      }
+    } catch (error) {
+      console.error('写入日志失败:', error);
+    }
+  }
+}
+
+// 便捷日志函数
+const logger = {
+  info: (message) => log('info', message),
+  error: (message) => log('error', message),
+  warn: (message) => log('warn', message),
+  debug: (message) => log('debug', message)
+};
+
+// 检测并转换字符串编码
+function detectAndConvertEncoding(input) {
+  if (!input) return input;
+  
+  // 1. 处理字符串类型
+  if (typeof input === 'string') {
+    // 字符串不包含乱码，直接返回
+    if (!input.includes('�')) {
+      return input;
+    }
+    
+    // 包含乱码，转换为Buffer并尝试GBK解码
+    const buffer = Buffer.from(input, 'latin1');
+    return iconv.decode(buffer, 'gbk');
+  }
+  
+  // 2. 处理Buffer类型
+  if (Buffer.isBuffer(input)) {
+    // 对于Buffer，我们直接尝试GBK解码，因为Java程序通常使用GBK编码
+    const gbkResult = iconv.decode(input, 'gbk');
+    
+    // 检查GBK解码结果是否合理（不包含乱码）
+    if (!gbkResult.includes('�')) {
+      return gbkResult;
+    }
+    
+    // 如果GBK解码也不行，尝试UTF-8
+    return input.toString('utf8');
+  }
+  
+  // 3. 其他类型，直接返回
+  return input;
 }
 
 ipcMain.handle('check-path-exists', (event, path) => {
@@ -271,6 +421,23 @@ ipcMain.handle('browse-path', async (event, type) => {
   return null;
 });
 
+ipcMain.handle('open-log-file', async () => {
+  try {
+    // 确保日志文件存在
+    if (!fs.existsSync(LOG_PATH)) {
+      // 如果日志文件不存在，创建一个空文件
+      fs.writeFileSync(LOG_PATH, '', { encoding: 'utf8' });
+    }
+    
+    // 使用默认应用打开日志文件
+    await shell.openPath(LOG_PATH);
+    return true;
+  } catch (error) {
+    logger.error(`打开日志文件失败: ${error}`);
+    return false;
+  }
+});
+
 ipcMain.handle('execute-with-environment', (event, item) => {
   return new Promise((resolve, reject) => {
     let command = item.command;
@@ -288,17 +455,72 @@ ipcMain.handle('execute-with-environment', (event, item) => {
       finalCommand = `${command} ${args}`.trim();
     }
 
+    // 打印执行的命令
+    logger.info(`执行命令: ${finalCommand}`);
+
     if (item.runInTerminal) {
       const cmd = 'cmd.exe';
-      const cmdArgs = ['/c', 'start', 'cmd', '/k', escapeShell(finalCommand)];
+      const cmdArgs = ['/c', 'start', 'cmd', '/k', 'chcp 65001 >nul & ' + escapeShell(finalCommand)];
       const child = spawn(cmd, cmdArgs, { detached: true, stdio: 'ignore', windowsHide: false });
       child.unref();
       resolve('命令已启动');
     } else {
-      exec(finalCommand, (error, stdout, stderr) => {
-        if (error) reject(error.message);
-        else if (stderr) reject(stderr);
-        else resolve(stdout);
+      // 使用spawn代替exec，直接处理流数据
+      const { spawn } = require('child_process');
+      
+      // 分割命令和参数
+      const parts = finalCommand.match(/([^"']+)|"([^"]*)"|'([^']*)'/g);
+      if (!parts) {
+        const errorMessage = '无效的命令格式';
+        logger.error(errorMessage);
+        reject(errorMessage);
+        return;
+      }
+      
+      // 处理引号
+      const cmd = parts[0].replace(/^["']|["]$/g, '');
+      const spawnArgs = parts.slice(1).map(arg => arg.replace(/^["']|["]$/g, ''));
+      
+      // 创建子进程，不指定encoding，让输出保持Buffer形式
+      const child = spawn(cmd, spawnArgs, {
+        shell: true // 使用shell来执行命令，处理管道等复杂情况
+      });
+      
+      let stdoutBuffer = Buffer.alloc(0);
+      let stderrBuffer = Buffer.alloc(0);
+      
+      // 收集stdout数据
+      child.stdout.on('data', (data) => {
+        stdoutBuffer = Buffer.concat([stdoutBuffer, data]);
+      });
+      
+      // 收集stderr数据
+      child.stderr.on('data', (data) => {
+        stderrBuffer = Buffer.concat([stderrBuffer, data]);
+      });
+      
+      // 处理子进程退出
+      child.on('close', (code) => {
+        // 处理输出数据
+        const processedStdout = detectAndConvertEncoding(stdoutBuffer);
+        const processedStderr = detectAndConvertEncoding(stderrBuffer);
+        
+        if (code !== 0) {
+          // 如果命令执行失败，将所有输出作为错误信息返回
+          const errorMessage = processedStdout + processedStderr || `命令执行失败，退出码: ${code}`;
+          logger.error(`命令执行失败: ${errorMessage}`);
+          reject(errorMessage);
+        } else {
+          // 如果命令执行成功，返回所有输出
+          resolve(processedStdout + processedStderr);
+        }
+      });
+      
+      // 处理子进程错误
+      child.on('error', (error) => {
+        const errorMessage = `创建子进程失败: ${error.message}`;
+        logger.error(errorMessage);
+        reject(errorMessage);
       });
     }
   });
