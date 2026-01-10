@@ -31,3 +31,6 @@
 - 开发框架：Electron
 - 开发方式：AI 辅助完成开发
 - 运行环境：Windows 操作系统（全版本适配）
+
+## 界面截图
+<img width="1397" height="880" alt="image" src="https://github.com/user-attachments/assets/f99c24c6-fcc6-4ebd-b8db-a25666690633" />
