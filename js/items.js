@@ -229,7 +229,22 @@ function renderItems(searchTerm = '') {
       }, 500);
     });
     
-    itemCard.addEventListener('click', () => {
+    // 在卡片右下方添加运行按钮
+    const runButton = document.createElement('button');
+    runButton.className = 'run-btn absolute bottom-3 right-3 p-2 rounded-full transition-all duration-300 flex items-center justify-center bg-primary text-white shadow-md hover:bg-primary/95 hover:shadow-lg hover:scale-110 active:scale-95';
+    runButton.innerHTML = '<i class="fas fa-play text-sm"></i>';
+    runButton.title = '运行项目';
+    runButton.style.border = 'none';
+    runButton.style.boxShadow = '0 2px 8px rgba(22, 93, 255, 0.3)';
+    runButton.addEventListener('mouseenter', () => {
+      runButton.style.transform = 'scale(1.1)';
+      runButton.style.boxShadow = '0 4px 12px rgba(22, 93, 255, 0.4)';
+    });
+    runButton.addEventListener('mouseleave', () => {
+      runButton.style.transform = 'scale(1)';
+      runButton.style.boxShadow = '0 2px 8px rgba(22, 93, 255, 0.3)';
+    });
+    runButton.addEventListener('click', () => {
       if (leaveTimer) {
         clearTimeout(leaveTimer);
         leaveTimer = null;
@@ -240,6 +255,7 @@ function renderItems(searchTerm = '') {
       });
       runItem(item);
     });
+    itemCard.appendChild(runButton);
     
     itemCard.addEventListener('contextmenu', (e) => {
       e.preventDefault();

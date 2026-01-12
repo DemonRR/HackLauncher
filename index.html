@@ -47,29 +47,77 @@
   </script>
 </head>
 <body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col light">
-  <!-- 顶部导航 -->
-  <header class="bg-white shadow-sm sticky top-0 z-10 light">
-    <div class="px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-          <img src="icons/hacklauncher.png" alt="Logo" class="h-6 w-6"> <!-- 替换为应用logo -->
-          <h1 class="text-xl font-bold text-primary">渗透武器库</h1>
-        </div>
-      <div class="flex items-center space-x-4">
-        <button id="theme-toggle-btn" class="flex items-center text-dark-2 hover:text-primary transition-custom">
-          <i class="fas fa-moon mr-1"></i> 主题
-        </button>
-        <button id="export-btn" class="flex items-center text-dark-2 hover:text-primary transition-custom">
-          <i class="fas fa-upload mr-1"></i> 导出
-        </button>
-        <button id="import-btn" class="flex items-center text-dark-2 hover:text-primary transition-custom">
-          <i class="fas fa-download mr-1"></i> 导入
-        </button>
-        <button id="settings-btn" class="flex items-center text-dark-2 hover:text-primary transition-custom">
-          <i class="fas fa-cog mr-1"></i> 设置
-        </button>
-      </div>
+  <!-- 自定义标题栏 -->
+  <div id="custom-titlebar" class="bg-white shadow-sm sticky top-0 z-10 light flex items-center justify-between px-1 py-1">
+    <!-- 标题栏左侧 - Logo和应用名称 -->
+    <div class="flex items-center space-x-2">
+      <img src="icons/hacklauncher.png" alt="Logo" class="h-6 w-6">
+      <h1 class="text-xl font-bold text-primary">渗透武器库</h1>
     </div>
-  </header>
+    
+    <!-- 标题栏右侧 - 所有按钮 -->
+    <div class="flex items-center space-x-1 ml-auto">
+      <!-- 主题切换开关 -->
+      <div class="tooltip-container relative">
+        <div id="theme-toggle-btn" class="theme-toggle relative inline-block w-11 h-6 rounded-full transition-all duration-300 cursor-pointer mx-0">
+          <div class="theme-toggle-knob absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-300 transform translate-x-0 flex items-center justify-center shadow-md">
+            <i class="fas fa-moon text-yellow-400 text-xs"></i>
+          </div>
+        </div>
+        <div class="tooltip top-1/2 transform -translate-y-1/2 -translate-x-1/2 left-1/2">
+          <div class="tooltip-content">切换主题</div>
+        </div>
+      </div>
+      
+      <!-- 导出按钮 -->
+      <div class="tooltip-container relative">
+        <button id="export-btn" class="flex items-center justify-center text-dark-2 hover:text-primary transition-custom text-sm w-8 h-8 mx-0">
+          <i class="fas fa-upload"></i>
+        </button>
+        <div class="tooltip top-1/2 transform -translate-y-1/2 -translate-x-1/2 left-1/2">
+          <div class="tooltip-content">导出配置</div>
+        </div>
+      </div>
+      
+      <!-- 导入按钮 -->
+      <div class="tooltip-container relative">
+        <button id="import-btn" class="flex items-center justify-center text-dark-2 hover:text-primary transition-custom text-sm w-8 h-8 mx-0">
+          <i class="fas fa-download"></i>
+        </button>
+        <div class="tooltip top-1/2 transform -translate-y-1/2 -translate-x-1/2 left-1/2">
+          <div class="tooltip-content">导入配置</div>
+        </div>
+      </div>
+      
+      <!-- 设置按钮 -->
+      <div class="tooltip-container relative">
+        <button id="settings-btn" class="flex items-center justify-center text-dark-2 hover:text-primary transition-custom text-sm w-8 h-8 mx-0">
+          <i class="fas fa-cog"></i>
+        </button>
+        <div class="tooltip top-1/2 transform -translate-y-1/2 -translate-x-1/2 left-1/2">
+          <div class="tooltip-content">设置</div>
+        </div>
+      </div>
+      
+      <!-- 分割线 -->
+      <div class="w-px h-6 bg-gray-300 mx-0.5"></div>
+      
+      <!-- 最小化按钮 -->
+      <button id="minimize-btn" class="flex items-center justify-center text-dark-2 hover:bg-light-2 transition-custom w-8 h-8 mx-0">
+        <i class="fas fa-window-minimize text-xs"></i>
+      </button>
+      
+      <!-- 最大化/恢复按钮 -->
+      <button id="maximize-btn" class="flex items-center justify-center text-dark-2 hover:bg-light-2 transition-custom w-8 h-8 mx-0">
+        <i class="fas fa-window-maximize text-xs"></i>
+      </button>
+      
+      <!-- 关闭按钮 -->
+      <button id="close-btn" class="flex items-center justify-center text-dark-2 hover:bg-danger hover:text-white transition-custom w-8 h-8 mx-0">
+        <i class="fas fa-times text-xs"></i>
+      </button>
+    </div>
+  </div>
 
   <!-- 主内容区 -->
   <main class="flex-grow px-2 py-1 flex flex-col md:flex-row gap-6">
@@ -347,6 +395,31 @@
     </div>
   </div>
 
+<!-- 关闭确认模态框 -->
+  <div id="close-confirm-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] flex flex-col transform transition-all" style="min-width: 300px;">
+      <!-- 可滚动的内容区域 -->
+      <div class="flex-grow overflow-y-auto p-6">
+        <div class="text-center mb-4">
+          <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fa fa-question-circle text-primary text-xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold">退出确认</h3>
+          <p class="text-dark-2 mt-2">请选择操作</p>
+        </div>
+      </div>
+      
+      <!-- 固定的底部按钮区域 -->
+      <div class="border-t border-light-2 p-3">
+        <div class="flex justify-center space-x-3">
+          <button id="close-confirm-quit" class="px-6 py-2 bg-danger text-white rounded-lg hover:bg-danger/90 transition-custom">退出程序</button>
+          <button id="close-confirm-minimize" class="px-6 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">最小化到系统托盘</button>
+          <button id="close-confirm-cancel" class="px-6 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 设置模态框 -->
   <div id="settings-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] flex flex-col transform transition-all">
@@ -429,7 +502,7 @@
             <i class="fas fa-info-circle mr-2 text-primary"></i> 关于
           </h4>
           <div class="text-sm text-dark-2">
-            <p>版本: 1.0.1</p>
+            <p>版本: 1.0.2</p>
             <p class="mt-1">渗透武器库 - Windows 专用启动器管理工具</p>
             <p class="mt-1">作者: DemonRR</p>
             <p class="mt-1 flex items-center">

@@ -5,7 +5,7 @@ const themeToggleBtn = document.getElementById('theme-toggle-btn');
 
 themeToggleBtn.addEventListener('click', async () => {
   const body = document.body;
-  const header = document.querySelector('header');
+  const header = document.querySelector('header') || document.querySelector('#custom-titlebar');
   const aside = document.querySelector('aside');
   const itemCards = document.querySelectorAll('.bg-white');
   const textDarkElements = document.querySelectorAll('.text-dark');
@@ -15,10 +15,14 @@ themeToggleBtn.addEventListener('click', async () => {
   if (body.classList.contains('light')) {
     body.classList.remove('light');
     body.classList.add('dark');
-    header.classList.remove('light');
-    header.classList.add('dark');
-    aside.classList.remove('light');
-    aside.classList.add('dark');
+    if (header) {
+      header.classList.remove('light');
+      header.classList.add('dark');
+    }
+    if (aside) {
+      aside.classList.remove('light');
+      aside.classList.add('dark');
+    }
     itemCards.forEach(card => {
       card.classList.remove('light');
       card.classList.add('dark');
@@ -27,21 +31,35 @@ themeToggleBtn.addEventListener('click', async () => {
       element.classList.remove('light');
       element.classList.add('dark');
     });
-    contextMenu.classList.remove('light');
-    contextMenu.classList.add('dark');
-    refreshBtn.classList.remove('light');
-    refreshBtn.classList.add('dark');
-    contextMenu.style.backgroundColor = '#1e293b';
-    contextMenu.style.borderColor = '#334155';
+    if (contextMenu) {
+      contextMenu.classList.remove('light');
+      contextMenu.classList.add('dark');
+      contextMenu.style.backgroundColor = '#1e293b';
+      contextMenu.style.borderColor = '#334155';
+    }
+    if (refreshBtn) {
+      refreshBtn.classList.remove('light');
+      refreshBtn.classList.add('dark');
+    }
     AppConfig.theme = 'dark';
-    themeToggleBtn.innerHTML = '<i class="fas fa-sun mr-1"></i> 主题';
+    // 添加active类，切换到暗色主题
+    themeToggleBtn.classList.add('active');
+    // 暗色主题下，开关颜色使用深色背景
+    themeToggleBtn.style.backgroundColor = '#4E5969';
+    // 切换到月亮图标（暗色主题显示月亮）
+    const knob = themeToggleBtn.querySelector('.theme-toggle-knob');
+    knob.innerHTML = '<i class="fas fa-moon text-yellow-400 text-xs"></i>';
   } else {
     body.classList.remove('dark');
     body.classList.add('light');
-    header.classList.remove('dark');
-    header.classList.add('light');
-    aside.classList.remove('dark');
-    aside.classList.add('light');
+    if (header) {
+      header.classList.remove('dark');
+      header.classList.add('light');
+    }
+    if (aside) {
+      aside.classList.remove('dark');
+      aside.classList.add('light');
+    }
     itemCards.forEach(card => {
       card.classList.remove('dark');
       card.classList.add('light');
@@ -50,14 +68,24 @@ themeToggleBtn.addEventListener('click', async () => {
       element.classList.remove('dark');
       element.classList.add('light');
     });
-    contextMenu.classList.remove('dark');
-    contextMenu.classList.add('light');
-    refreshBtn.classList.remove('dark');
-    refreshBtn.classList.add('light');
-    contextMenu.style.backgroundColor = '#ffffff';
-    contextMenu.style.borderColor = '#e2e8f0';
+    if (contextMenu) {
+      contextMenu.classList.remove('dark');
+      contextMenu.classList.add('light');
+      contextMenu.style.backgroundColor = '#ffffff';
+      contextMenu.style.borderColor = '#e2e8f0';
+    }
+    if (refreshBtn) {
+      refreshBtn.classList.remove('dark');
+      refreshBtn.classList.add('light');
+    }
     AppConfig.theme = 'light';
-    themeToggleBtn.innerHTML = '<i class="fas fa-moon mr-1"></i> 主题';
+    // 移除active类，切换到亮色主题
+    themeToggleBtn.classList.remove('active');
+    // 亮色主题下，开关颜色使用浅色背景
+    themeToggleBtn.style.backgroundColor = '#E5E6EB';
+    // 切换到太阳图标（亮色主题显示太阳）
+    const knob = themeToggleBtn.querySelector('.theme-toggle-knob');
+    knob.innerHTML = '<i class="fas fa-sun text-yellow-500 text-xs"></i>';
   }
 
   await saveConfig();
@@ -67,10 +95,21 @@ themeToggleBtn.addEventListener('click', async () => {
 document.addEventListener('DOMContentLoaded', () => {
   const themeToggleBtn = document.getElementById('theme-toggle-btn');
   const body = document.body;
+  const knob = themeToggleBtn.querySelector('.theme-toggle-knob');
   
   if (body.classList.contains('dark')) {
-    themeToggleBtn.innerHTML = '<i class="fas fa-sun mr-1"></i> 主题';
+    // 暗色主题 - 添加active类
+    themeToggleBtn.classList.add('active');
+    // 暗色主题下，开关颜色使用深色背景
+    themeToggleBtn.style.backgroundColor = '#4E5969';
+    // 显示月亮图标（暗色主题显示月亮）
+    knob.innerHTML = '<i class="fas fa-moon text-yellow-400 text-xs"></i>';
   } else {
-    themeToggleBtn.innerHTML = '<i class="fas fa-moon mr-1"></i> 主题';
+    // 亮色主题 - 移除active类
+    themeToggleBtn.classList.remove('active');
+    // 亮色主题下，开关颜色使用浅色背景
+    themeToggleBtn.style.backgroundColor = '#E5E6EB';
+    // 显示太阳图标（亮色主题显示太阳）
+    knob.innerHTML = '<i class="fas fa-sun text-yellow-500 text-xs"></i>';
   }
 });

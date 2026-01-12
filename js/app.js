@@ -139,32 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       openSettingsModal();
     });
 
-    // 设置模态框中的主题切换按钮
-    document.getElementById('theme-toggle-btn').addEventListener('click', () => {
-      const body = document.body;
 
-      if (body.classList.contains('dark-theme')) {
-        body.classList.remove('dark-theme');
-        body.classList.add('light-theme');
-        document.getElementById('theme-toggle-btn').innerHTML = '<i class="fas fa-sun mr-1"></i> 明亮主题';
-        localStorage.setItem('appTheme', 'light');
-      } else {
-        body.classList.remove('light-theme');
-        body.classList.add('dark-theme');
-        document.getElementById('theme-toggle-btn').innerHTML = '<i class="fas fa-moon mr-1"></i> 暗黑主题';
-        localStorage.setItem('appTheme', 'dark');
-      }
-    });
-
-    // 加载保存的主题偏好并更新设置按钮
-    const savedTheme = localStorage.getItem('appTheme');
-    if (savedTheme === 'dark') {
-      document.body.classList.add('dark-theme');
-      document.getElementById('theme-toggle-btn').innerHTML = '<i class="fas fa-moon mr-1"></i> 暗黑主题';
-    } else {
-      document.body.classList.add('light-theme');
-      document.getElementById('theme-toggle-btn').innerHTML = '<i class="fas fa-sun mr-1"></i> 明亮主题';
-    }
   } catch (error) {
     console.error('应用初始化失败:', error);
     showNotification('错误', '应用初始化失败: ' + error.message, 'error');
@@ -399,7 +374,62 @@ function initImageDropzone() {
   });
 }
 
-// 页面加载完成后初始化拖拽功能
+// 页面加载完成后初始化拖拽功能和关闭确认事件
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(initImageDropzone, 100);
+  
+  // 设置关闭确认弹窗事件监听
+  window.api.onCloseConfirm(() => {
+    document.getElementById('close-confirm-modal').classList.remove('hidden');
+  });
+  
+  // 取消按钮点击事件
+  document.getElementById('close-confirm-cancel').addEventListener('click', () => {
+    document.getElementById('close-confirm-modal').classList.add('hidden');
+  });
+  
+  // 最小化到系统托盘按钮点击事件
+  document.getElementById('close-confirm-minimize').addEventListener('click', () => {
+    document.getElementById('close-confirm-modal').classList.add('hidden');
+    window.api.confirmMinimize();
+  });
+  
+  // 退出程序按钮点击事件
+  document.getElementById('close-confirm-quit').addEventListener('click', () => {
+    document.getElementById('close-confirm-modal').classList.add('hidden');
+    window.api.confirmQuit();
+  });
+  
+  // 自定义标题栏按钮事件处理
+  setupTitleBarEvents();
 });
+
+// 设置自定义标题栏事件
+function setupTitleBarEvents() {
+  // 最小化按钮
+  const minimizeBtn = document.getElementById('minimize-btn');
+  if (minimizeBtn) {
+    minimizeBtn.addEventListener('click', () => {
+      window.api.minimizeWindow();
+    });
+  }
+  
+  // 最大化/恢复按钮
+  const maximizeBtn = document.getElementById('maximize-btn');
+  if (maximizeBtn) {
+    maximizeBtn.addEventListener('click', () => {
+      window.api.toggleMaximizeWindow();
+    });
+  }
+  
+  // 关闭按钮
+  const closeBtn = document.getElementById('close-btn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      // 发送消息给渲染进程，显示自定义关闭确认弹窗
+      window.api.showCloseConfirm();
+    });
+  }
+  
+
+}

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Menu, Tray, MenuItem, shell, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
@@ -34,6 +34,10 @@ let config = {
   }
 };
 
+let mainWindow = null;
+let tray = null;
+let isQuitting = false;
+
 async function loadConfig() {
   try {
     // 确保配置目录存在
@@ -61,12 +65,53 @@ async function saveConfig() {
   }
 }
 
+function createTray() {
+  // 创建托盘图标
+  tray = new Tray(path.join(__dirname, 'build', 'icon.ico'));
+  
+  // 创建托盘菜单
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: '显示窗口',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+        }
+      }
+    },
+    {
+      label: '退出程序',
+      click: () => {
+        isQuitting = true;
+        app.quit();
+      }
+    }
+  ]);
+  
+  // 设置托盘图标提示文本
+  tray.setToolTip('HackLauncher');
+  
+  // 设置托盘菜单
+  tray.setContextMenu(contextMenu);
+  
+  // 双击托盘图标显示窗口
+  tray.on('double-click', () => {
+    if (mainWindow) {
+      mainWindow.show();
+    }
+  });
+  
+  logger.info('系统托盘已创建');
+}
+
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1100,
     height: 680,
     // 关键修改：将 png 改为 ico 格式（和 package.json 中一致）
     icon: path.join(__dirname, 'build', 'icon.ico'),
+    frame: false, // 无边框窗口，使用自定义标题栏
+    titleBarStyle: 'hidden', // 隐藏默认标题栏
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -76,29 +121,110 @@ function createWindow() {
     }
   });
 
-  win.loadFile('index.html');
+  mainWindow.loadFile('index.html');
 
   if (process.env.NODE_ENV === 'development') {
-    win.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   }
 
+  // 监听窗口关闭事件
+  mainWindow.on('close', (event) => {
+    // 如果是应用程序主动退出，不显示提示
+    if (isQuitting) {
+      return;
+    }
+    
+    // 阻止默认关闭行为
+    event.preventDefault();
+    
+    // 发送消息给渲染进程，显示自定义关闭确认弹窗
+    mainWindow.webContents.send('show-close-confirm');
+  });
+
+  // 监听渲染进程的退出确认
+  ipcMain.on('confirm-quit', () => {
+    isQuitting = true;
+    app.quit();
+  });
+
+  // 监听渲染进程的最小化到托盘确认
+ipcMain.on('confirm-minimize', () => {
+  mainWindow.hide();
+});
+
+// 监听渲染进程的关闭确认请求
+ipcMain.on('show-close-confirm', () => {
+  // 发送消息给渲染进程，显示自定义关闭确认弹窗
+  mainWindow.webContents.send('show-close-confirm');
+});
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
   logger.info('主窗口已创建');
+}
+
+// 单实例运行逻辑
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // 当第二个实例启动时，聚焦到已有窗口
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
 }
 
 app.whenReady().then(async () => {
   await loadConfig();
   createWindow();
+  createTray();
 
   app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (mainWindow === null) createWindow();
   });
 });
 
 app.on('window-all-closed', function () {
-  app.quit();
+  // 保持应用运行，不退出
+  // 在Windows和Linux上，窗口全部关闭时应用会退出
+  // 我们需要阻止默认行为，让应用继续运行在系统托盘中
+  // 注意：在macOS上，即使所有窗口关闭，应用也会继续运行
+  // 但在Windows和Linux上，我们需要明确阻止退出
+  // 实际上，我们已经在close事件中阻止了窗口关闭，所以这个事件可能不会触发
+});
+
+// 当应用准备退出时，清理托盘资源
+app.on('before-quit', () => {
+  isQuitting = true;
+  if (tray) {
+    tray.destroy();
+  }
 });
 
 Menu.setApplicationMenu(null);
+
+// 窗口控制相关IPC处理
+ipcMain.handle('minimize-window', () => {
+  if (mainWindow) {
+    mainWindow.minimize();
+  }
+  return true;
+});
+
+ipcMain.handle('toggle-maximize-window', () => {
+  if (mainWindow) {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  }
+  return true;
+});
 
 // 以下原有代码保持不变（省略，避免重复）
 ipcMain.handle('get-config', () => {
@@ -265,38 +391,41 @@ function escapeShell(cmd) {
 
 // 日志记录函数
 function log(level, message) {
-  const timestamp = new Date().toISOString();
+  // 使用更友好的日期格式，显示本地时间
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+  const timestamp = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+  
   const logMessage = `${timestamp} [${level.toUpperCase()}] ${message}\n`;
   
   // 输出到控制台
   console[level === 'error' ? 'error' : 'log'](logMessage);
   
-  // 只将命令相关的日志写入日志文件
-  const isCommandRelated = message.includes('执行命令:') || 
-                         message.includes('执行终端命令:') || 
-                         message.includes('命令执行失败:') ||
-                         message.includes('创建子进程失败:');
-  
-  if (isCommandRelated) {
-    try {
-      // 确保配置目录存在
-      if (!fs.existsSync(CONFIG_DIR)) {
-        fs.mkdirSync(CONFIG_DIR, { recursive: true });
-      }
-      
-      // 写入日志文件，使用UTF-8编码
-      fs.appendFileSync(LOG_PATH, logMessage, { encoding: 'utf8' });
-      
-      // 检查日志文件大小，如果超过10MB，进行简单的日志轮转
-      const stats = fs.statSync(LOG_PATH);
-      if (stats.size > 10 * 1024 * 1024) {
-        // 重命名旧日志文件
-        const oldLogPath = path.join(CONFIG_DIR, `hacklauncher.log.${Date.now()}`);
-        fs.renameSync(LOG_PATH, oldLogPath);
-      }
-    } catch (error) {
-      console.error('写入日志失败:', error);
+  // 所有日志都写入日志文件
+  try {
+    // 确保配置目录存在
+    if (!fs.existsSync(CONFIG_DIR)) {
+      fs.mkdirSync(CONFIG_DIR, { recursive: true });
     }
+    
+    // 写入日志文件，使用UTF-8编码
+    fs.appendFileSync(LOG_PATH, logMessage, { encoding: 'utf8' });
+    
+    // 检查日志文件大小，如果超过10MB，进行简单的日志轮转
+    const stats = fs.statSync(LOG_PATH);
+    if (stats.size > 10 * 1024 * 1024) {
+      // 重命名旧日志文件
+      const oldLogPath = path.join(CONFIG_DIR, `hacklauncher.log.${Date.now()}`);
+      fs.renameSync(LOG_PATH, oldLogPath);
+    }
+  } catch (error) {
+    console.error('写入日志失败:', error);
   }
 }
 

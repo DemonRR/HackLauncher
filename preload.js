@@ -20,5 +20,15 @@ contextBridge.exposeInMainWorld('api', {
   getEnvironment: () => ipcRenderer.invoke('get-environment'),
   browsePath: (type) => ipcRenderer.invoke('browse-path', type),
   checkPathExists: (path) => ipcRenderer.invoke('check-path-exists', path),
-  executeWithEnvironment: (item) => ipcRenderer.invoke('execute-with-environment', item)
+  executeWithEnvironment: (item) => ipcRenderer.invoke('execute-with-environment', item),
+  // 窗口控制相关
+  minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
+  toggleMaximizeWindow: () => ipcRenderer.invoke('toggle-maximize-window'),
+  showCloseConfirm: () => ipcRenderer.send('show-close-confirm'),
+  // 关闭确认相关
+  onCloseConfirm: (callback) => {
+    ipcRenderer.on('show-close-confirm', callback);
+  },
+  confirmQuit: () => ipcRenderer.send('confirm-quit'),
+  confirmMinimize: () => ipcRenderer.send('confirm-minimize')
 });
