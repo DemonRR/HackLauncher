@@ -5,6 +5,30 @@ const fsPromises = require('fs').promises;
 const { exec, execSync, spawn } = require('child_process');
 const iconv = require('iconv-lite');
 
+function getTrayIconPath() {
+  const candidates = [];
+
+  // ① 开发模式（你现在这个）
+  candidates.push(path.join(__dirname, 'build', 'icon.ico'));
+
+  // ② 打包后（extraResources）
+  candidates.push(path.join(process.resourcesPath, 'icon.ico'));
+
+  // ③ 极端情况（unpacked 调试）
+  candidates.push(path.join(process.resourcesPath, 'build', 'icon.ico'));
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      logger.info('使用托盘图标: ' + p);
+      return p;
+    }
+  }
+
+  logger.error('未找到任何可用托盘图标，尝试路径: ' + candidates.join(' | '));
+  return null;
+}
+
+
 try {
   require('child_process').execSync('chcp 65001', { stdio: 'ignore' });
 } catch (e) {}
@@ -66,43 +90,43 @@ async function saveConfig() {
 }
 
 function createTray() {
-  // 创建托盘图标
-  tray = new Tray(path.join(__dirname, 'build', 'icon.ico'));
-  
-  // 创建托盘菜单
-  const contextMenu = Menu.buildFromTemplate([
+  const trayIconPath = getTrayIconPath();
+
+  if (!trayIconPath) {
+    // ⚠ 不 return，继续跑，避免托盘事件系统半死
+    return;
+  }
+
+  tray = new Tray(trayIconPath);
+
+  tray.setToolTip('HackLauncher');
+
+  tray.setContextMenu(Menu.buildFromTemplate([
     {
       label: '显示窗口',
       click: () => {
-        if (mainWindow) {
-          mainWindow.show();
-        }
+        mainWindow?.show();
+        mainWindow?.focus();
       }
     },
     {
-      label: '退出程序',
+      label: '退出',
       click: () => {
         isQuitting = true;
         app.quit();
       }
     }
-  ]);
-  
-  // 设置托盘图标提示文本
-  tray.setToolTip('HackLauncher');
-  
-  // 设置托盘菜单
-  tray.setContextMenu(contextMenu);
-  
-  // 双击托盘图标显示窗口
-  tray.on('double-click', () => {
-    if (mainWindow) {
-      mainWindow.show();
-    }
+  ]));
+
+  tray.on('click', () => {
+    mainWindow?.show();
+    mainWindow?.focus();
   });
-  
-  logger.info('系统托盘已创建');
+
+  logger.info('系统托盘创建完成');
 }
+
+
 
 function createWindow() {
   mainWindow = new BrowserWindow({

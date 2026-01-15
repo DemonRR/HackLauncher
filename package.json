@@ -35,19 +35,32 @@
   "build": {
     "appId": "com.demonrr.hacklauncher",
     "productName": "HackLauncher",
+
+    "asar": true,
+
     "directories": {
       "output": "dist",
       "buildResources": "build"
     },
+
     "files": [
       "**/*"
     ],
+
+    "extraResources": [
+      {
+        "from": "build/icon.ico",
+        "to": "icon.ico"
+      }
+    ],
+
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico",
       "executableName": "HackLauncher",
       "requestedExecutionLevel": "asInvoker"
     },
+
     "nsis": {
       "oneClick": false,
       "perMachine": false,
@@ -60,7 +73,7 @@
       "uninstallerIcon": "build/icon.ico",
       "installerHeaderIcon": "build/icon.ico"
     }
-  },
+},
   "repository": {
     "type": "git",
     "url": "https://github.com/DemonRR/HackLauncher.git"
