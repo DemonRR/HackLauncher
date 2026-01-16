@@ -50,7 +50,15 @@ const LOG_PATH = path.join(CONFIG_DIR, 'hacklauncher.log');
 let config = {
   categories: [],
   items: [],
-  theme: 'light',
+  defaultCategoryId: null,
+  settings: {
+    theme: 'light',
+    themeColor: '#165DFF',
+    layout: 'grid',
+    animations: true,
+    closeBehavior: 'ask',
+    autoMinimizeAfterRun: false
+  },
   environment: {
     python: '',
     java: '',
@@ -69,13 +77,45 @@ async function loadConfig() {
     
     const data = await fsPromises.readFile(CONFIG_PATH, 'utf8');
     config = JSON.parse(data);
+    
+    // 确保配置结构完整
+    if (!config.settings) {
+      config.settings = {
+        theme: 'light',
+        themeColor: '#165DFF',
+        layout: 'grid',
+        animations: true,
+        closeBehavior: 'ask',
+        autoMinimizeAfterRun: false
+      };
+    }
+    
+    // 确保环境配置存在
     if (!config.environment) {
       config.environment = { python: '', java: '', customPaths: [] };
     }
+    
+    // 添加默认值，如果不存在
+    config.settings.closeBehavior = config.settings.closeBehavior || 'ask';
+    config.settings.autoMinimizeAfterRun = config.settings.autoMinimizeAfterRun || false;
+    
     logger.info('配置文件加载成功');
   } catch (error) {
     logger.error(`加载配置文件失败: ${error}`);
-    config = { categories: [], items: [], theme: 'light', environment: { python: '', java: '', customPaths: [] } };
+    config = {
+      categories: [],
+      items: [],
+      defaultCategoryId: null,
+      settings: {
+        theme: 'light',
+        themeColor: '#165DFF',
+        layout: 'grid',
+        animations: true,
+        closeBehavior: 'ask',
+        autoMinimizeAfterRun: false
+      },
+      environment: { python: '', java: '', customPaths: [] }
+    };
     await saveConfig();
   }
 }
@@ -99,7 +139,7 @@ function createTray() {
 
   tray = new Tray(trayIconPath);
 
-  tray.setToolTip('HackLauncher');
+  tray.setToolTip('渗透武器库');
 
   tray.setContextMenu(Menu.buildFromTemplate([
     {
@@ -158,11 +198,26 @@ function createWindow() {
       return;
     }
     
-    // 阻止默认关闭行为
-    event.preventDefault();
+    // 获取关闭行为设置
+    const closeBehavior = config.settings.closeBehavior || 'ask';
     
-    // 发送消息给渲染进程，显示自定义关闭确认弹窗
-    mainWindow.webContents.send('show-close-confirm');
+    switch (closeBehavior) {
+      case 'close':
+        // 直接关闭，不阻止默认行为
+        isQuitting = true;
+        break;
+      case 'minimize':
+        // 最小化到托盘，阻止默认行为
+        event.preventDefault();
+        mainWindow.hide();
+        break;
+      case 'ask':
+      default:
+        // 显示确认对话框，阻止默认行为
+        event.preventDefault();
+        mainWindow.webContents.send('show-close-confirm');
+        break;
+    }
   });
 
   // 监听渲染进程的退出确认
@@ -178,8 +233,25 @@ ipcMain.on('confirm-minimize', () => {
 
 // 监听渲染进程的关闭确认请求
 ipcMain.on('show-close-confirm', () => {
-  // 发送消息给渲染进程，显示自定义关闭确认弹窗
-  mainWindow.webContents.send('show-close-confirm');
+  // 获取关闭行为设置
+  const closeBehavior = config.settings.closeBehavior || 'ask';
+  
+  switch (closeBehavior) {
+    case 'close':
+      // 直接关闭
+      isQuitting = true;
+      app.quit();
+      break;
+    case 'minimize':
+      // 最小化到托盘
+      mainWindow.hide();
+      break;
+    case 'ask':
+    default:
+      // 显示确认对话框
+      mainWindow.webContents.send('show-close-confirm');
+      break;
+  }
 });
 
   mainWindow.on('closed', () => {

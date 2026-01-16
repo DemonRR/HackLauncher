@@ -32,7 +32,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 40px);
   background-color: transparent;
 }
 
@@ -91,6 +91,136 @@ textarea:focus {
   --tw-ring-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.3) !important;
   border-color: var(--theme-color, #165DFF) !important;
   box-shadow: 0 0 0 2px rgba(var(--theme-color-rgb, 22, 93, 255), 0.1) !important;
+}
+
+/* 表单元素基础样式 */
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--theme-color, #165DFF) !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 重置浏览器默认样式 */
+input[type="radio"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  position: relative;
+}
+
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  position: relative;
+}
+
+/* 亮色主题下的表单元素样式 */
+body.light input[type="radio"],
+body.light input[type="checkbox"] {
+  background-color: #ffffff;
+  border: 2px solid #d1d5db;
+}
+
+body.light input[type="radio"]:checked,
+body.light input[type="checkbox"]:checked {
+  background-color: var(--theme-color, #165DFF);
+  border-color: var(--theme-color, #165DFF);
+}
+
+body.light input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: white;
+}
+
+body.light input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+body.light input[type="radio"]:hover,
+body.light input[type="checkbox"]:hover {
+  border-color: var(--theme-color, #165DFF);
+}
+
+/* 暗色主题下的表单元素样式 */
+body.dark input[type="radio"],
+body.dark input[type="checkbox"] {
+  background-color: #374151;
+  border: 2px solid #4B5563;
+}
+
+body.dark input[type="radio"]:checked,
+body.dark input[type="checkbox"]:checked {
+  background-color: var(--theme-color, #165DFF);
+  border-color: var(--theme-color, #165DFF);
+}
+
+body.dark input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: white;
+}
+
+body.dark input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+body.dark input[type="radio"]:hover,
+body.dark input[type="checkbox"]:hover {
+  border-color: var(--theme-color, #165DFF);
+}
+
+/* 暗色主题下的标签样式 */
+body.dark label {
+  color: #E5E7EB !important;
+}
+
+body.dark label.text-dark-2 {
+  color: #9CA3AF !important;
+}
+
+/* 暗色主题下的复选框文字样式 */
+body.dark label span {
+  color: #E5E7EB !important;
+}
+
+/* 暗色主题下特定类的复选框文字样式 */
+body.dark label span.text-gray-700 {
+  color: #E5E7EB !important;
 }
 
 /* 之前的代码保持不变 */

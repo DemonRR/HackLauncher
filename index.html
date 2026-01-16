@@ -120,9 +120,9 @@
   </div>
 
   <!-- 主内容区 -->
-  <main class="flex-grow px-2 py-1 flex flex-col md:flex-row gap-6">
+  <main class="flex-grow px-2 py-1 pb-0 flex flex-col md:flex-row gap-6">
     <!-- 左侧边栏 - 分类列表 -->
-    <aside class="md:w-64 flex-shrink-0 bg-white rounded-xl shadow-custom p-4 flex flex-col sticky top-6 light" style="height: calc(100vh - 100px);">
+    <aside class="md:w-64 flex-shrink-0 bg-white rounded-xl shadow-custom p-4 flex flex-col sticky top-6 light" style="height: calc(100vh - 90px);">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-semibold">分类管理</h2>
         <button id="add-category-btn" class="text-primary hover:text-primary/80 transition-custom">
@@ -281,7 +281,7 @@
           <!-- 命令类型专用选项 -->
           <div id="run-in-terminal-option" class="mb-4 hidden">
             <label class="flex items-center">
-              <input type="checkbox" id="run-in-terminal" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+              <input type="checkbox" id="run-in-terminal">
               <span class="ml-2 text-sm text-gray-700">在终端中打开</span>
             </label>
           </div>
@@ -465,6 +465,40 @@
           </div>
         </div>
         
+        <!-- 窗口设置 -->
+        <div class="mb-6">
+          <h4 class="text-md font-medium text-dark mb-3 flex items-center">
+            <i class="fas fa-window-maximize mr-2 text-primary"></i> 窗口设置
+          </h4>
+          
+          <!-- 关闭窗口行为设置 -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-dark-2 mb-2">关闭窗口行为</label>
+            <div class="space-y-2">
+              <div class="flex items-center">
+                <input type="radio" id="close-behavior-close" name="close-behavior" value="close" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded mr-2">
+                <label for="close-behavior-close" class="text-sm text-dark">直接关闭</label>
+              </div>
+              <div class="flex items-center">
+                <input type="radio" id="close-behavior-minimize" name="close-behavior" value="minimize" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded mr-2">
+                <label for="close-behavior-minimize" class="text-sm text-dark">最小化到系统托盘</label>
+              </div>
+              <div class="flex items-center">
+                <input type="radio" id="close-behavior-ask" name="close-behavior" value="ask" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded mr-2">
+                <label for="close-behavior-ask" class="text-sm text-dark">每次询问</label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 运行程序后自动最小化设置 -->
+          <div class="mb-4">
+            <div class="flex items-center justify-between">
+              <label for="auto-minimize" class="block text-sm font-medium text-dark-2">运行程序卡片后自动最小化</label>
+              <input type="checkbox" id="auto-minimize" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded transition-custom">
+            </div>
+          </div>
+        </div>
+        
         <!-- 环境配置 -->
         <div class="mb-6">
           <h4 class="text-md font-medium text-dark mb-3 flex items-center">
@@ -502,7 +536,7 @@
             <i class="fas fa-info-circle mr-2 text-primary"></i> 关于
           </h4>
           <div class="text-sm text-dark-2">
-            <p>版本: 1.0.2</p>
+            <p>版本: 1.0.3</p>
             <p class="mt-1">渗透武器库 - Windows 专用启动器管理工具</p>
             <p class="mt-1">作者: DemonRR</p>
             <p class="mt-1 flex items-center">

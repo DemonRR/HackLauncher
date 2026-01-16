@@ -162,6 +162,18 @@ async function openSettingsModal() {
     // 同时更新AppConfig，确保数据一致性
     AppConfig.environment = envConfig;
     
+    // 加载窗口设置
+    const closeBehavior = AppConfig.settings.closeBehavior || 'ask';
+    const autoMinimize = AppConfig.settings.autoMinimizeAfterRun || false;
+    
+    // 更新关闭行为单选按钮
+    document.querySelectorAll('input[name="close-behavior"]').forEach(radio => {
+      radio.checked = radio.value === closeBehavior;
+    });
+    
+    // 更新自动最小化复选框
+    document.getElementById('auto-minimize').checked = autoMinimize;
+    
     document.getElementById('settings-modal').classList.remove('hidden');
   } catch (error) {
     console.error('获取环境配置失败:', error);
@@ -192,6 +204,13 @@ async function saveSettings() {
     // 确保设置对象存在
     AppConfig.settings = AppConfig.settings || {};
     AppConfig.settings.themeColor = AppConfig.settings.themeColor || '#165DFF';
+    
+    // 保存窗口设置
+    const selectedCloseBehavior = document.querySelector('input[name="close-behavior"]:checked').value;
+    const autoMinimize = document.getElementById('auto-minimize').checked;
+    
+    AppConfig.settings.closeBehavior = selectedCloseBehavior;
+    AppConfig.settings.autoMinimizeAfterRun = autoMinimize;
     
     // 保存完整配置
     await saveConfig();

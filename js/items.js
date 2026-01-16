@@ -790,6 +790,11 @@ async function runItem(item) {
         }
         await window.api.openUrl(url);
         showNotification('成功', `URL已打开: ${item.name}`, 'success');
+        
+        // 检查是否需要自动最小化
+        if (AppConfig.settings.autoMinimizeAfterRun) {
+          window.api.minimizeWindow();
+        }
         return;
       }
 
@@ -802,6 +807,11 @@ async function runItem(item) {
         if (item.runInTerminal) {
           await window.api.executeCommandInTerminal(combinedCommand, workingDir);
           showNotification('成功', `命令已在终端启动: ${item.name}`, 'success');
+          
+          // 检查是否需要自动最小化
+          if (AppConfig.settings.autoMinimizeAfterRun) {
+            window.api.minimizeWindow();
+          }
           return;
         }
 
@@ -811,6 +821,11 @@ async function runItem(item) {
         window.api.executeCommand(cmd)
           .then(() => {
             showNotification('成功', `命令执行完成: ${item.name}`, 'success');
+            
+            // 检查是否需要自动最小化
+            if (AppConfig.settings.autoMinimizeAfterRun) {
+              window.api.minimizeWindow();
+            }
           })
           .catch(err => {
             showNotification('错误', `命令执行失败: ${err}`, 'error');
@@ -833,6 +848,11 @@ async function runItem(item) {
           const cmd = `"${pythonPath}" "${scriptPath}"${params}`;
           await window.api.executeCommandInTerminal(cmd, workingDir);
           showNotification('成功', `Python 已在终端启动: ${item.name}`, 'success');
+          
+          // 检查是否需要自动最小化
+          if (AppConfig.settings.autoMinimizeAfterRun) {
+            window.api.minimizeWindow();
+          }
           return;
         }
 
@@ -846,6 +866,11 @@ async function runItem(item) {
           if (finished) return;
           finished = true;
           showNotification('成功', `Python 启动成功: ${item.name}`, 'success');
+          
+          // 检查是否需要自动最小化
+          if (AppConfig.settings.autoMinimizeAfterRun) {
+            window.api.minimizeWindow();
+          }
         }, 300);
 
         window.api.executeCommand(cmd).catch(err => {
@@ -878,6 +903,11 @@ async function runItem(item) {
         if (item.runInTerminal) {
           await window.api.executeCommandInTerminal(fullCmd, workingDir);
           showNotification('成功', `Java 已在终端启动: ${item.name}`, 'success');
+          
+          // 检查是否需要自动最小化
+          if (AppConfig.settings.autoMinimizeAfterRun) {
+            window.api.minimizeWindow();
+          }
           return;
         }
 
@@ -891,6 +921,11 @@ async function runItem(item) {
           if (finished) return;
           finished = true;
           showNotification('成功', `Java 启动成功: ${item.name}`, 'success');
+          
+          // 检查是否需要自动最小化
+          if (AppConfig.settings.autoMinimizeAfterRun) {
+            window.api.minimizeWindow();
+          }
         }, 300);
 
         window.api.executeCommand(cmd).catch(err => {
@@ -913,6 +948,11 @@ async function runItem(item) {
         });
 
         showNotification('成功', `应用程序已启动: ${item.name}`, 'success');
+        
+        // 检查是否需要自动最小化
+        if (AppConfig.settings.autoMinimizeAfterRun) {
+          window.api.minimizeWindow();
+        }
         return;
       }
 
@@ -925,6 +965,11 @@ async function runItem(item) {
           `${item.type === 'file' ? '文件' : '文件夹'}已打开: ${item.name}`,
           'success'
         );
+        
+        // 检查是否需要自动最小化
+        if (AppConfig.settings.autoMinimizeAfterRun) {
+          window.api.minimizeWindow();
+        }
         return;
       }
 

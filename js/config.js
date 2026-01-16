@@ -8,7 +8,9 @@ let AppConfig = {
     theme: 'light',
     themeColor: '#165DFF',
     layout: 'grid',
-    animations: true
+    animations: true,
+    closeBehavior: 'ask',
+    autoMinimizeAfterRun: false
   },
   environment: {
     python: '',
