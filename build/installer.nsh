@@ -3,6 +3,41 @@
   SetOutPath $INSTDIR
 !macroend
 
+!macro customInit
+  ; 备份 config 文件夹
+  IfFileExists "$INSTDIR\config" 0 noConfigBackup
+  
+  ; 创建临时目录用于备份
+  CreateDirectory "$TEMP\HackLauncherBackup"
+  
+  ; 备份 config 文件夹
+  CopyFiles /SILENT /FILESONLY "$INSTDIR\config\*.*" "$TEMP\HackLauncherBackup\"
+  
+  ; 记录备份完成
+  DetailPrint "已备份配置文件到临时目录"
+
+noConfigBackup:
+!macroend
+
+!macro customInstall
+  ; 安装后恢复 config 文件夹
+  IfFileExists "$TEMP\HackLauncherBackup\*.*" 0 noConfigRestore
+  
+  ; 确保目标 config 文件夹存在
+  CreateDirectory "$INSTDIR\config"
+  
+  ; 恢复 config 文件夹
+  CopyFiles /SILENT /FILESONLY "$TEMP\HackLauncherBackup\*.*" "$INSTDIR\config\"
+  
+  ; 清理临时备份目录
+  RMDir /r "$TEMP\HackLauncherBackup"
+  
+  ; 记录恢复完成
+  DetailPrint "已恢复配置文件"
+
+noConfigRestore:
+!macroend
+
 ; 使用.onVerifyInstDir函数处理目录验证和自动填充
 ; 这个函数会在用户选择目录后、进入下一步之前被调用
 Function .onVerifyInstDir

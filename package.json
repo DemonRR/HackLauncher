@@ -1,6 +1,6 @@
 {
   "name": "hacklauncher",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "渗透工具箱",
   "productName": "HackLauncher",
   "main": "main.js",
@@ -42,7 +42,8 @@
       "buildResources": "build"
     },
     "files": [
-      "**/*"
+      "**/*",
+      "!config/**"
     ],
     "extraResources": [
       {
@@ -70,7 +71,10 @@
       "menuCategory": false,
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico"
+      "installerHeaderIcon": "build/icon.ico",
+      "include": "build/installer.nsh",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
     }
   },
   "repository": {

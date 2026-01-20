@@ -95,6 +95,9 @@ async function initDatabase() {
     // 确保配置目录存在
     await fsPromises.mkdir(CONFIG_DIR, { recursive: true });
     
+    // 检查并恢复配置文件
+    await checkAndRestoreConfig();
+    
     // 创建数据库连接
     db = new sqlite3.Database(CONFIG_PATH);
     
@@ -148,6 +151,77 @@ async function initDatabase() {
   } catch (error) {
     logger.error(`数据库初始化失败: ${error}`);
     throw error;
+  }
+}
+
+// 检查并恢复配置文件
+async function checkAndRestoreConfig() {
+  try {
+    // 检查是否存在旧的配置文件
+    const oldConfigPath = path.join(INSTALL_DIR, 'config', 'config.json');
+    const oldDbPath = path.join(INSTALL_DIR, 'config', 'config.db');
+    
+    // 检查是否存在备份的配置文件
+    const backupDir = path.join(INSTALL_DIR, 'config', 'backup');
+    const backupDbPath = path.join(backupDir, 'config.db');
+    const backupJsonPath = path.join(backupDir, 'config.json');
+    
+    // 如果存在旧的配置文件但没有当前配置文件，尝试恢复
+    if ((fs.existsSync(oldConfigPath) || fs.existsSync(oldDbPath)) && !fs.existsSync(CONFIG_PATH)) {
+      logger.info('检测到旧的配置文件，尝试恢复...');
+      
+      // 确保配置目录存在
+      await fsPromises.mkdir(CONFIG_DIR, { recursive: true });
+      
+      // 复制旧的配置文件
+      if (fs.existsSync(oldDbPath)) {
+        await fsPromises.copyFile(oldDbPath, CONFIG_PATH);
+        logger.info('已从旧的 config.db 恢复配置');
+      } else if (fs.existsSync(oldConfigPath)) {
+        // 如果只有 JSON 文件，将在 importFromJson 中处理
+        logger.info('检测到旧的 config.json 文件，将在导入过程中处理');
+      }
+    }
+    
+    // 每次启动时创建配置备份
+    await createConfigBackup();
+    
+  } catch (error) {
+    logger.error(`检查和恢复配置文件失败: ${error}`);
+  }
+}
+
+// 创建配置备份
+async function createConfigBackup() {
+  try {
+    const backupDir = path.join(INSTALL_DIR, 'config', 'backup');
+    await fsPromises.mkdir(backupDir, { recursive: true });
+    
+    // 备份数据库文件
+    if (fs.existsSync(CONFIG_PATH)) {
+      const backupPath = path.join(backupDir, `config_${Date.now()}.db`);
+      await fsPromises.copyFile(CONFIG_PATH, backupPath);
+      logger.info('已创建配置备份');
+    }
+    
+    // 清理旧备份，只保留最近5个
+    const backupFiles = fs.readdirSync(backupDir).filter(f => f.startsWith('config_') && f.endsWith('.db'));
+    if (backupFiles.length > 5) {
+      // 按创建时间排序
+      backupFiles.sort((a, b) => {
+        const timeA = parseInt(a.replace('config_', '').replace('.db', ''));
+        const timeB = parseInt(b.replace('config_', '').replace('.db', ''));
+        return timeA - timeB;
+      });
+      
+      // 删除旧备份
+      for (let i = 0; i < backupFiles.length - 5; i++) {
+        fs.unlinkSync(path.join(backupDir, backupFiles[i]));
+      }
+    }
+    
+  } catch (error) {
+    logger.error(`创建配置备份失败: ${error}`);
   }
 }
 

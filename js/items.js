@@ -488,158 +488,11 @@ async function openItemModal(itemId = null) {
   }
   
 
-  // 渲染 Java 环境选项
-    async function renderJavaEnvironmentOptions(selectedEnvId = '') {
-      const javaEnvSelect = document.getElementById('item-java-environment');
-      const javaEnvOption = document.getElementById('java-environment-option');
-      if (!javaEnvSelect) return;
-      
-      // 清空现有选项
-      javaEnvSelect.innerHTML = '';
-      
-      try {
-        // 从主进程获取最新的环境配置
-        const envConfig = await window.api.getEnvironment();
-        
-        // 更新本地 AppConfig 以保持数据一致性
-        AppConfig.environment = envConfig;
-        
-        // 检查是否有配置的 Java 环境
-        if (envConfig.javaEnvironments && envConfig.javaEnvironments.length > 0) {
-          // 添加 Java 环境选项
-          envConfig.javaEnvironments.forEach(env => {
-            const option = document.createElement('option');
-            option.value = env.id;
-            option.textContent = env.name;
-            javaEnvSelect.appendChild(option);
-          });
-          
-          // 恢复之前选中的值，如果没有则选择默认环境
-          if (selectedEnvId) {
-            javaEnvSelect.value = selectedEnvId;
-          } else if (envConfig.defaultJavaEnvironmentId) {
-            javaEnvSelect.value = envConfig.defaultJavaEnvironmentId;
-          }
-        } else {
-          // 没有配置 Java 环境，显示提示选项
-          const noEnvOption = document.createElement('option');
-          noEnvOption.value = '';
-          noEnvOption.textContent = '未配置 Java 环境';
-          noEnvOption.disabled = true;
-          javaEnvSelect.appendChild(noEnvOption);
-        }
-      } catch (error) {
-        console.error('获取环境配置失败:', error);
-        // 出错时使用本地配置
-        if (AppConfig.environment.javaEnvironments && AppConfig.environment.javaEnvironments.length > 0) {
-          // 添加 Java 环境选项
-          AppConfig.environment.javaEnvironments.forEach(env => {
-            const option = document.createElement('option');
-            option.value = env.id;
-            option.textContent = env.name;
-            javaEnvSelect.appendChild(option);
-          });
-          
-          // 恢复之前选中的值，如果没有则选择默认环境
-          if (selectedEnvId) {
-            javaEnvSelect.value = selectedEnvId;
-          } else if (AppConfig.environment.defaultJavaEnvironmentId) {
-            javaEnvSelect.value = AppConfig.environment.defaultJavaEnvironmentId;
-          }
-        } else {
-          // 没有配置 Java 环境，显示提示选项
-          const noEnvOption = document.createElement('option');
-          noEnvOption.value = '';
-          noEnvOption.textContent = '未配置 Java 环境';
-          noEnvOption.disabled = true;
-          javaEnvSelect.appendChild(noEnvOption);
-        }
-      }
-    }
-
-    
-    // 监听项目类型变化
-  itemTypeSelect.addEventListener('change', (e) => {
-    const iconPreview = document.getElementById('item-icon-preview');
-    const itemIconInput = document.getElementById('item-icon');
-    switch (e.target.value) {
-      case 'url':
-        iconPreview.className = 'fa fa-globe';
-        itemIconInput.value = 'fa-globe';
-        break;
-      case 'file':
-        iconPreview.className = 'fa fa-file';
-        itemIconInput.value = 'fa-file';
-        break;
-      case 'folder':
-        iconPreview.className = 'fa fa-folder';
-        itemIconInput.value = 'fa-folder';
-        break;
-      case 'command':
-        iconPreview.className = 'fa fa-terminal';
-        itemIconInput.value = 'fa-terminal';
-        break;
-      case 'python':
-        iconPreview.className = 'fab fa-python';
-        itemIconInput.value = 'fa-python';
-        break;
-      case 'java':
-        iconPreview.className = 'fab fa-java';
-        itemIconInput.value = 'fa-java';
-        break;
-      case 'application':
-        iconPreview.className = 'fas fa-desktop';
-        itemIconInput.value = 'fa-desktop';
-        break;
-    }
-    
-    // 根据类型显示/隐藏启动参数输入框
-    const launchParamsContainer = document.getElementById('launch-params-container');
-    if (['python', 'java', 'application'].includes(e.target.value)) {
-      launchParamsContainer.classList.remove('hidden');
-    } else {
-      launchParamsContainer.classList.add('hidden');
-    }
-    
-    // 根据类型显示/隐藏终端选项
-    if (['command', 'python', 'java'].includes(e.target.value)) {
-      terminalOption.classList.remove('hidden');
-    } else {
-      terminalOption.classList.add('hidden');
-    }
-    
-    // 根据类型显示/隐藏 Java 环境选项
-    const javaEnvOption = document.getElementById('java-environment-option');
-    if (e.target.value === 'java') {
-      javaEnvOption.classList.remove('hidden');
-      renderJavaEnvironmentOptions();
-    } else {
-      javaEnvOption.classList.add('hidden');
-    }
-    
-    // 切换命令输入框（命令行用textarea，其他用input）
-    const commandInput = document.getElementById('item-command-input');
-    const commandTextarea = document.getElementById('item-command-textarea');
-    const commandHelpText = document.getElementById('command-help-text');
-    
-    if (e.target.value === 'command') {
-      if (commandInput) commandInput.classList.add('hidden');
-      if (commandTextarea) commandTextarea.classList.remove('hidden');
-      if (commandHelpText) commandHelpText.classList.remove('hidden');
-    } else {
-      if (commandInput) commandInput.classList.remove('hidden');
-      if (commandTextarea) commandTextarea.classList.add('hidden');
-      if (commandHelpText) commandHelpText.classList.add('hidden');
-    }
-    
-    const commandContainer = document.getElementById('item-command-container');
-    const browseBtn = commandContainer?.querySelector('button');
-    if (e.target.value === 'command' || e.target.value === 'url') {
-      if (browseBtn) browseBtn.classList.add('hidden');
-    } else {
-      if (browseBtn) browseBtn.classList.remove('hidden');
-    }
-  });
+  // 移除之前可能存在的事件监听器
+  itemTypeSelect.removeEventListener('change', handleItemTypeChange);
+  
+  // 添加事件监听器
+  itemTypeSelect.addEventListener('change', handleItemTypeChange);
   
   // 触发一次 change 事件，设置初始图标
   if (!itemId || (item && item.type !== 'java')) {
@@ -882,6 +735,159 @@ function setupItemEvents() {
       renderItems('');
     }
   });
+}
+
+// 类型切换事件处理函数
+function handleItemTypeChange(e) {
+  const iconPreview = document.getElementById('item-icon-preview');
+  const itemIconInput = document.getElementById('item-icon');
+  switch (e.target.value) {
+    case 'url':
+      iconPreview.className = 'fa fa-globe';
+      itemIconInput.value = 'fa-globe';
+      break;
+    case 'file':
+      iconPreview.className = 'fa fa-file';
+      itemIconInput.value = 'fa-file';
+      break;
+    case 'folder':
+      iconPreview.className = 'fa fa-folder';
+      itemIconInput.value = 'fa-folder';
+      break;
+    case 'command':
+      iconPreview.className = 'fa fa-terminal';
+      itemIconInput.value = 'fa-terminal';
+      break;
+    case 'python':
+      iconPreview.className = 'fab fa-python';
+      itemIconInput.value = 'fa-python';
+      break;
+    case 'java':
+      iconPreview.className = 'fab fa-java';
+      itemIconInput.value = 'fa-java';
+      break;
+    case 'application':
+      iconPreview.className = 'fas fa-desktop';
+      itemIconInput.value = 'fa-desktop';
+      break;
+  }
+  
+  // 根据类型显示/隐藏启动参数输入框
+  const launchParamsContainer = document.getElementById('launch-params-container');
+  if (['python', 'java', 'application'].includes(e.target.value)) {
+    launchParamsContainer.classList.remove('hidden');
+  } else {
+    launchParamsContainer.classList.add('hidden');
+  }
+  
+  // 根据类型显示/隐藏终端选项
+  const terminalOption = document.getElementById('run-in-terminal-option');
+  if (['command', 'python', 'java'].includes(e.target.value)) {
+    terminalOption.classList.remove('hidden');
+  } else {
+    terminalOption.classList.add('hidden');
+  }
+  
+  // 根据类型显示/隐藏 Java 环境选项
+  const javaEnvOption = document.getElementById('java-environment-option');
+  if (e.target.value === 'java') {
+    javaEnvOption.classList.remove('hidden');
+    renderJavaEnvironmentOptions();
+  } else {
+    javaEnvOption.classList.add('hidden');
+  }
+  
+  // 切换命令输入框（命令行用textarea，其他用input）
+  const commandInput = document.getElementById('item-command-input');
+  const commandTextarea = document.getElementById('item-command-textarea');
+  const commandHelpText = document.getElementById('command-help-text');
+  
+  if (e.target.value === 'command') {
+    if (commandInput) commandInput.classList.add('hidden');
+    if (commandTextarea) commandTextarea.classList.remove('hidden');
+    if (commandHelpText) commandHelpText.classList.remove('hidden');
+  } else {
+    if (commandInput) commandInput.classList.remove('hidden');
+    if (commandTextarea) commandTextarea.classList.add('hidden');
+    if (commandHelpText) commandHelpText.classList.add('hidden');
+  }
+  
+  const commandContainer = document.getElementById('item-command-container');
+  const browseBtn = commandContainer?.querySelector('button');
+  if (e.target.value === 'command' || e.target.value === 'url') {
+    if (browseBtn) browseBtn.classList.add('hidden');
+  } else {
+    if (browseBtn) browseBtn.classList.remove('hidden');
+  }
+}
+
+// 渲染 Java 环境选项
+async function renderJavaEnvironmentOptions(selectedEnvId = '') {
+  const javaEnvSelect = document.getElementById('item-java-environment');
+  const javaEnvOption = document.getElementById('java-environment-option');
+  if (!javaEnvSelect) return;
+  
+  // 清空现有选项
+  javaEnvSelect.innerHTML = '';
+  
+  try {
+    // 从主进程获取最新的环境配置
+    const envConfig = await window.api.getEnvironment();
+    
+    // 更新本地 AppConfig 以保持数据一致性
+    AppConfig.environment = envConfig;
+    
+    // 检查是否有配置的 Java 环境
+    if (envConfig.javaEnvironments && envConfig.javaEnvironments.length > 0) {
+      // 添加 Java 环境选项
+      envConfig.javaEnvironments.forEach(env => {
+        const option = document.createElement('option');
+        option.value = env.id;
+        option.textContent = env.name;
+        javaEnvSelect.appendChild(option);
+      });
+      
+      // 恢复之前选中的值，如果没有则选择默认环境
+      if (selectedEnvId) {
+        javaEnvSelect.value = selectedEnvId;
+      } else if (envConfig.defaultJavaEnvironmentId) {
+        javaEnvSelect.value = envConfig.defaultJavaEnvironmentId;
+      }
+    } else {
+      // 没有配置 Java 环境，显示提示选项
+      const noEnvOption = document.createElement('option');
+      noEnvOption.value = '';
+      noEnvOption.textContent = '未配置 Java 环境';
+      noEnvOption.disabled = true;
+      javaEnvSelect.appendChild(noEnvOption);
+    }
+  } catch (error) {
+    console.error('获取环境配置失败:', error);
+    // 出错时使用本地配置
+    if (AppConfig.environment.javaEnvironments && AppConfig.environment.javaEnvironments.length > 0) {
+      // 添加 Java 环境选项
+      AppConfig.environment.javaEnvironments.forEach(env => {
+        const option = document.createElement('option');
+        option.value = env.id;
+        option.textContent = env.name;
+        javaEnvSelect.appendChild(option);
+      });
+      
+      // 恢复之前选中的值，如果没有则选择默认环境
+      if (selectedEnvId) {
+        javaEnvSelect.value = selectedEnvId;
+      } else if (AppConfig.environment.defaultJavaEnvironmentId) {
+        javaEnvSelect.value = AppConfig.environment.defaultJavaEnvironmentId;
+      }
+    } else {
+      // 没有配置 Java 环境，显示提示选项
+      const noEnvOption = document.createElement('option');
+      noEnvOption.value = '';
+      noEnvOption.textContent = '未配置 Java 环境';
+      noEnvOption.disabled = true;
+      javaEnvSelect.appendChild(noEnvOption);
+    }
+  }
 }
 
 // 从文件路径提取工作目录
