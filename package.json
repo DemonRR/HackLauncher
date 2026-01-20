@@ -1,6 +1,6 @@
 {
   "name": "hacklauncher",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "渗透工具箱",
   "productName": "HackLauncher",
   "main": "main.js",
@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "iconv-lite": "^0.7.1",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "chalk": "^4.1.2",
@@ -35,32 +36,30 @@
   "build": {
     "appId": "com.demonrr.hacklauncher",
     "productName": "HackLauncher",
-
     "asar": true,
-
     "directories": {
       "output": "dist",
       "buildResources": "build"
     },
-
     "files": [
       "**/*"
     ],
-
     "extraResources": [
       {
         "from": "build/icon.ico",
         "to": "icon.ico"
+      },
+      {
+        "from": "extract-icon.ps1",
+        "to": "extract-icon.ps1"
       }
     ],
-
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico",
       "executableName": "HackLauncher",
       "requestedExecutionLevel": "asInvoker"
     },
-
     "nsis": {
       "oneClick": false,
       "perMachine": false,
@@ -73,7 +72,7 @@
       "uninstallerIcon": "build/icon.ico",
       "installerHeaderIcon": "build/icon.ico"
     }
-},
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DemonRR/HackLauncher.git"

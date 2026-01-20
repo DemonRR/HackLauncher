@@ -319,6 +319,110 @@ body.dark label span.text-gray-700 {
   transform: translateX(20px) !important;
 }
 
+/* Java 环境默认开关样式 - 使用与主题切换按钮相同的样式 */
+.java-environment-item .theme-toggle {
+  background-color: #E5E6EB;
+  -webkit-app-region: no-drag;
+  width: 44px !important;
+  height: 24px !important;
+  transition: all 0.3s ease;
+  border-radius: 12px !important;
+}
+
+.java-environment-item .theme-toggle:hover {
+  background-color: #D9DCE2;
+}
+
+/* Java 环境默认开关 - 激活状态 */
+.java-environment-item .theme-toggle.active {
+  background-color: var(--theme-color, #165DFF) !important;
+}
+
+/* Java 环境默认开关 - 旋钮样式 */
+.java-environment-item .theme-toggle .theme-toggle-knob {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  width: 20px !important;
+  height: 20px !important;
+  top: 2px !important;
+  left: 2px !important;
+  border-radius: 50% !important;
+  position: absolute;
+  transition: transform 0.3s ease;
+}
+
+/* Java 环境默认开关 - 激活状态下旋钮位置 */
+.java-environment-item .theme-toggle.active .theme-toggle-knob {
+  transform: translateX(20px) !important;
+}
+
+/* 暗主题下 Java 环境默认开关样式 */
+body.dark .java-environment-item .theme-toggle {
+  background-color: #374151 !important;
+  border: 1px solid #4B5563 !important;
+}
+
+body.dark .java-environment-item .theme-toggle:hover {
+  background-color: #4B5563 !important;
+}
+
+/* 暗主题下 Java 环境默认开关 - 激活状态 */
+body.dark .java-environment-item .theme-toggle.active {
+  background-color: var(--theme-color, #165DFF) !important;
+  border-color: var(--theme-color, #165DFF) !important;
+}
+
+/* 暗主题下 Java 环境默认开关 - 旋钮样式 */
+body.dark .java-environment-item .theme-toggle .theme-toggle-knob {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 暗主题下 Java 环境添加按钮样式 */
+body.dark button[onclick="addJavaEnvironment()"] i:hover {
+  background-color: rgba(96, 165, 250, 0.15) !important;
+}
+
+/* 亮主题下提示文字样式 */
+body.light .text-xs.text-light-3 {
+  color: #6B7280 !important;
+}
+
+/* 暗主题下确认对话框样式 */
+body.dark #confirm-modal .bg-white {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+}
+
+body.dark #confirm-modal .border-t.border-light-2 {
+  border-color: #334155 !important;
+}
+
+body.dark #confirm-modal h3#confirm-title {
+  color: #ffffff !important;
+}
+
+body.dark #confirm-modal p#confirm-message {
+  color: #CBD5E1 !important;
+}
+
+body.dark #confirm-modal button#confirm-cancel-btn {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #CBD5E1 !important;
+}
+
+body.dark #confirm-modal button#confirm-cancel-btn:hover {
+  background-color: #475569 !important;
+}
+
+body.dark #confirm-modal button#confirm-ok-btn {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+body.dark #confirm-modal button#confirm-ok-btn:hover {
+  background-color: #dc2626 !important;
+}
+
 /* 标题栏中间按钮样式 - 亮色主题 */
 #custom-titlebar button#export-btn,
 #custom-titlebar button#import-btn,
@@ -382,38 +486,29 @@ body.dark #custom-titlebar {
   border-bottom: 1px solid #334155;
 }
 
-/* 暗色主题下标题栏中间按钮样式 */
+/* 暗色主题下标题栏所有按钮基础样式（统一颜色） */
 body.dark #custom-titlebar button#export-btn,
 body.dark #custom-titlebar button#import-btn,
-body.dark #custom-titlebar button#settings-btn {
-  color: #94A3B8;
-  background-color: transparent !important;
-}
-
-/* 暗色主题下标题栏中间按钮悬停效果 */
-body.dark #custom-titlebar button#export-btn:hover,
-body.dark #custom-titlebar button#import-btn:hover,
-body.dark #custom-titlebar button#settings-btn:hover {
-  background-color: transparent !important;
-  color: var(--theme-color, #60A5FA);
-  box-shadow: none !important;
-}
-
-/* 暗色主题下窗口控制按钮基础样式 */
+body.dark #custom-titlebar button#settings-btn,
 body.dark #custom-titlebar button#minimize-btn,
 body.dark #custom-titlebar button#maximize-btn,
 body.dark #custom-titlebar button#close-btn {
-  color: #94A3B8 !important;
+  color: #CBD5E1 !important;
+  background-color: transparent !important;
 }
 
-/* 暗色主题下最大化/最小化按钮悬停效果 */
+/* 暗色主题下标题栏按钮悬停效果（统一处理） */
+body.dark #custom-titlebar button#export-btn:hover,
+body.dark #custom-titlebar button#import-btn:hover,
+body.dark #custom-titlebar button#settings-btn:hover,
 body.dark #custom-titlebar button#minimize-btn:hover,
 body.dark #custom-titlebar button#maximize-btn:hover {
   background-color: transparent !important;
   color: var(--theme-color, #60A5FA) !important;
+  box-shadow: none !important;
 }
 
-/* 暗色主题下关闭按钮悬停效果 */
+/* 暗色主题下关闭按钮悬停效果（保持红色，符合用户预期） */
 body.dark #custom-titlebar button#close-btn:hover {
   background-color: transparent !important;
   color: #f87171 !important;
@@ -833,7 +928,98 @@ body.dark .search-container .search-icon {
 
 /* 刷新按钮暗主题下的悬停样式 */
 body.dark #refresh-btn:hover {
-  background-color: #2a3a50; /* 更柔和的深蓝色 */
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 按钮悬停效果优化 */
+button {
+  transition: all 0.2s ease;
+}
+
+/* 分类管理添加按钮悬停效果 */
+#add-category-btn {
+  transition: all 0.2s ease;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#add-category-btn:hover {
+  color: var(--theme-color-hover, #0F4BD8);
+  font-weight: 600;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 新建项目按钮悬停效果 */
+#add-item-btn {
+  transition: all 0.2s ease;
+}
+
+#add-item-btn:hover {
+  background-color: var(--theme-color-hover, #0F4BD8);
+}
+
+/* 刷新按钮悬停效果 */
+#refresh-btn {
+  transition: all 0.2s ease;
+  background: transparent !important;
+}
+
+#refresh-btn:hover {
+  color: var(--theme-color-hover, #0F4BD8);
+  transform: rotate(180deg);
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Java 环境管理添加按钮悬停效果 */
+button[onclick="addJavaEnvironment()"] {
+  transition: all 0.2s ease;
+  background: transparent !important;
+}
+
+button[onclick="addJavaEnvironment()"]:hover {
+  color: var(--theme-color-hover, #0F4BD8);
+  font-weight: 600;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 保存修改按钮悬停效果 */
+#item-submit-btn {
+  transition: all 0.2s ease;
+}
+
+#item-submit-btn:hover {
+  background-color: var(--theme-color-hover, #0F4BD8);
+}
+
+/* 新建项目卡片时的添加项目按钮悬停效果 */
+#empty-add-item-btn {
+  transition: all 0.2s ease;
+}
+
+#empty-add-item-btn:hover {
+  background-color: var(--theme-color-hover, #0F4BD8);
+}
+
+/* 分类模态框保存按钮悬停效果 */
+#category-modal button[type="submit"] {
+  transition: all 0.2s ease;
+}
+
+#category-modal button[type="submit"]:hover {
+  background-color: var(--theme-color-hover, #0F4BD8);
+}
+
+/* 设置里保存按钮悬停效果 */
+button[onclick="saveSettings()"] {
+  transition: all 0.2s ease;
+}
+
+button[onclick="saveSettings()"]:hover {
+  background-color: var(--theme-color-hover, #0F4BD8);
 }
 
 /* 过渡动画 */
@@ -847,11 +1033,13 @@ body.dark #item-modal-close:hover,
 body.dark button:hover[onclick*="category-modal"],
 body.dark button:hover[class*="browse"],
 body.dark button:hover[onclick*="browsePath"],
+body.dark button:hover[onclick*="browseJavaEnvPath"],
 body.dark button:hover[onclick*="browseItemPath"],
 body.dark #settings-modal button:hover[onclick*="closeSettingsModal"],
 body.dark #settings-modal button[onclick="closeSettingsModal()"]:hover,
 body.dark #close-confirm-cancel:hover,
-body.dark #close-confirm-minimize:hover {
+body.dark #close-confirm-minimize:hover,
+body.dark .java-environment-item button:hover {
   background-color: #2a3a50;
   color: #ffffff;
 }

@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('api', {
   browsePath: (type) => ipcRenderer.invoke('browse-path', type),
   checkPathExists: (path) => ipcRenderer.invoke('check-path-exists', path),
   executeWithEnvironment: (item) => ipcRenderer.invoke('execute-with-environment', item),
+  getExeIcon: (exePath) => ipcRenderer.invoke('get-exe-icon', exePath),
   // 窗口控制相关
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   toggleMaximizeWindow: () => ipcRenderer.invoke('toggle-maximize-window'),

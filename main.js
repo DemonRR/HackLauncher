@@ -19,12 +19,20 @@ function getTrayIconPath() {
 
   for (const p of candidates) {
     if (fs.existsSync(p)) {
-      logger.info('使用托盘图标: ' + p);
+      try {
+        logger.info('使用托盘图标: ' + p);
+      } catch (e) {
+        console.log('使用托盘图标: ' + p);
+      }
       return p;
     }
   }
 
-  logger.error('未找到任何可用托盘图标，尝试路径: ' + candidates.join(' | '));
+  try {
+    logger.error('未找到任何可用托盘图标，尝试路径: ' + candidates.join(' | '));
+  } catch (e) {
+    console.error('未找到任何可用托盘图标，尝试路径: ' + candidates.join(' | '));
+  }
   return null;
 }
 
@@ -40,10 +48,21 @@ if (process.platform === 'win32') {
 
 // 获取用户主目录
 const USER_HOME = app.getPath('home');
-// 设置配置文件路径到 ~/.config 目录
-const CONFIG_DIR = path.join(USER_HOME, '.config', 'HackLauncher');
+
+// 获取安装目录（根据运行模式）
+let INSTALL_DIR;
+if (app.isPackaged) {
+  // 打包后模式
+  INSTALL_DIR = path.dirname(app.getPath('exe'));
+} else {
+  // 开发模式
+  INSTALL_DIR = __dirname;
+}
+
+// 设置配置文件路径到安装目录的 config 目录
+const CONFIG_DIR = path.join(INSTALL_DIR, 'config');
 // 设置配置文件路径
-const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
+const CONFIG_PATH = path.join(CONFIG_DIR, 'config.db');
 // 设置日志文件路径
 const LOG_PATH = path.join(CONFIG_DIR, 'hacklauncher.log');
 
@@ -66,17 +85,281 @@ let config = {
   }
 };
 
+// SQLite 数据库连接
+let db = null;
+const sqlite3 = require('sqlite3').verbose();
+
+// 初始化数据库
+async function initDatabase() {
+  try {
+    // 确保配置目录存在
+    await fsPromises.mkdir(CONFIG_DIR, { recursive: true });
+    
+    // 创建数据库连接
+    db = new sqlite3.Database(CONFIG_PATH);
+    
+    // 创建表
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        // 创建配置表
+        db.run(`
+          CREATE TABLE IF NOT EXISTS config (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            key TEXT UNIQUE,
+            value TEXT
+          )
+        `);
+        
+        // 创建分类表
+        db.run(`
+          CREATE TABLE IF NOT EXISTS categories (
+            id TEXT PRIMARY KEY,
+            name TEXT,
+            icon TEXT DEFAULT 'fa-folder'
+          )
+        `);
+        
+        // 创建项目表
+        db.run(`
+          CREATE TABLE IF NOT EXISTS items (
+            id TEXT PRIMARY KEY,
+            name TEXT,
+            type TEXT,
+            command TEXT,
+            categoryId TEXT,
+            categoryName TEXT,
+            icon TEXT,
+            iconType TEXT DEFAULT 'fa',
+            imagePath TEXT DEFAULT '',
+            launchParams TEXT DEFAULT '',
+            description TEXT DEFAULT '',
+            runInTerminal INTEGER DEFAULT 0,
+            isFavorite INTEGER DEFAULT 0,
+            javaEnvironmentId TEXT DEFAULT '',
+            FOREIGN KEY (categoryId) REFERENCES categories (id)
+          )
+        `);
+        
+        resolve();
+      });
+    });
+    
+    logger.info('数据库初始化完成');
+  } catch (error) {
+    logger.error(`数据库初始化失败: ${error}`);
+    throw error;
+  }
+}
+
+// 从旧的 JSON 文件导入数据
+async function importFromJson() {
+  const oldJsonPath = path.join(CONFIG_DIR, 'config.json');
+  if (!fs.existsSync(oldJsonPath)) {
+    return false;
+  }
+  
+  try {
+    logger.info('检测到旧的 JSON 配置文件，开始导入...');
+    
+    // 读取旧的 JSON 文件
+    const data = await fsPromises.readFile(oldJsonPath, 'utf8');
+    const oldConfig = JSON.parse(data);
+    
+    // 导入分类
+    if (oldConfig.categories && oldConfig.categories.length > 0) {
+      await new Promise((resolve, reject) => {
+        db.serialize(() => {
+          const stmt = db.prepare('INSERT OR REPLACE INTO categories (id, name, icon) VALUES (?, ?, ?)');
+          oldConfig.categories.forEach(category => {
+            stmt.run(category.id, category.name, category.icon || 'fa-folder');
+          });
+          stmt.finalize(err => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+      });
+    }
+    
+    // 导入项目
+    if (oldConfig.items && oldConfig.items.length > 0) {
+      await new Promise((resolve, reject) => {
+        db.serialize(() => {
+          const stmt = db.prepare(`
+            INSERT OR REPLACE INTO items (
+              id, name, type, command, categoryId, categoryName, icon, iconType, 
+              imagePath, launchParams, description, runInTerminal, isFavorite, javaEnvironmentId
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          oldConfig.items.forEach(item => {
+            stmt.run(
+              item.id,
+              item.name,
+              item.type,
+              item.command,
+              item.categoryId,
+              item.categoryName,
+              item.icon,
+              item.iconType || 'fa',
+              item.imagePath || '',
+              item.launchParams || '',
+              item.description || '',
+              item.runInTerminal ? 1 : 0,
+              item.isFavorite ? 1 : 0,
+              item.javaEnvironmentId || ''
+            );
+          });
+          stmt.finalize(err => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+      });
+    }
+    
+    // 导入设置
+    if (oldConfig.settings) {
+      await new Promise((resolve, reject) => {
+        db.run(
+          'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          'settings',
+          JSON.stringify(oldConfig.settings),
+          err => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+    }
+    
+    // 导入环境配置
+    if (oldConfig.environment) {
+      // 处理旧版本的Java环境配置（单版本）
+      let processedEnv = { ...oldConfig.environment };
+      
+      // 如果存在旧的java字段但不存在javaEnvironments字段，转换为新格式
+      if (processedEnv.java && (!processedEnv.javaEnvironments || processedEnv.javaEnvironments.length === 0)) {
+        // 创建一个Java环境对象
+        const javaEnv = {
+          id: Date.now().toString(),
+          name: 'Java (旧版本)',
+          path: processedEnv.java
+        };
+        
+        // 设置javaEnvironments数组
+        processedEnv.javaEnvironments = [javaEnv];
+        
+        // 设置默认Java环境ID
+        processedEnv.defaultJavaEnvironmentId = javaEnv.id;
+        
+        // 保留旧的java字段以保持向后兼容
+      }
+      
+      await new Promise((resolve, reject) => {
+        db.run(
+          'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          'environment',
+          JSON.stringify(processedEnv),
+          err => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+    }
+    
+    // 导入默认分类 ID
+    if (oldConfig.defaultCategoryId) {
+      await new Promise((resolve, reject) => {
+        db.run(
+          'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          'defaultCategoryId',
+          oldConfig.defaultCategoryId,
+          err => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+    }
+    
+    logger.info('从 JSON 文件导入数据成功');
+    return true;
+  } catch (error) {
+    logger.error(`从 JSON 文件导入数据失败: ${error}`);
+    return false;
+  }
+}
+
 let mainWindow = null;
 let tray = null;
 let isQuitting = false;
 
 async function loadConfig() {
   try {
-    // 确保配置目录存在
-    await fsPromises.mkdir(CONFIG_DIR, { recursive: true });
+    // 初始化数据库
+    await initDatabase();
     
-    const data = await fsPromises.readFile(CONFIG_PATH, 'utf8');
-    config = JSON.parse(data);
+    // 尝试从旧的 JSON 文件导入数据
+    await importFromJson();
+    
+    // 加载分类
+    config.categories = await new Promise((resolve, reject) => {
+      db.all('SELECT * FROM categories', (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+    
+    // 加载项目
+    config.items = await new Promise((resolve, reject) => {
+      db.all('SELECT * FROM items', (err, rows) => {
+        if (err) reject(err);
+        else {
+          // 转换数值类型字段
+          const items = rows.map(row => ({
+            ...row,
+            runInTerminal: row.runInTerminal === 1,
+            isFavorite: row.isFavorite === 1,
+            javaEnvironmentId: row.javaEnvironmentId || ''
+          }));
+          resolve(items);
+        }
+      });
+    });
+    
+    // 加载设置
+    const settingsRow = await new Promise((resolve, reject) => {
+      db.get('SELECT value FROM config WHERE key = ?', 'settings', (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    if (settingsRow) {
+      config.settings = JSON.parse(settingsRow.value);
+    }
+    
+    // 加载环境配置
+    const environmentRow = await new Promise((resolve, reject) => {
+      db.get('SELECT value FROM config WHERE key = ?', 'environment', (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    if (environmentRow) {
+      config.environment = JSON.parse(environmentRow.value);
+    }
+    
+    // 加载默认分类 ID
+    const defaultCategoryIdRow = await new Promise((resolve, reject) => {
+      db.get('SELECT value FROM config WHERE key = ?', 'defaultCategoryId', (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    if (defaultCategoryIdRow) {
+      config.defaultCategoryId = defaultCategoryIdRow.value;
+    }
     
     // 确保配置结构完整
     if (!config.settings) {
@@ -99,9 +382,9 @@ async function loadConfig() {
     config.settings.closeBehavior = config.settings.closeBehavior || 'ask';
     config.settings.autoMinimizeAfterRun = config.settings.autoMinimizeAfterRun || false;
     
-    logger.info('配置文件加载成功');
+    logger.info('配置加载成功');
   } catch (error) {
-    logger.error(`加载配置文件失败: ${error}`);
+    logger.error(`加载配置失败: ${error}`);
     config = {
       categories: [],
       items: [],
@@ -122,10 +405,114 @@ async function loadConfig() {
 
 async function saveConfig() {
   try {
-    await fsPromises.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2));
-    logger.info('配置文件保存成功');
+    // 保存设置
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+        'settings',
+        JSON.stringify(config.settings),
+        err => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+    
+    // 保存环境配置
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+        'environment',
+        JSON.stringify(config.environment),
+        err => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+    
+    // 保存默认分类 ID
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+        'defaultCategoryId',
+        config.defaultCategoryId,
+        err => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+    
+    // 保存分类
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        // 先删除所有分类
+        db.run('DELETE FROM categories', err => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          
+          // 再插入所有分类
+          const stmt = db.prepare('INSERT INTO categories (id, name, icon) VALUES (?, ?, ?)');
+          config.categories.forEach(category => {
+            stmt.run(category.id, category.name, category.icon || 'fa-folder');
+          });
+          stmt.finalize(err => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+      });
+    });
+    
+    // 保存项目
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        // 先删除所有项目
+        db.run('DELETE FROM items', err => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          
+          // 再插入所有项目
+          const stmt = db.prepare(`
+            INSERT INTO items (
+              id, name, type, command, categoryId, categoryName, icon, iconType, 
+              imagePath, launchParams, description, runInTerminal, isFavorite, javaEnvironmentId
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          config.items.forEach(item => {
+            stmt.run(
+              item.id,
+              item.name,
+              item.type,
+              item.command,
+              item.categoryId,
+              item.categoryName,
+              item.icon,
+              item.iconType || 'fa',
+              item.imagePath || '',
+              item.launchParams || '',
+              item.description || '',
+              item.runInTerminal ? 1 : 0,
+              item.isFavorite ? 1 : 0,
+              item.javaEnvironmentId || ''
+            );
+          });
+          stmt.finalize(err => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+      });
+    });
+    
+    logger.info('配置保存成功');
   } catch (error) {
-    logger.error(`保存配置文件失败: ${error}`);
+    logger.error(`保存配置失败: ${error}`);
   }
 }
 
@@ -170,7 +557,7 @@ function createTray() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1100,
+    width: 1190,
     height: 680,
     // 关键修改：将 png 改为 ico 格式（和 package.json 中一致）
     icon: path.join(__dirname, 'build', 'icon.ico'),
@@ -305,21 +692,31 @@ Menu.setApplicationMenu(null);
 
 // 窗口控制相关IPC处理
 ipcMain.handle('minimize-window', () => {
-  if (mainWindow) {
-    mainWindow.minimize();
+  try {
+    if (mainWindow) {
+      mainWindow.minimize();
+    }
+    return true;
+  } catch (error) {
+    logger.error(`最小化窗口失败: ${error.message}`);
+    return false;
   }
-  return true;
 });
 
 ipcMain.handle('toggle-maximize-window', () => {
-  if (mainWindow) {
-    if (mainWindow.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow.maximize();
+  try {
+    if (mainWindow) {
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow.maximize();
+      }
     }
+    return true;
+  } catch (error) {
+    logger.error(`切换窗口最大化状态失败: ${error.message}`);
+    return false;
   }
-  return true;
 });
 
 // 以下原有代码保持不变（省略，避免重复）
@@ -334,53 +731,91 @@ ipcMain.handle('save-config', async (event, newConfig) => {
 });
 
 ipcMain.handle('add-category', async (event, name) => {
-  const newCategory = { id: Date.now().toString(), name };
-  config.categories.push(newCategory);
-  await saveConfig();
-  return newCategory;
+  try {
+    const newCategory = { id: Date.now().toString(), name };
+    config.categories.push(newCategory);
+    await saveConfig();
+    logger.info(`添加分类成功: ${name}`);
+    return newCategory;
+  } catch (error) {
+    logger.error(`添加分类失败: ${error.message}`);
+    return null;
+  }
 });
 
 ipcMain.handle('edit-category', async (event, id, name) => {
-  const category = config.categories.find(c => c.id === id);
-  if (category) {
-    category.name = name;
-    config.items.forEach(item => {
-      if (item.categoryId === id) item.categoryName = name;
-    });
-    await saveConfig();
-    return true;
+  try {
+    const category = config.categories.find(c => c.id === id);
+    if (category) {
+      category.name = name;
+      config.items.forEach(item => {
+        if (item.categoryId === id) item.categoryName = name;
+      });
+      await saveConfig();
+      logger.info(`编辑分类成功: ${id} -> ${name}`);
+      return true;
+    }
+    logger.warn(`编辑分类失败: 分类不存在 (ID: ${id})`);
+    return false;
+  } catch (error) {
+    logger.error(`编辑分类失败: ${error.message}`);
+    return false;
   }
-  return false;
 });
 
 ipcMain.handle('delete-category', async (event, id) => {
-  config.items = config.items.filter(item => item.categoryId !== id);
-  config.categories = config.categories.filter(c => c.id !== id);
-  await saveConfig();
-  return true;
+  try {
+    config.items = config.items.filter(item => item.categoryId !== id);
+    config.categories = config.categories.filter(c => c.id !== id);
+    await saveConfig();
+    logger.info(`删除分类成功: ${id}`);
+    return true;
+  } catch (error) {
+    logger.error(`删除分类失败: ${error.message}`);
+    return false;
+  }
 });
 
 ipcMain.handle('add-item', async (event, item) => {
-  const newItem = { id: Date.now().toString(), ...item };
-  config.items.push(newItem);
-  await saveConfig();
-  return newItem;
+  try {
+    const newItem = { id: Date.now().toString(), ...item };
+    config.items.push(newItem);
+    await saveConfig();
+    logger.info(`添加项目成功: ${item.name}`);
+    return newItem;
+  } catch (error) {
+    logger.error(`添加项目失败: ${error.message}`);
+    return null;
+  }
 });
 
 ipcMain.handle('edit-item', async (event, id, updatedItem) => {
-  const index = config.items.findIndex(item => item.id === id);
-  if (index !== -1) {
-    config.items[index] = { ...config.items[index], ...updatedItem };
-    await saveConfig();
-    return true;
+  try {
+    const index = config.items.findIndex(item => item.id === id);
+    if (index !== -1) {
+      config.items[index] = { ...config.items[index], ...updatedItem };
+      await saveConfig();
+      logger.info(`编辑项目成功: ${id}`);
+      return true;
+    }
+    logger.warn(`编辑项目失败: 项目不存在 (ID: ${id})`);
+    return false;
+  } catch (error) {
+    logger.error(`编辑项目失败: ${error.message}`);
+    return false;
   }
-  return false;
 });
 
 ipcMain.handle('delete-item', async (event, id) => {
-  config.items = config.items.filter(item => item.id !== id);
-  await saveConfig();
-  return true;
+  try {
+    config.items = config.items.filter(item => item.id !== id);
+    await saveConfig();
+    logger.info(`删除项目成功: ${id}`);
+    return true;
+  } catch (error) {
+    logger.error(`删除项目失败: ${error.message}`);
+    return false;
+  }
 });
 
 ipcMain.handle('execute-command', (event, command, cwd) => {
@@ -455,14 +890,23 @@ ipcMain.handle('execute-command-in-terminal', async (event, command, cwd) => {
     
     // 使用 start 命令打开新窗口，并指定窗口标题和工作目录
     let cmdCommand;
+    let envSetup = 'chcp 65001 >nul';
+    
+    // 检查命令是否包含 Python 执行，如果是且设置了 Python 路径，修改 PATH 环境变量
+    if (command.includes('.py') && config.environment.python) {
+      // 获取 Python 路径的目录部分
+      const pythonDir = path.dirname(config.environment.python);
+      // 设置 PATH 环境变量，将 Python 目录添加到最前面
+      envSetup += ` & set "PATH=${pythonDir};%PATH%"`;
+    }
     
     if (cwd && cwd.trim()) {
       // 如果有工作目录，使用 cd 命令切换后再执行
       // 使用双引号包裹路径，避免路径中的空格问题
       const escapedCwd = cwd.replace(/"/g, '\\"');
-      cmdCommand = `start "Runner" cmd /k "chcp 65001 >nul & cd /d \"${escapedCwd}\" & ${command}"`;
+      cmdCommand = `start "Runner" cmd /k "${envSetup} & cd /d \"${escapedCwd}\" & ${command}"`;
     } else {
-      cmdCommand = `start "Runner" cmd /k "chcp 65001 >nul & ${command}"`;
+      cmdCommand = `start "Runner" cmd /k "${envSetup} & ${command}"`;
     }
     
     logger.info(`执行终端命令: ${cmdCommand}`);
@@ -500,28 +944,43 @@ function log(level, message) {
   
   const logMessage = `${timestamp} [${level.toUpperCase()}] ${message}\n`;
   
-  // 输出到控制台
+  // 输出到控制台（所有级别都输出到控制台，方便开发和调试）
   console[level === 'error' ? 'error' : 'log'](logMessage);
   
-  // 所有日志都写入日志文件
-  try {
-    // 确保配置目录存在
-    if (!fs.existsSync(CONFIG_DIR)) {
-      fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  // 定义要排除的无用日志内容
+  const excludedMessages = [
+    '配置保存成功',
+    '配置加载成功',
+    '数据库初始化完成',
+    '主窗口已创建',
+    '系统托盘创建完成',
+    '使用托盘图标:'
+  ];
+  
+  // 检查是否为无用日志
+  const isExcluded = excludedMessages.some(excluded => message.includes(excluded));
+  
+  // 只将错误、警告以及非无用的信息写入日志文件
+  if ((level === 'error' || level === 'warn' || level === 'info') && !isExcluded) {
+    try {
+      // 确保配置目录存在
+      if (!fs.existsSync(CONFIG_DIR)) {
+        fs.mkdirSync(CONFIG_DIR, { recursive: true });
+      }
+      
+      // 写入日志文件，使用UTF-8编码
+      fs.appendFileSync(LOG_PATH, logMessage, { encoding: 'utf8' });
+      
+      // 检查日志文件大小，如果超过10MB，进行简单的日志轮转
+      const stats = fs.statSync(LOG_PATH);
+      if (stats.size > 10 * 1024 * 1024) {
+        // 重命名旧日志文件
+        const oldLogPath = path.join(CONFIG_DIR, `hacklauncher.log.${Date.now()}`);
+        fs.renameSync(LOG_PATH, oldLogPath);
+      }
+    } catch (error) {
+      console.error('写入日志失败:', error);
     }
-    
-    // 写入日志文件，使用UTF-8编码
-    fs.appendFileSync(LOG_PATH, logMessage, { encoding: 'utf8' });
-    
-    // 检查日志文件大小，如果超过10MB，进行简单的日志轮转
-    const stats = fs.statSync(LOG_PATH);
-    if (stats.size > 10 * 1024 * 1024) {
-      // 重命名旧日志文件
-      const oldLogPath = path.join(CONFIG_DIR, `hacklauncher.log.${Date.now()}`);
-      fs.renameSync(LOG_PATH, oldLogPath);
-    }
-  } catch (error) {
-    console.error('写入日志失败:', error);
   }
 }
 
@@ -576,7 +1035,9 @@ ipcMain.handle('open-url', async (event, url) => {
     await shell.openExternal(url);
     return true;
   } catch (error) {
-    throw new Error(`无法打开URL: ${error.message}`);
+    const errorMessage = `无法打开URL: ${error.message}`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
   }
 });
 
@@ -595,8 +1056,10 @@ ipcMain.handle('export-config', async () => {
   if (!canceled) {
     try {
       await fs.writeFile(filePath, JSON.stringify(config, null, 2));
+      logger.info(`配置导出成功: ${filePath}`);
       return true;
     } catch (error) {
+      logger.error(`配置导出失败: ${error.message}`);
       return false;
     }
   }
@@ -617,8 +1080,10 @@ ipcMain.handle('import-config', async () => {
       const newConfig = JSON.parse(data);
       config = newConfig;
       await saveConfig();
+      logger.info(`配置导入成功: ${filePaths[0]}`);
       return true;
     } catch (error) {
+      logger.error(`配置导入失败: ${error.message}`);
       return false;
     }
   }
@@ -626,9 +1091,14 @@ ipcMain.handle('import-config', async () => {
 });
 
 ipcMain.handle('save-environment', async (event, envConfig) => {
-  config.environment = envConfig;
-  await saveConfig();
-  return true;
+  try {
+    config.environment = envConfig;
+    await saveConfig();
+    return true;
+  } catch (error) {
+    logger.error(`保存环境配置失败: ${error.message}`);
+    return false;
+  }
 });
 
 ipcMain.handle('get-environment', () => {
@@ -636,14 +1106,86 @@ ipcMain.handle('get-environment', () => {
 });
 
 ipcMain.handle('browse-path', async (event, type) => {
-  const { canceled, filePaths } = await dialog.showOpenDialog({
-    properties: type === 'file' ? ['openFile'] : ['openDirectory']
-  });
+  try {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: type === 'file' ? ['openFile'] : ['openDirectory']
+    });
 
-  if (!canceled && filePaths.length > 0) {
-    return filePaths[0];
+    if (!canceled && filePaths.length > 0) {
+      return filePaths[0];
+    }
+    return null;
+  } catch (error) {
+    logger.error(`浏览路径失败: ${error.message}`);
+    return null;
   }
-  return null;
+});
+
+ipcMain.handle('get-exe-icon', async (event, exePath) => {
+  try {
+    // 检查文件是否存在
+    if (!fs.existsSync(exePath)) {
+      throw new Error('文件不存在');
+    }
+
+    // 检查文件是否为可执行文件
+    if (!exePath.toLowerCase().endsWith('.exe')) {
+      throw new Error('不是可执行文件');
+    }
+
+    // 创建临时文件路径
+    const tempDir = require('os').tmpdir();
+    const tempFile = require('path').join(tempDir, `icon_${Date.now()}.png`);
+
+    // 执行 PowerShell 脚本
+    let result = '';
+    try {
+      // 确定脚本路径（开发环境和打包环境）
+      let scriptPath;
+      if (app.isPackaged) {
+        // 打包环境：脚本在 resources 目录
+        scriptPath = path.join(process.resourcesPath, 'extract-icon.ps1');
+      } else {
+        // 开发环境：脚本在项目根目录
+        scriptPath = path.join(__dirname, 'extract-icon.ps1');
+      }
+      
+      result = require('child_process').execSync(`powershell -File "${scriptPath}" -exePath "${exePath}" -outputPath "${tempFile}"`, { 
+        encoding: 'utf8',
+        timeout: 5000
+      }).trim();
+    } catch (execError) {
+      logger.warn(`PowerShell 脚本执行失败: ${execError.message}`);
+      return null;
+    }
+
+    // 检查结果
+    if (result !== 'Success' || !fs.existsSync(tempFile)) {
+      logger.warn('无法获取图标文件');
+      
+      // 回退方案：使用默认应用图标
+      const defaultIcon = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik01NiAxMGgtNDhWMTRoNDh2MzZoLTQ4djQtNDh6Ii8+PHBhdGggZD0iTTQ4IDEwaC0yMHY0aDIwdjEyaC0yMFYxMHptLTQyIDB2NDhoMjB2LTQ4aC0yMHptMjAgMjBoLTIwdjRoMjB2LTQ4aC0yMHoiIGZpbGw9IiMwMDAiLz48L2c+PC9zdmc+";
+      return defaultIcon;
+    }
+
+    // 读取图标文件并转换为 Base64
+    let iconBase64 = null;
+    try {
+      const iconBuffer = fs.readFileSync(tempFile);
+      iconBase64 = `data:image/png;base64,${iconBuffer.toString('base64')}`;
+      
+      // 清理临时文件
+      fs.unlinkSync(tempFile);
+    } catch (readError) {
+      logger.warn(`读取图标文件失败: ${readError.message}`);
+      return null;
+    }
+
+    return iconBase64;
+  } catch (error) {
+    logger.error(`获取 EXE 图标失败: ${error}`);
+    return null;
+  }
 });
 
 ipcMain.handle('open-log-file', async () => {
@@ -671,8 +1213,29 @@ ipcMain.handle('execute-with-environment', (event, item) => {
 
     if (item.type === 'python' && config.environment.python) {
       finalCommand = `"${config.environment.python}" ${command} ${args}`.trim();
-    } else if (item.type === 'java' && config.environment.java) {
-      finalCommand = `"${config.environment.java}" -jar "${command}" ${args}`.trim();
+    } else if (item.type === 'java') {
+      let javaPath = 'java';
+      
+      // 根据项目选择的 Java 环境获取路径
+      if (item.javaEnvironmentId && config.environment.javaEnvironments) {
+        const selectedEnv = config.environment.javaEnvironments.find(e => e.id === item.javaEnvironmentId);
+        if (selectedEnv && selectedEnv.path) {
+          javaPath = selectedEnv.path;
+          // 如果路径是文件夹，添加 java.exe
+          if (!javaPath.toLowerCase().endsWith('.exe')) {
+            javaPath = path.join(javaPath, 'java.exe');
+          }
+        }
+      } else if (config.environment.java) {
+        // 向后兼容：使用旧的 Java 路径
+        javaPath = config.environment.java;
+        // 如果路径是文件夹，添加 java.exe
+        if (!javaPath.toLowerCase().endsWith('.exe')) {
+          javaPath = path.join(javaPath, 'java.exe');
+        }
+      }
+      
+      finalCommand = `"${javaPath}" -jar "${command}" ${args}`.trim();
     } else if (item.type === 'application') {
       const argString = args ? ` ${args}` : '';
       finalCommand = `"${command}"${argString}`.trim();
@@ -684,8 +1247,18 @@ ipcMain.handle('execute-with-environment', (event, item) => {
     logger.info(`执行命令: ${finalCommand}`);
 
     if (item.runInTerminal) {
+      let envSetup = 'chcp 65001 >nul';
+      
+      // 如果是Python类型的项目且设置了Python路径，修改PATH环境变量
+      if (item.type === 'python' && config.environment.python) {
+        // 获取Python路径的目录部分
+        const pythonDir = path.dirname(config.environment.python);
+        // 设置PATH环境变量，将Python目录添加到最前面
+        envSetup += ` & set "PATH=${pythonDir};%PATH%"`;
+      }
+      
       const cmd = 'cmd.exe';
-      const cmdArgs = ['/c', 'start', 'cmd', '/k', 'chcp 65001 >nul & ' + escapeShell(finalCommand)];
+      const cmdArgs = ['/c', 'start', 'cmd', '/k', `${envSetup} & ` + escapeShell(finalCommand)];
       const child = spawn(cmd, cmdArgs, { detached: true, stdio: 'ignore', windowsHide: false });
       child.unref();
       resolve('命令已启动');

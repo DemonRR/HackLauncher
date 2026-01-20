@@ -236,7 +236,7 @@
       <div class="border-t border-light-2 p-3">
         <div class="flex justify-end space-x-3">
           <button type="button" onclick="document.getElementById('category-modal').classList.add('hidden')" class="px-4 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">取消</button>
-          <button type="submit" form="category-form" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">保存</button>
+          <button type="submit" form="category-form" class="px-4 py-2 bg-primary text-white rounded-lg transition-custom">保存</button>
         </div>
       </div>
     </div>
@@ -304,10 +304,18 @@
             <input type="text" id="item-launch-params" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入启动参数（可选）">
           </div>
           
+          <!-- Java 环境选择 -->
+          <div id="java-environment-option" class="mb-4 hidden">
+            <label for="item-java-environment" class="block text-sm font-medium text-dark-2 mb-1">Java 环境</label>
+            <select id="item-java-environment" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom">
+              <!-- Java 环境选项将在这里动态生成 -->
+            </select>
+          </div>
+          
           <div class="mb-4">
             <label for="item-category" class="block text-sm font-medium text-dark-2 mb-1">所属分类</label>
             <select id="item-category" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom">
-              <option value="">未分类</option>
+
               <!-- 分类选项将在这里动态生成 -->
             </select>
           </div>
@@ -372,7 +380,7 @@
   </div>
 
   <!-- 删除确认模态框 -->
-  <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" style="z-index: 100;">
     <div class="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] flex flex-col transform transition-all" style="min-width: 300px;">
       <!-- 可滚动的内容区域 -->
       <div class="flex-grow overflow-y-auto p-6">
@@ -396,7 +404,7 @@
   </div>
 
 <!-- 关闭确认模态框 -->
-  <div id="close-confirm-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div id="close-confirm-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" style="z-index: 100;">
     <div class="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] flex flex-col transform transition-all" style="min-width: 300px;">
       <!-- 可滚动的内容区域 -->
       <div class="flex-grow overflow-y-auto p-6">
@@ -517,16 +525,23 @@
             <p class="text-xs text-light-3 mt-1">例如: C:\Python39\python.exe</p>
           </div>
           
-          <!-- Java 路径设置 -->
+          <!-- Java 环境管理 -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-dark-2 mb-1">Java 路径</label>
-            <div class="flex space-x-2">
-              <input type="text" id="java-path" class="flex-grow px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入 Java 可执行文件路径">
-              <button onclick="browsePath('folder')" class="px-3 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">
-                <i class="fas fa-folder-open"></i>
+            <div class="flex justify-between items-center mb-2">
+            <label class="block text-sm font-medium text-dark-2">Java 环境管理</label>
+            <button onclick="addJavaEnvironment()" class="text-primary hover:text-primary/80 transition-custom">
+                <i class="fas fa-plus hover:bg-primary/10 p-1 rounded-full transition-custom"></i>
               </button>
+          </div>
+            <div id="java-environments-list" class="space-y-3">
+              <!-- Java 环境列表将在这里动态生成 -->
             </div>
-            <p class="text-xs text-light-3 mt-1">例如: C:\Program Files\Java\jdk-11\bin\java.exe</p>
+            <p id="no-java-environments" class="text-xs text-light-3 mt-2">
+              未配置 Java 环境，添加至少一个 Java 环境以便为项目选择版本
+            </p>
+            <p class="text-xs text-light-3 mt-1">
+              提示：至少要有一个默认环境
+            </p>
           </div>
         </div>
         
@@ -536,7 +551,7 @@
             <i class="fas fa-info-circle mr-2 text-primary"></i> 关于
           </h4>
           <div class="text-sm text-dark-2">
-            <p>版本: 1.0.3</p>
+            <p>版本: 1.0.4</p>
             <p class="mt-1">渗透武器库 - Windows 专用启动器管理工具</p>
             <p class="mt-1">作者: DemonRR</p>
             <p class="mt-1 flex items-center">

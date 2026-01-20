@@ -41,7 +41,7 @@ themeToggleBtn.addEventListener('click', async () => {
       refreshBtn.classList.remove('light');
       refreshBtn.classList.add('dark');
     }
-    AppConfig.theme = 'dark';
+    AppConfig.settings.theme = 'dark';
     // 添加active类，切换到暗色主题
     themeToggleBtn.classList.add('active');
     // 暗色主题下，开关颜色使用深色背景
@@ -78,7 +78,7 @@ themeToggleBtn.addEventListener('click', async () => {
       refreshBtn.classList.remove('dark');
       refreshBtn.classList.add('light');
     }
-    AppConfig.theme = 'light';
+    AppConfig.settings.theme = 'light';
     // 移除active类，切换到亮色主题
     themeToggleBtn.classList.remove('active');
     // 亮色主题下，开关颜色使用浅色背景

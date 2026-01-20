@@ -14,7 +14,8 @@ let AppConfig = {
   },
   environment: {
     python: '',
-    java: '',
+    javaEnvironments: [],
+    defaultJavaEnvironmentId: '',
     customPaths: []
   }
 };
@@ -28,7 +29,7 @@ async function loadConfig() {
       AppConfig = config;
       showNotification('成功', '配置加载成功', 'success');
       // 应用主题设置
-      applyTheme(config.theme);
+    applyTheme(config.settings.theme);
     } else {
       showNotification('提示', '使用默认配置', 'info');
     }
@@ -63,6 +64,8 @@ function applyTheme(theme) {
   const aside = document.querySelector('aside');
   const itemCards = document.querySelectorAll('.bg-white');
   const textDarkElements = document.querySelectorAll('.text-dark');
+  const contextMenu = document.getElementById('item-context-menu');
+  const refreshBtn = document.getElementById('refresh-btn');
 
   if (theme === 'dark') {
     body.classList.remove('light');
@@ -83,6 +86,16 @@ function applyTheme(theme) {
       element.classList.remove('light');
       element.classList.add('dark');
     });
+    if (contextMenu) {
+      contextMenu.classList.remove('light');
+      contextMenu.classList.add('dark');
+      contextMenu.style.backgroundColor = '#1e293b';
+      contextMenu.style.borderColor = '#334155';
+    }
+    if (refreshBtn) {
+      refreshBtn.classList.remove('light');
+      refreshBtn.classList.add('dark');
+    }
   } else {
     body.classList.remove('dark');
     body.classList.add('light');
@@ -102,6 +115,16 @@ function applyTheme(theme) {
       element.classList.remove('dark');
       element.classList.add('light');
     });
+    if (contextMenu) {
+      contextMenu.classList.remove('dark');
+      contextMenu.classList.add('light');
+      contextMenu.style.backgroundColor = '#ffffff';
+      contextMenu.style.borderColor = '#e2e8f0';
+    }
+    if (refreshBtn) {
+      refreshBtn.classList.remove('dark');
+      refreshBtn.classList.add('light');
+    }
   }
   
   // 应用主题颜色

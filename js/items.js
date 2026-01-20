@@ -11,13 +11,13 @@ let currentSearchTerm = '';
 // 是否显示收藏
 let showFavoritesOnly = false;
 
+
 // 根据分类ID获取分类名称
 const getCategoryName = (categoryId) => {
-  if (!categoryId) return '未分类';
-  
   const category = AppConfig?.categories?.find(c => c.id === categoryId);
   return category ? category.name : '未知分类';
 };
+
 
 // 渲染项目列表
 function renderItems(searchTerm = '') {
@@ -179,10 +179,9 @@ function renderItems(searchTerm = '') {
     itemCard.appendChild(bottomRow);
     
     const tooltip = document.createElement('div');
-    tooltip.className = 'item-tooltip absolute left-0 right-0 top-full mt-2 text-sm p-3 rounded-lg shadow-lg opacity-0 invisible transition-all duration-200 transform -translate-y-2 z-10 pointer-events-none';
-    tooltip.style.whiteSpace = 'normal';
-    tooltip.style.wordBreak = 'break-all';
-    tooltip.style.transitionDelay = '1000ms';
+      tooltip.className = 'item-tooltip absolute left-0 right-0 top-full mt-2 text-sm p-3 rounded-lg shadow-lg opacity-0 invisible transition-all duration-200 transform -translate-y-2 z-10 pointer-events-none';
+      tooltip.style.whiteSpace = 'normal';
+      tooltip.style.wordBreak = 'break-all';
     
     const typeNames = {
       'command': '命令行',
@@ -205,13 +204,8 @@ function renderItems(searchTerm = '') {
     itemCard.appendChild(tooltip);
     
     let hoverTimer = null;
-    let leaveTimer = null;
     
     itemCard.addEventListener('mouseenter', () => {
-      if (leaveTimer) {
-        clearTimeout(leaveTimer);
-        leaveTimer = null;
-      }
       hoverTimer = setTimeout(() => {
         tooltip.classList.remove('opacity-0', 'invisible', '-translate-y-2');
         tooltip.classList.add('opacity-100', 'visible', 'translate-y-0');
@@ -223,10 +217,9 @@ function renderItems(searchTerm = '') {
         clearTimeout(hoverTimer);
         hoverTimer = null;
       }
-      leaveTimer = setTimeout(() => {
-        tooltip.classList.add('opacity-0', 'invisible', '-translate-y-2');
-        tooltip.classList.remove('opacity-100', 'visible', 'translate-y-0');
-      }, 500);
+      // 立即隐藏tooltip，无延迟
+      tooltip.classList.add('opacity-0', 'invisible', '-translate-y-2');
+      tooltip.classList.remove('opacity-100', 'visible', 'translate-y-0');
     });
     
     // 在卡片右下方添加运行按钮
@@ -235,19 +228,22 @@ function renderItems(searchTerm = '') {
     runButton.innerHTML = '<i class="fas fa-play text-sm"></i>';
     runButton.title = '运行项目';
     runButton.style.border = 'none';
-    runButton.style.boxShadow = '0 2px 8px rgba(22, 93, 255, 0.3)';
+    runButton.style.filter = 'brightness(0.9)';
+    runButton.style.boxShadow = '0 2px 8px rgba(22, 93, 255, 0.25)';
     runButton.addEventListener('mouseenter', () => {
       runButton.style.transform = 'scale(1.1)';
-      runButton.style.boxShadow = '0 4px 12px rgba(22, 93, 255, 0.4)';
+      runButton.style.filter = 'brightness(0.98)';
+      runButton.style.boxShadow = '0 4px 12px rgba(22, 93, 255, 0.35)';
     });
     runButton.addEventListener('mouseleave', () => {
       runButton.style.transform = 'scale(1)';
-      runButton.style.boxShadow = '0 2px 8px rgba(22, 93, 255, 0.3)';
+      runButton.style.filter = 'brightness(0.9)';
+      runButton.style.boxShadow = '0 2px 8px rgba(22, 93, 255, 0.25)';
     });
     runButton.addEventListener('click', () => {
-      if (leaveTimer) {
-        clearTimeout(leaveTimer);
-        leaveTimer = null;
+      if (hoverTimer) {
+        clearTimeout(hoverTimer);
+        hoverTimer = null;
       }
       document.querySelectorAll('.item-tooltip').forEach(t => {
         t.classList.add('opacity-0', 'invisible', '-translate-y-2');
@@ -355,11 +351,12 @@ function getCommandValue() {
 }
 
 // 打开项目模态框
-function openItemModal(itemId = null) {
+async function openItemModal(itemId = null) {
   const modal = document.getElementById('item-modal');
   const form = document.getElementById('item-form');
   const title = document.getElementById('item-modal-title');
   const submitBtn = document.getElementById('item-submit-btn');
+  const itemTypeSelect = document.getElementById('item-type');
   
   // 重置表单
   form.reset();
@@ -370,14 +367,6 @@ function openItemModal(itemId = null) {
   // 填充分类选项
   const categorySelect = document.getElementById('item-category');
   categorySelect.innerHTML = ''; // 清空现有选项
-  
-  // 只有在编辑已有项目时才添加"未分类"选项
-  if (itemId) {
-    const noneOption = document.createElement('option');
-    noneOption.value = '';
-    noneOption.textContent = '未分类';
-    categorySelect.appendChild(noneOption);
-  }
   
   // 添加用户自定义分类
   AppConfig.categories.forEach(category => {
@@ -392,56 +381,63 @@ function openItemModal(itemId = null) {
   terminalOption.classList.add('hidden');
   
   if (itemId) {
-    title.textContent = '编辑项目';
-    submitBtn.textContent = '保存修改';
-    
-    // 查找要编辑的项目
-    const item = AppConfig.items.find(i => i.id === itemId);
-    if (item) {
-      document.getElementById('item-id').value = item.id;
-      document.getElementById('item-name').value = item.name;
-      document.getElementById('item-type').value = item.type;
-      setCommandValue(item.command);
-      document.getElementById('item-category').value = item.categoryId || '';
-      document.getElementById('item-icon').value = item.icon;
-      document.getElementById('item-icon-preview').className = `fa ${item.icon || 'fa-terminal'}`;
-      
-      // 处理图片图标
-      if (item.iconType === 'image' && item.imagePath) {
-        document.getElementById('icon-image-preview').src = item.imagePath;
-        document.getElementById('icon-image-preview-container').classList.remove('hidden');
-        document.getElementById('icon-image-placeholder').classList.add('hidden');
-        document.getElementById('item-image-path').value = item.imagePath;
-        switchIconType('image');
-      } else {
-        switchIconType('fa');
-        document.getElementById('icon-image-preview').src = '';
-        document.getElementById('icon-image-preview-container').classList.add('hidden');
-        document.getElementById('icon-image-placeholder').classList.remove('hidden');
-        document.getElementById('item-image-path').value = '';
-      }
-      
-      // 加载启动参数和描述
-      const launchParamsInput = document.getElementById('item-launch-params');
-      const descriptionInput = document.getElementById('item-description');
-      if (launchParamsInput) launchParamsInput.value = item.launchParams || '';
-      if (descriptionInput) descriptionInput.value = item.description || '';
-      
-      // 如果是命令/Python/Java类型，显示终端选项
-      if (['command', 'python', 'java'].includes(item.type)) {
-        terminalOption.classList.remove('hidden');
-        document.getElementById('run-in-terminal').checked = item.runInTerminal || false;
-      }
-      
-      // 如果是Python/Java/Application类型，显示启动参数
-      if (['python', 'java', 'application'].includes(item.type)) {
-        const launchParamsContainer = document.getElementById('launch-params-container');
-        if (launchParamsContainer) {
-          launchParamsContainer.classList.remove('hidden');
-        }
-      }
+        title.textContent = '编辑项目';
+        submitBtn.textContent = '保存修改';
+        
+        // 查找要编辑的项目
+        const item = AppConfig.items.find(i => i.id === itemId);
+        if (item) {
+          document.getElementById('item-id').value = item.id;
+          document.getElementById('item-name').value = item.name;
+          document.getElementById('item-type').value = item.type;
+          setCommandValue(item.command);
+          document.getElementById('item-category').value = item.categoryId || '';
+          document.getElementById('item-icon').value = item.icon;
+          document.getElementById('item-icon-preview').className = `fa ${item.icon || 'fa-terminal'}`;
+          
+          // 处理图片图标
+          if (item.iconType === 'image' && item.imagePath) {
+            document.getElementById('icon-image-preview').src = item.imagePath;
+            document.getElementById('icon-image-preview-container').classList.remove('hidden');
+            document.getElementById('icon-image-placeholder').classList.add('hidden');
+            document.getElementById('item-image-path').value = item.imagePath;
+            switchIconType('image');
+          } else {
+            switchIconType('fa');
+            document.getElementById('icon-image-preview').src = '';
+            document.getElementById('icon-image-preview-container').classList.add('hidden');
+            document.getElementById('icon-image-placeholder').classList.remove('hidden');
+            document.getElementById('item-image-path').value = '';
+          }
+          
+          // 加载启动参数和描述
+          const launchParamsInput = document.getElementById('item-launch-params');
+          const descriptionInput = document.getElementById('item-description');
+          if (launchParamsInput) launchParamsInput.value = item.launchParams || '';
+          if (descriptionInput) descriptionInput.value = item.description || '';
+          
+          // 如果是命令/Python/Java类型，显示终端选项
+          if (['command', 'python', 'java'].includes(item.type)) {
+            terminalOption.classList.remove('hidden');
+            document.getElementById('run-in-terminal').checked = item.runInTerminal || false;
+          }
+          
+          // 如果是Python/Java/Application类型，显示启动参数
+          if (['python', 'java', 'application'].includes(item.type)) {
+            const launchParamsContainer = document.getElementById('launch-params-container');
+            if (launchParamsContainer) {
+              launchParamsContainer.classList.remove('hidden');
+            }
+          }
+          
+          // 如果是Java类型，显示Java环境选项并加载已保存的选择
+    if (item.type === 'java') {
+      const javaEnvOption = document.getElementById('java-environment-option');
+      javaEnvOption.classList.remove('hidden');
+      await renderJavaEnvironmentOptions(item.javaEnvironmentId);
     }
-  } else {
+        }
+      } else {
     title.textContent = '新建项目';
     submitBtn.textContent = '添加项目';
     document.getElementById('item-icon-preview').className = 'fa fa-terminal';
@@ -469,11 +465,12 @@ function openItemModal(itemId = null) {
   modal.classList.remove('hidden');
   
   // 初始化浏览按钮显示状态
-  const itemTypeSelect = document.getElementById('item-type');
-  const commandContainer = document.getElementById('item-command-container');
-  const browseBtn = commandContainer?.querySelector('button');
-  if ((itemTypeSelect.value === 'command' || itemTypeSelect.value === 'url') && browseBtn) {
-    browseBtn.classList.add('hidden');
+  if ((itemTypeSelect.value === 'command' || itemTypeSelect.value === 'url')) {
+    const commandContainer = document.getElementById('item-command-container');
+    const browseBtn = commandContainer?.querySelector('button');
+    if (browseBtn) {
+      browseBtn.classList.add('hidden');
+    }
   }
   
   // 确保输入框可聚焦
@@ -481,7 +478,87 @@ function openItemModal(itemId = null) {
     document.getElementById('item-name').focus();
   }, 100);
   
-  // 监听项目类型变化
+  // 添加命令输入框事件监听，用于自动获取EXE图标
+  const commandInput = document.getElementById('item-command-input');
+  if (commandInput) {
+    // 移除之前可能存在的事件监听器
+    commandInput.removeEventListener('blur', handleCommandInputBlur);
+    // 添加新的事件监听器
+    commandInput.addEventListener('blur', handleCommandInputBlur);
+  }
+  
+
+  // 渲染 Java 环境选项
+    async function renderJavaEnvironmentOptions(selectedEnvId = '') {
+      const javaEnvSelect = document.getElementById('item-java-environment');
+      const javaEnvOption = document.getElementById('java-environment-option');
+      if (!javaEnvSelect) return;
+      
+      // 清空现有选项
+      javaEnvSelect.innerHTML = '';
+      
+      try {
+        // 从主进程获取最新的环境配置
+        const envConfig = await window.api.getEnvironment();
+        
+        // 更新本地 AppConfig 以保持数据一致性
+        AppConfig.environment = envConfig;
+        
+        // 检查是否有配置的 Java 环境
+        if (envConfig.javaEnvironments && envConfig.javaEnvironments.length > 0) {
+          // 添加 Java 环境选项
+          envConfig.javaEnvironments.forEach(env => {
+            const option = document.createElement('option');
+            option.value = env.id;
+            option.textContent = env.name;
+            javaEnvSelect.appendChild(option);
+          });
+          
+          // 恢复之前选中的值，如果没有则选择默认环境
+          if (selectedEnvId) {
+            javaEnvSelect.value = selectedEnvId;
+          } else if (envConfig.defaultJavaEnvironmentId) {
+            javaEnvSelect.value = envConfig.defaultJavaEnvironmentId;
+          }
+        } else {
+          // 没有配置 Java 环境，显示提示选项
+          const noEnvOption = document.createElement('option');
+          noEnvOption.value = '';
+          noEnvOption.textContent = '未配置 Java 环境';
+          noEnvOption.disabled = true;
+          javaEnvSelect.appendChild(noEnvOption);
+        }
+      } catch (error) {
+        console.error('获取环境配置失败:', error);
+        // 出错时使用本地配置
+        if (AppConfig.environment.javaEnvironments && AppConfig.environment.javaEnvironments.length > 0) {
+          // 添加 Java 环境选项
+          AppConfig.environment.javaEnvironments.forEach(env => {
+            const option = document.createElement('option');
+            option.value = env.id;
+            option.textContent = env.name;
+            javaEnvSelect.appendChild(option);
+          });
+          
+          // 恢复之前选中的值，如果没有则选择默认环境
+          if (selectedEnvId) {
+            javaEnvSelect.value = selectedEnvId;
+          } else if (AppConfig.environment.defaultJavaEnvironmentId) {
+            javaEnvSelect.value = AppConfig.environment.defaultJavaEnvironmentId;
+          }
+        } else {
+          // 没有配置 Java 环境，显示提示选项
+          const noEnvOption = document.createElement('option');
+          noEnvOption.value = '';
+          noEnvOption.textContent = '未配置 Java 环境';
+          noEnvOption.disabled = true;
+          javaEnvSelect.appendChild(noEnvOption);
+        }
+      }
+    }
+
+    
+    // 监听项目类型变化
   itemTypeSelect.addEventListener('change', (e) => {
     const iconPreview = document.getElementById('item-icon-preview');
     const itemIconInput = document.getElementById('item-icon');
@@ -531,6 +608,15 @@ function openItemModal(itemId = null) {
       terminalOption.classList.add('hidden');
     }
     
+    // 根据类型显示/隐藏 Java 环境选项
+    const javaEnvOption = document.getElementById('java-environment-option');
+    if (e.target.value === 'java') {
+      javaEnvOption.classList.remove('hidden');
+      renderJavaEnvironmentOptions();
+    } else {
+      javaEnvOption.classList.add('hidden');
+    }
+    
     // 切换命令输入框（命令行用textarea，其他用input）
     const commandInput = document.getElementById('item-command-input');
     const commandTextarea = document.getElementById('item-command-textarea');
@@ -556,7 +642,26 @@ function openItemModal(itemId = null) {
   });
   
   // 触发一次 change 事件，设置初始图标
-  itemTypeSelect.dispatchEvent(new Event('change'));
+  if (!itemId || (item && item.type !== 'java')) {
+    itemTypeSelect.dispatchEvent(new Event('change'));
+  }
+}
+
+// 处理命令输入框失去焦点事件，用于自动获取EXE图标
+function handleCommandInputBlur() {
+  const itemTypeSelect = document.getElementById('item-type');
+  const commandInput = document.getElementById('item-command-input');
+  
+  // 检查是否是应用程序类型且路径是可执行文件
+  if (itemTypeSelect && itemTypeSelect.value === 'application' && commandInput) {
+    const path = commandInput.value.trim();
+    if (path && path.toLowerCase().endsWith('.exe')) {
+      // 调用全局的 autoGetExeIcon 函数
+      if (typeof autoGetExeIcon === 'function') {
+        autoGetExeIcon(path);
+      }
+    }
+  }
 }
 
 // 设置项目相关事件
@@ -639,6 +744,11 @@ function setupItemEvents() {
       ? document.getElementById('run-in-terminal').checked 
       : false;
     
+    // 获取 Java 环境选择
+    const javaEnvironmentId = itemType === 'java' 
+      ? document.getElementById('item-java-environment').value 
+      : '';
+    
     // 验证
     let isValid = true;
     
@@ -692,6 +802,14 @@ function setupItemEvents() {
             delete AppConfig.items[index].runInTerminal;
           }
           
+          // 对 Java 类型保存 javaEnvironmentId 属性
+          if (itemType === 'java') {
+            AppConfig.items[index].javaEnvironmentId = javaEnvironmentId;
+          } else {
+            // 如果不是 Java 类型，移除该属性
+            delete AppConfig.items[index].javaEnvironmentId;
+          }
+          
           showNotification('成功', '项目已更新', 'success');
         }
       } else {
@@ -713,6 +831,11 @@ function setupItemEvents() {
         // 对命令/Python/Java类型添加runInTerminal属性
         if (['command', 'python', 'java'].includes(itemType)) {
           newItem.runInTerminal = runInTerminal;
+        }
+        
+        // 对 Java 类型添加 javaEnvironmentId 属性
+        if (itemType === 'java') {
+          newItem.javaEnvironmentId = javaEnvironmentId;
         }
         
         AppConfig.items.push(newItem);
@@ -888,7 +1011,34 @@ async function runItem(item) {
         const env = await window.api.getEnvironment();
         let javaPath = 'java';
 
-        if (env.java) {
+        // 根据项目选择的 Java 环境获取路径
+        if (item.javaEnvironmentId) {
+          const selectedEnv = env.javaEnvironments?.find(e => e.id === item.javaEnvironmentId);
+          if (selectedEnv) {
+            javaPath = selectedEnv.path.endsWith('java.exe')
+              ? selectedEnv.path
+              : `${selectedEnv.path}\\java.exe`;
+          } else if (env.java) {
+            // 如果选择的环境不存在，使用默认 Java 路径
+            javaPath = env.java.endsWith('java.exe')
+              ? env.java
+              : `${env.java}\\java.exe`;
+          }
+        } else if (env.defaultJavaEnvironmentId) {
+          // 如果项目没有选择环境，使用默认环境
+          const defaultEnv = env.javaEnvironments?.find(e => e.id === env.defaultJavaEnvironmentId);
+          if (defaultEnv) {
+            javaPath = defaultEnv.path.endsWith('java.exe')
+              ? defaultEnv.path
+              : `${defaultEnv.path}\\java.exe`;
+          } else if (env.java) {
+            // 如果默认环境不存在，使用旧的 Java 路径
+            javaPath = env.java.endsWith('java.exe')
+              ? env.java
+              : `${env.java}\\java.exe`;
+          }
+        } else if (env.java) {
+          // 向后兼容：使用旧的 Java 路径
           javaPath = env.java.endsWith('java.exe')
             ? env.java
             : `${env.java}\\java.exe`;
