@@ -1,1 +1,0 @@
-2026-01-20 10:11:35.149 [INFO] 执行终端命令: start "Runner" cmd /k "chcp 65001 >nul & cd /d "H:\渗透武器库\Tools\ShellTools\Behinder\Behinder_v3.0_Beta_11.t00ls" & "H:\渗透武器库\Tools\path\Java_path\Java_8_win\bin\java.exe" -jar "H:\渗透武器库\Tools\ShellTools\Behinder\Behinder_v3.0_Beta_11.t00ls\Behinder.jar""

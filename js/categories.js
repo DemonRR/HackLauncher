@@ -98,13 +98,23 @@ function renderCategories() {
   categoriesList.appendChild(favoriteCategoryItem);
 
   // 添加用户自定义分类
-  AppConfig.categories.forEach(category => {
+  const sortedCategories = getSortedCategories();
+  sortedCategories.forEach(category => {
     // 跳过无效分类
     if (!category || !category.id || !category.name) return;
     
     const categoryItem = document.createElement('div');
-    categoryItem.className = `flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-light-1 transition-custom category-list-item ${currentCategoryId === category.id && !showFavoritesOnly ? 'bg-primary/10 text-primary' : ''}`;
+    categoryItem.className = `flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-light-1 transition-custom category-list-item draggable ${currentCategoryId === category.id && !showFavoritesOnly ? 'bg-primary/10 text-primary' : ''}`;
     categoryItem.dataset.id = category.id;
+    categoryItem.setAttribute('draggable', 'true');
+    
+    // 添加拖拽相关事件监听器
+    categoryItem.addEventListener('dragstart', handleCategoryDragStart);
+    categoryItem.addEventListener('dragend', handleCategoryDragEnd);
+    categoryItem.addEventListener('dragover', handleCategoryDragOver);
+    categoryItem.addEventListener('dragenter', handleCategoryDragEnter);
+    categoryItem.addEventListener('dragleave', handleCategoryDragLeave);
+    categoryItem.addEventListener('drop', handleCategoryDrop);
     
     categoryItem.addEventListener('click', () => {
       currentCategoryId = category.id;
@@ -312,4 +322,179 @@ async function deleteCategory(categoryId) {
   // 更新UI
   renderCategories();
   renderItems();
+}
+
+// 分类拖拽相关变量
+let draggedCategory = null;
+
+// 处理分类拖拽开始
+function handleCategoryDragStart(e) {
+  draggedCategory = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', this.dataset.id);
+}
+
+// 处理分类拖拽结束
+function handleCategoryDragEnd(e) {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.category-list-item').forEach(item => {
+    item.classList.remove('drag-over');
+  });
+  draggedCategory = null;
+}
+
+// 处理分类拖拽经过
+function handleCategoryDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  
+  // 避免在"全部项目"和"我的收藏"上放置
+  if (this.dataset.id === 'all' || this.dataset.id === 'favorites') {
+    return;
+  }
+  
+  // 移除其他元素的drag-over类
+  document.querySelectorAll('.category-list-item').forEach(item => {
+    if (item !== this) {
+      item.classList.remove('drag-over');
+    }
+  });
+  
+  // 添加drag-over类
+  this.classList.add('drag-over');
+}
+
+// 处理分类拖拽进入
+function handleCategoryDragEnter(e) {
+  e.preventDefault();
+  
+  // 避免在"全部项目"和"我的收藏"上放置
+  if (this.dataset.id === 'all' || this.dataset.id === 'favorites') {
+    return;
+  }
+  
+  // 添加drag-over类
+  this.classList.add('drag-over');
+}
+
+// 处理分类拖拽离开
+function handleCategoryDragLeave(e) {
+  // 移除drag-over类
+  this.classList.remove('drag-over');
+}
+
+// 处理分类拖拽放置
+async function handleCategoryDrop(e) {
+  e.preventDefault();
+  
+  // 避免在"全部项目"和"我的收藏"上放置
+  if (this.dataset.id === 'all' || this.dataset.id === 'favorites') {
+    return;
+  }
+  
+  const draggedId = e.dataTransfer.getData('text/plain');
+  const targetId = this.dataset.id;
+  
+  if (draggedId !== targetId) {
+    // 重新排序分类
+    reorderCategories(draggedId, targetId);
+    
+    // 保存排序
+    await saveCategoryOrder();
+    
+    // 重新渲染分类
+    renderCategories();
+  }
+  
+  // 移除drag-over类
+  this.classList.remove('drag-over');
+}
+
+// 重新排序分类
+function reorderCategories(draggedId, targetId) {
+  // 确保categoryOrder数组存在
+  if (!AppConfig.categoryOrder) {
+    AppConfig.categoryOrder = [];
+  }
+  
+  // 如果categoryOrder为空，初始化它
+  if (AppConfig.categoryOrder.length === 0) {
+    AppConfig.categoryOrder = AppConfig.categories.map(cat => cat.id);
+  }
+  
+  // 移除被拖拽的分类
+  const draggedIndex = AppConfig.categoryOrder.indexOf(draggedId);
+  if (draggedIndex > -1) {
+    AppConfig.categoryOrder.splice(draggedIndex, 1);
+  }
+  
+  // 找到目标位置并插入
+  const targetIndex = AppConfig.categoryOrder.indexOf(targetId);
+  if (targetIndex > -1) {
+    AppConfig.categoryOrder.splice(targetIndex, 0, draggedId);
+  } else {
+    // 如果目标不在数组中，添加到末尾
+    AppConfig.categoryOrder.push(draggedId);
+  }
+}
+
+// 保存分类排序
+async function saveCategoryOrder() {
+  try {
+    await saveConfig();
+  } catch (error) {
+    console.error('保存分类排序失败:', error);
+  }
+}
+
+// 获取排序后的分类列表
+function getSortedCategories() {
+  // 确保categoryOrder数组存在
+  if (!AppConfig.categoryOrder) {
+    AppConfig.categoryOrder = [];
+  }
+  
+  // 检查是否需要更新categoryOrder数组
+  let needsUpdate = false;
+  
+  // 确保所有分类都在categoryOrder数组中
+  // 先收集所有当前分类的ID
+  const currentCategoryIds = AppConfig.categories.map(cat => cat.id);
+  
+  // 移除categoryOrder中不存在的分类ID
+  const originalLength = AppConfig.categoryOrder.length;
+  AppConfig.categoryOrder = AppConfig.categoryOrder.filter(id => currentCategoryIds.includes(id));
+  if (AppConfig.categoryOrder.length !== originalLength) {
+    needsUpdate = true;
+  }
+  
+  // 添加新分类ID到categoryOrder末尾
+  currentCategoryIds.forEach(id => {
+    if (!AppConfig.categoryOrder.includes(id)) {
+      AppConfig.categoryOrder.push(id);
+      needsUpdate = true;
+    }
+  });
+  
+  // 如果有更新，保存配置
+  if (needsUpdate) {
+    saveConfig().catch(error => {
+      console.error('保存分类顺序失败:', error);
+    });
+  }
+  
+  // 按照categoryOrder排序分类
+  const sorted = [...AppConfig.categories].sort((a, b) => {
+    const indexA = AppConfig.categoryOrder.indexOf(a.id);
+    const indexB = AppConfig.categoryOrder.indexOf(b.id);
+    
+    if (indexA === -1 && indexB === -1) return 0;
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    
+    return indexA - indexB;
+  });
+  
+  return sorted;
 }

@@ -3,6 +3,12 @@
 let AppConfig = {
   categories: [],
   items: [],
+  sortOrders: {
+    all: [], // 全部项目的排序
+    favorites: [] // 收藏项目的排序
+    // 分类排序会自动添加，格式为 category_{categoryId}
+  },
+  categoryOrder: [], // 分类本身的排序顺序
   defaultCategoryId: null,
   settings: {
     theme: 'light',
@@ -26,6 +32,33 @@ async function loadConfig() {
     // 从主进程获取配置
     const config = await window.api.getConfig();
     if (config) {
+      // 确保sortOrders对象存在，保持向后兼容性
+      if (!config.sortOrders) {
+        config.sortOrders = {
+          all: [],
+          favorites: []
+        };
+      }
+      // 确保categoryOrder数组存在，保持向后兼容性
+      if (!config.categoryOrder) {
+        config.categoryOrder = [];
+      }
+      
+      // 确保categoryOrder数组包含所有当前分类的ID
+      if (config.categories && config.categories.length > 0) {
+        const currentCategoryIds = config.categories.map(cat => cat.id);
+        
+        // 移除categoryOrder中不存在的分类ID
+        config.categoryOrder = config.categoryOrder.filter(id => currentCategoryIds.includes(id));
+        
+        // 添加新分类ID到categoryOrder末尾
+        currentCategoryIds.forEach(id => {
+          if (!config.categoryOrder.includes(id)) {
+            config.categoryOrder.push(id);
+          }
+        });
+      }
+      
       AppConfig = config;
       showNotification('成功', '配置加载成功', 'success');
       // 应用主题设置
@@ -45,6 +78,11 @@ async function saveConfig() {
     // 确保数据完整性
     AppConfig.categories = AppConfig.categories || [];
     AppConfig.items = AppConfig.items || [];
+    AppConfig.sortOrders = AppConfig.sortOrders || {
+      all: [],
+      favorites: []
+    };
+    AppConfig.categoryOrder = AppConfig.categoryOrder || [];
     
     // 保存到主进程
     await window.api.saveConfig(AppConfig);

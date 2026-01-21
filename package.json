@@ -1,6 +1,6 @@
 {
   "name": "hacklauncher",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "渗透工具箱",
   "productName": "HackLauncher",
   "main": "main.js",
@@ -59,7 +59,8 @@
       "target": "nsis",
       "icon": "build/icon.ico",
       "executableName": "HackLauncher",
-      "requestedExecutionLevel": "asInvoker"
+      "requestedExecutionLevel": "asInvoker",
+      "forceCodeSigning": false
     },
     "nsis": {
       "oneClick": false,

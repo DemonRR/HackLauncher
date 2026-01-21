@@ -161,11 +161,6 @@ async function checkAndRestoreConfig() {
     const oldConfigPath = path.join(INSTALL_DIR, 'config', 'config.json');
     const oldDbPath = path.join(INSTALL_DIR, 'config', 'config.db');
     
-    // 检查是否存在备份的配置文件
-    const backupDir = path.join(INSTALL_DIR, 'config', 'backup');
-    const backupDbPath = path.join(backupDir, 'config.db');
-    const backupJsonPath = path.join(backupDir, 'config.json');
-    
     // 如果存在旧的配置文件但没有当前配置文件，尝试恢复
     if ((fs.existsSync(oldConfigPath) || fs.existsSync(oldDbPath)) && !fs.existsSync(CONFIG_PATH)) {
       logger.info('检测到旧的配置文件，尝试恢复...');
@@ -183,45 +178,8 @@ async function checkAndRestoreConfig() {
       }
     }
     
-    // 每次启动时创建配置备份
-    await createConfigBackup();
-    
   } catch (error) {
     logger.error(`检查和恢复配置文件失败: ${error}`);
-  }
-}
-
-// 创建配置备份
-async function createConfigBackup() {
-  try {
-    const backupDir = path.join(INSTALL_DIR, 'config', 'backup');
-    await fsPromises.mkdir(backupDir, { recursive: true });
-    
-    // 备份数据库文件
-    if (fs.existsSync(CONFIG_PATH)) {
-      const backupPath = path.join(backupDir, `config_${Date.now()}.db`);
-      await fsPromises.copyFile(CONFIG_PATH, backupPath);
-      logger.info('已创建配置备份');
-    }
-    
-    // 清理旧备份，只保留最近5个
-    const backupFiles = fs.readdirSync(backupDir).filter(f => f.startsWith('config_') && f.endsWith('.db'));
-    if (backupFiles.length > 5) {
-      // 按创建时间排序
-      backupFiles.sort((a, b) => {
-        const timeA = parseInt(a.replace('config_', '').replace('.db', ''));
-        const timeB = parseInt(b.replace('config_', '').replace('.db', ''));
-        return timeA - timeB;
-      });
-      
-      // 删除旧备份
-      for (let i = 0; i < backupFiles.length - 5; i++) {
-        fs.unlinkSync(path.join(backupDir, backupFiles[i]));
-      }
-    }
-    
-  } catch (error) {
-    logger.error(`创建配置备份失败: ${error}`);
   }
 }
 
@@ -435,6 +393,28 @@ async function loadConfig() {
       config.defaultCategoryId = defaultCategoryIdRow.value;
     }
     
+    // 加载排序顺序
+    const sortOrdersRow = await new Promise((resolve, reject) => {
+      db.get('SELECT value FROM config WHERE key = ?', 'sortOrders', (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    if (sortOrdersRow) {
+      config.sortOrders = JSON.parse(sortOrdersRow.value);
+    }
+    
+    // 加载分类顺序
+    const categoryOrderRow = await new Promise((resolve, reject) => {
+      db.get('SELECT value FROM config WHERE key = ?', 'categoryOrder', (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    if (categoryOrderRow) {
+      config.categoryOrder = JSON.parse(categoryOrderRow.value);
+    }
+    
     // 确保配置结构完整
     if (!config.settings) {
       config.settings = {
@@ -450,6 +430,19 @@ async function loadConfig() {
     // 确保环境配置存在
     if (!config.environment) {
       config.environment = { python: '', java: '', customPaths: [] };
+    }
+    
+    // 确保排序顺序存在
+    if (!config.sortOrders) {
+      config.sortOrders = {
+        all: [],
+        favorites: []
+      };
+    }
+    
+    // 确保分类顺序存在
+    if (!config.categoryOrder) {
+      config.categoryOrder = [];
     }
     
     // 添加默认值，如果不存在
@@ -511,6 +504,32 @@ async function saveConfig() {
         'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
         'defaultCategoryId',
         config.defaultCategoryId,
+        err => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+    
+    // 保存排序顺序
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+        'sortOrders',
+        JSON.stringify(config.sortOrders),
+        err => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+    
+    // 保存分类顺序
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+        'categoryOrder',
+        JSON.stringify(config.categoryOrder),
         err => {
           if (err) reject(err);
           else resolve();
@@ -901,19 +920,9 @@ ipcMain.handle('execute-command', (event, command, cwd) => {
     // 打印执行的命令
     logger.info(`执行命令: ${command}`);
     
-    // 分割命令和参数
-    const parts = command.match(/([^"']+)|"([^"]*)"|'([^']*)'/g);
-    if (!parts) {
-      reject('无效的命令格式');
-      return;
-    }
-    
-    // 处理引号
-    const cmd = parts[0].replace(/^["']|["]$/g, '');
-    const args = parts.slice(1).map(arg => arg.replace(/^["']|["]$/g, ''));
-    
+    // 直接使用命令作为整体，让shell处理空格和引号
     // 创建子进程，不指定encoding，让输出保持Buffer形式
-    const child = spawn(cmd, args, {
+    const child = spawn(command, [], {
       ...options,
       shell: true // 使用shell来执行命令，处理管道等复杂情况
     });
@@ -1340,21 +1349,9 @@ ipcMain.handle('execute-with-environment', (event, item) => {
       // 使用spawn代替exec，直接处理流数据
       const { spawn } = require('child_process');
       
-      // 分割命令和参数
-      const parts = finalCommand.match(/([^"']+)|"([^"]*)"|'([^']*)'/g);
-      if (!parts) {
-        const errorMessage = '无效的命令格式';
-        logger.error(errorMessage);
-        reject(errorMessage);
-        return;
-      }
-      
-      // 处理引号
-      const cmd = parts[0].replace(/^["']|["]$/g, '');
-      const spawnArgs = parts.slice(1).map(arg => arg.replace(/^["']|["]$/g, ''));
-      
+      // 直接使用命令作为整体，让shell处理空格和引号
       // 创建子进程，不指定encoding，让输出保持Buffer形式
-      const child = spawn(cmd, spawnArgs, {
+      const child = spawn(finalCommand, [], {
         shell: true // 使用shell来执行命令，处理管道等复杂情况
       });
       

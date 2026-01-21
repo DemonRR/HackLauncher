@@ -807,9 +807,10 @@ body.dark #notification .modal-close-btn:hover {
   padding: 0.5rem 0.75rem;
   border-radius: 0.25rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
+  border: 2px solid transparent;
 }
 
 .category-list-item i {
@@ -1131,6 +1132,8 @@ header {
 aside {
   background-color: #e9e9e9; /* 调整侧边栏背景色 */
   border-right: 1px solid #dcdcdc; /* 增加右边框以增强层次感 */
+  position: relative;
+  z-index: 10;
 }
 
 .bg-white {
@@ -1220,6 +1223,60 @@ body.dark .modal-close-btn:hover i {
 
 body.dark .item-icon-container i {
   color: var(--theme-color, #60a5fa);
+}
+
+/* 拖拽排序样式 */
+.draggable {
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.draggable:hover {
+  cursor: grab;
+}
+
+.draggable:active {
+  cursor: grabbing;
+}
+
+.dragging {
+  opacity: 0.5;
+  transform: scale(1.05);
+  z-index: 1000;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+}
+
+body.dark .dragging {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+
+.drag-over {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.2);
+  border: 2px dashed var(--theme-color, #165DFF);
+  background-color: rgba(22, 93, 255, 0.05);
+}
+
+body.dark .drag-over {
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+  border: 2px dashed var(--theme-color, #60a5fa);
+  background-color: rgba(96, 165, 250, 0.1);
+}
+
+
+/* 卡片移位动画 */
+.item-card {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item-card.animate-move {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 确保拖拽时其他卡片的动画效果 */
+#items-grid {
+  position: relative;
 }
 
 /* 确保背景色正确 */
@@ -1657,4 +1714,57 @@ body.dark select option:hover,
 body.dark select option:focus {
   background-color: var(--theme-color, #60a5fa) !important;
   color: #ffffff !important;
+}
+
+/* 分类拖拽样式 */
+.category-list-item.draggable {
+  cursor: grab;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.category-list-item.draggable:hover {
+  cursor: grab;
+}
+
+.category-list-item.draggable:active {
+  cursor: grabbing;
+}
+
+.category-list-item.dragging {
+  opacity: 0.95;
+  transform: scale(1);
+  z-index: 9999;
+  position: relative;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.1), 0 1px 4px -2px rgba(0, 0, 0, 0.05);
+  border-radius: 0.5rem;
+  overflow: visible;
+}
+
+body.dark .category-list-item.dragging {
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.2), 0 1px 4px -2px rgba(0, 0, 0, 0.15);
+}
+
+.category-list-item.drag-over {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.2);
+  border: 2px dashed var(--theme-color, #165DFF);
+  background-color: rgba(22, 93, 255, 0.05);
+}
+
+body.dark .category-list-item.drag-over {
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.3);
+  border: 2px dashed var(--theme-color, #165DFF);
+  background-color: rgba(22, 93, 255, 0.1);
+}
+
+/* 确保"全部项目"和"我的收藏"不可拖拽 */
+.category-list-item[data-id="all"],
+.category-list-item[data-id="favorites"] {
+  cursor: pointer !important;
+}
+
+.category-list-item[data-id="all"]:hover,
+.category-list-item[data-id="favorites"]:hover {
+  cursor: pointer !important;
 }

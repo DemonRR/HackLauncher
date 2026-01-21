@@ -11,6 +11,12 @@ let currentSearchTerm = '';
 // 是否显示收藏
 let showFavoritesOnly = false;
 
+// 拖拽相关变量
+let draggedElement = null;
+let dragStartIndex = -1;
+let dragEndIndex = -1;
+let isDragging = false;
+
 
 // 根据分类ID获取分类名称
 const getCategoryName = (categoryId) => {
@@ -49,6 +55,9 @@ function renderItems(searchTerm = '') {
     );
   }
   
+  // 应用排序
+  itemsToRender = applySortOrder(itemsToRender);
+  
   // 显示空状态或项目列表
   if (itemsToRender.length === 0) {
     itemsGrid.innerHTML = '';
@@ -76,12 +85,21 @@ function renderItems(searchTerm = '') {
   
   itemsToRender.forEach(item => {
     const itemCard = document.createElement('div');
-    itemCard.className = 'bg-white rounded-xl shadow-sm p-3 hover-scale hover:shadow-md transition-all duration-200 cursor-pointer group relative';
-    itemCard.dataset.itemId = item.id;
-    itemCard.style.display = 'flex';
-    itemCard.style.flexDirection = 'column';
-    itemCard.style.gap = '0.5rem';
-    itemCard.style.minHeight = '90px';
+    itemCard.className = 'bg-white rounded-xl shadow-sm p-3 hover-scale hover:shadow-md transition-all duration-200 cursor-pointer group relative item-card draggable';
+          itemCard.dataset.itemId = item.id;
+          itemCard.style.display = 'flex';
+          itemCard.style.flexDirection = 'column';
+          itemCard.style.gap = '0.5rem';
+          itemCard.style.minHeight = '90px';
+          
+          // 添加拖拽相关事件监听器
+          itemCard.setAttribute('draggable', 'true');
+          itemCard.addEventListener('dragstart', handleDragStart);
+          itemCard.addEventListener('dragend', handleDragEnd);
+          itemCard.addEventListener('dragover', handleDragOver);
+          itemCard.addEventListener('dragenter', handleDragEnter);
+          itemCard.addEventListener('dragleave', handleDragLeave);
+          itemCard.addEventListener('drop', handleDrop);
     
     const topRow = document.createElement('div');
     topRow.style.display = 'flex';
@@ -203,24 +221,44 @@ function renderItems(searchTerm = '') {
     
     itemCard.appendChild(tooltip);
     
-    let hoverTimer = null;
-    
+    // 禁用拖拽时的卡片详情弹出
     itemCard.addEventListener('mouseenter', () => {
-      hoverTimer = setTimeout(() => {
-        tooltip.classList.remove('opacity-0', 'invisible', '-translate-y-2');
-        tooltip.classList.add('opacity-100', 'visible', 'translate-y-0');
-      }, 1000);
+      if (!isDragging) {
+        // 只有在非拖拽状态下才显示详情
+        const hoverTimer = setTimeout(() => {
+          tooltip.classList.remove('opacity-0', 'invisible', '-translate-y-2');
+          tooltip.classList.add('opacity-100', 'visible', 'translate-y-0');
+        }, 1000);
+        
+        // 存储定时器到卡片元素
+        itemCard._hoverTimer = hoverTimer;
+      }
     });
     
     itemCard.addEventListener('mouseleave', () => {
-      if (hoverTimer) {
-        clearTimeout(hoverTimer);
-        hoverTimer = null;
+      // 清除定时器
+      if (itemCard._hoverTimer) {
+        clearTimeout(itemCard._hoverTimer);
+        itemCard._hoverTimer = null;
       }
       // 立即隐藏tooltip，无延迟
       tooltip.classList.add('opacity-0', 'invisible', '-translate-y-2');
       tooltip.classList.remove('opacity-100', 'visible', 'translate-y-0');
     });
+    
+
+    // 确保点击时清除定时器
+    itemCard.addEventListener('click', () => {
+      if (itemCard._hoverTimer) {
+        clearTimeout(itemCard._hoverTimer);
+        itemCard._hoverTimer = null;
+      }
+      document.querySelectorAll('.item-tooltip').forEach(t => {
+        t.classList.add('opacity-0', 'invisible', '-translate-y-2');
+        t.classList.remove('opacity-100', 'visible', 'translate-y-0');
+      });
+    });
+
     
     // 在卡片右下方添加运行按钮
     const runButton = document.createElement('button');
@@ -241,9 +279,9 @@ function renderItems(searchTerm = '') {
       runButton.style.boxShadow = '0 2px 8px rgba(22, 93, 255, 0.25)';
     });
     runButton.addEventListener('click', () => {
-      if (hoverTimer) {
-        clearTimeout(hoverTimer);
-        hoverTimer = null;
+      if (itemCard._hoverTimer) {
+        clearTimeout(itemCard._hoverTimer);
+        itemCard._hoverTimer = null;
       }
       document.querySelectorAll('.item-tooltip').forEach(t => {
         t.classList.add('opacity-0', 'invisible', '-translate-y-2');
@@ -1096,7 +1134,9 @@ async function runItem(item) {
 
       /* ================= APPLICATION ================= */
       case 'application': {
-        let cmd = item.command;
+        // 确保路径被正确引用，处理包含空格的路径
+        const quotedCommand = `"${item.command}"`;
+        let cmd = quotedCommand;
         if (item.launchParams) cmd += ` ${item.launchParams}`;
 
         window.api.executeCommand(cmd).catch(err => {
@@ -1276,8 +1316,255 @@ function initContextMenu() {
   document.body.appendChild(contextMenu);
 }
 
-// 在应用初始化时调用
-document.addEventListener('DOMContentLoaded', () => {
-  initContextMenu();
-  // ... 其他初始化代码 ...
-});
+// 根据当前视图应用排序
+function applySortOrder(items) {
+  // 确保sortOrders对象存在
+  if (!AppConfig.sortOrders) {
+    AppConfig.sortOrders = {
+      all: [],
+      favorites: []
+    };
+  }
+  
+  // 确定当前视图的排序键
+  let sortKey;
+  if (showFavoritesOnly) {
+    sortKey = 'favorites';
+  } else if (currentCategoryId) {
+    sortKey = `category_${currentCategoryId}`;
+  } else {
+    sortKey = 'all';
+  }
+  
+  // 确保排序数组存在
+  if (!AppConfig.sortOrders[sortKey]) {
+    AppConfig.sortOrders[sortKey] = [];
+  }
+  
+  const sortOrder = AppConfig.sortOrders[sortKey];
+  
+  // 如果没有排序数据，返回原始顺序
+  if (!sortOrder || sortOrder.length === 0) {
+    return items;
+  }
+  
+  // 根据排序数据对项目进行排序
+  return items.sort((a, b) => {
+    const indexA = sortOrder.indexOf(a.id);
+    const indexB = sortOrder.indexOf(b.id);
+    
+    // 如果项目不在排序数组中，将其放在末尾
+    if (indexA === -1 && indexB === -1) return 0;
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    
+    return indexA - indexB;
+  });
+}
+
+// 保存排序顺序
+async function saveSortOrder(items) {
+  // 确保sortOrders对象存在
+  if (!AppConfig.sortOrders) {
+    AppConfig.sortOrders = {
+      all: [],
+      favorites: []
+    };
+  }
+  
+  // 确定当前视图的排序键
+  let sortKey;
+  if (showFavoritesOnly) {
+    sortKey = 'favorites';
+  } else if (currentCategoryId) {
+    sortKey = `category_${currentCategoryId}`;
+  } else {
+    sortKey = 'all';
+  }
+  
+  // 提取项目ID并保存排序
+  const itemIds = items.map(item => item.id);
+  AppConfig.sortOrders[sortKey] = itemIds;
+  
+  // 保存配置到文件
+  try {
+    await saveConfig();
+  } catch (error) {
+    console.error('保存排序失败:', error);
+  }
+}
+
+// 拖拽处理函数
+
+// 处理拖拽开始
+function handleDragStart(e) {
+  draggedElement = this;
+  this.classList.add('dragging');
+  isDragging = true;
+  
+  // 立即清除所有卡片的tooltip
+  document.querySelectorAll('.item-tooltip').forEach(t => {
+    t.classList.add('opacity-0', 'invisible', '-translate-y-2');
+    t.classList.remove('opacity-100', 'visible', 'translate-y-0');
+  });
+  
+  // 清除所有卡片的hover定时器
+  document.querySelectorAll('.item-card').forEach(card => {
+    if (card._hoverTimer) {
+      clearTimeout(card._hoverTimer);
+      card._hoverTimer = null;
+    }
+  });
+  
+  // 获取当前拖拽元素的索引
+  const cards = Array.from(document.querySelectorAll('.item-card'));
+  dragStartIndex = cards.indexOf(this);
+  
+  // 设置拖拽数据
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+// 处理拖拽结束
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+  draggedElement = null;
+  isDragging = false;
+  
+  // 移除所有卡片的drag-over类和视觉反馈
+  document.querySelectorAll('.item-card').forEach(card => {
+    card.classList.remove('drag-over');
+    card.style.border = '';
+    card.style.backgroundColor = '';
+  });
+  
+  // 重置拖拽索引
+  dragStartIndex = -1;
+  dragEndIndex = -1;
+}
+
+// 处理拖拽经过
+function handleDragOver(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  e.dataTransfer.dropEffect = 'move';
+  
+  // 在dragover事件中也添加视觉反馈，确保可靠性
+  if (this !== draggedElement) {
+    this.classList.add('drag-over');
+    this.style.border = '2px dashed var(--theme-color, #165DFF)';
+    this.style.backgroundColor = 'rgba(22, 93, 255, 0.05)';
+  }
+  
+  return false;
+}
+
+// 处理拖拽进入
+function handleDragEnter(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  if (this !== draggedElement) {
+    // 移除其他卡片的视觉反馈
+    document.querySelectorAll('.item-card').forEach(card => {
+      if (card !== this && card !== draggedElement) {
+        card.classList.remove('drag-over');
+        card.style.border = '';
+        card.style.backgroundColor = '';
+      }
+    });
+    
+    // 添加当前卡片的视觉反馈
+    this.classList.add('drag-over');
+    this.style.border = '2px dashed var(--theme-color, #165DFF)';
+    this.style.backgroundColor = 'rgba(22, 93, 255, 0.05)';
+  }
+}
+
+// 处理拖拽离开
+function handleDragLeave(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  // 只有当鼠标完全离开卡片时才移除视觉反馈
+  if (!this.contains(e.relatedTarget)) {
+    this.classList.remove('drag-over');
+    this.style.border = '';
+    this.style.backgroundColor = '';
+  }
+}
+
+// 处理拖拽放置
+async function handleDrop(e) {
+  if (e.stopPropagation) {
+    e.stopPropagation();
+  }
+  
+  if (draggedElement !== this) {
+    // 获取所有卡片
+    const cards = Array.from(document.querySelectorAll('.item-card'));
+    dragEndIndex = cards.indexOf(this);
+    
+    // 重新排序项目
+    await reorderItems(dragStartIndex, dragEndIndex);
+  }
+  
+  // 移除视觉反馈
+  this.classList.remove('drag-over');
+  this.style.border = '';
+  this.style.backgroundColor = '';
+  
+  return false;
+}
+
+// 重新排序项目
+async function reorderItems(startIndex, endIndex) {
+  if (startIndex === -1 || endIndex === -1) return;
+  
+  // 获取当前显示的项目
+  let itemsToRender = AppConfig.items;
+  
+  // 应用收藏筛选
+  if (showFavoritesOnly) {
+    itemsToRender = itemsToRender.filter(item => item.isFavorite);
+  }
+  
+  // 应用分类筛选
+  if (currentCategoryId) {
+    itemsToRender = itemsToRender.filter(item => item.categoryId === currentCategoryId);
+  }
+  
+  // 应用搜索筛选
+  if (currentSearchTerm) {
+    const lowerSearchTerm = currentSearchTerm.toLowerCase();
+    itemsToRender = itemsToRender.filter(item => 
+      item.name.toLowerCase().includes(lowerSearchTerm) || 
+      item.command.toLowerCase().includes(lowerSearchTerm)
+    );
+  }
+  
+  // 应用当前排序
+  itemsToRender = applySortOrder(itemsToRender);
+  
+  // 确保索引有效
+  if (startIndex < 0 || startIndex >= itemsToRender.length || 
+      endIndex < 0 || endIndex >= itemsToRender.length) {
+    return;
+  }
+  
+  // 执行排序操作
+  const reorderedItems = [...itemsToRender];
+  const [movedItem] = reorderedItems.splice(startIndex, 1);
+  reorderedItems.splice(endIndex, 0, movedItem);
+  
+  // 保存新的排序顺序
+  try {
+    await saveSortOrder(reorderedItems);
+    // 重新渲染项目列表
+    renderItems(currentSearchTerm);
+  } catch (error) {
+    console.error('排序失败:', error);
+    showNotification('错误', '保存排序失败: ' + error.message, 'error');
+  }
+}
