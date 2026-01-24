@@ -17,7 +17,8 @@
 一款专为渗透测试从业者开发的一站式工具启动器，解决渗透测试过程中工具繁多、存放目录分散、启动查找繁琐的痛点，统一管理所有常用渗透工具，提升工作效率。
 
 ## 🖼 界面展示
-<img width="1413" height="888" alt="image" src="https://github.com/user-attachments/assets/6fc67131-ba56-480a-92f5-db5fc4309588" />
+<img width="1526" height="888" alt="PixPin_2026-01-21_14-43-26" src="https://github.com/user-attachments/assets/0105458e-ca14-4d09-afba-fb6e42fe3bd6" />
+
 
 
 ## ✨ 核心功能
@@ -25,13 +26,16 @@
 
 ✅ 自定义图标配置：兼容 Font Awesome 图标 + 自定义图片上传
 
-✅ 运行环境配置：可在设置中自定义配置 Python/Java 运行环境路径
+✅ 运行环境配置：可在设置中自定义配置 Python/Java 运行环境路径（Java多版本支持）
 
 ✅ 主题个性化：支持明暗主题切换，可自定义主题配色
 
 ✅ 配置灵活迁移：工具列表及所有配置支持导入/导出
 
+✅ 灵活排序：分类/卡片支持拖拽排序
+
 ## 🛠 开发说明
 - 开发框架：Electron
 - 开发方式：AI 辅助完成开发
 - 运行环境：Windows 操作系统（全版本适配）
+
