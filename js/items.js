@@ -293,7 +293,15 @@ function renderItems(searchTerm = '') {
     
     itemCard.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-      const contextMenu = document.getElementById('item-context-menu');
+      e.stopPropagation();
+      
+      // 确保右键菜单存在
+      let contextMenu = document.getElementById('item-context-menu');
+      if (!contextMenu) {
+        initContextMenu();
+        contextMenu = document.getElementById('item-context-menu');
+      }
+      
       contextMenu.dataset.itemId = item.id;
       contextMenu.querySelector('.menu-item-name').textContent = item.name;
       
@@ -466,14 +474,26 @@ async function openItemModal(itemId = null) {
             if (launchParamsContainer) {
               launchParamsContainer.classList.remove('hidden');
             }
+            
+            // 如果是Java类型，显示程序参数输入框
+            if (item.type === 'java') {
+              const javaProgramParamsContainer = document.getElementById('java-program-params-container');
+              if (javaProgramParamsContainer) {
+                javaProgramParamsContainer.classList.remove('hidden');
+              }
+            }
           }
           
           // 如果是Java类型，显示Java环境选项并加载已保存的选择
-    if (item.type === 'java') {
-      const javaEnvOption = document.getElementById('java-environment-option');
-      javaEnvOption.classList.remove('hidden');
-      await renderJavaEnvironmentOptions(item.javaEnvironmentId);
-    }
+          if (item.type === 'java') {
+            const javaEnvOption = document.getElementById('java-environment-option');
+            javaEnvOption.classList.remove('hidden');
+            await renderJavaEnvironmentOptions(item.javaEnvironmentId);
+            
+            // 加载Java程序参数
+            const javaProgramParamsInput = document.getElementById('item-java-program-params');
+            if (javaProgramParamsInput) javaProgramParamsInput.value = item.javaProgramParams || '';
+          }
         }
       } else {
     title.textContent = '新建项目';
@@ -627,6 +647,9 @@ function setupItemEvents() {
     const launchParams = document.getElementById('item-launch-params')?.value.trim() || '';
     const description = document.getElementById('item-description')?.value.trim() || '';
     
+    // 获取Java程序参数
+    const javaProgramParams = document.getElementById('item-java-program-params')?.value.trim() || '';
+    
     // 获取图标类型（fa 或 image）
     const iconType = !document.getElementById('image-icon-section').classList.contains('hidden') ? 'image' : 'fa';
     
@@ -693,12 +716,14 @@ function setupItemEvents() {
             delete AppConfig.items[index].runInTerminal;
           }
           
-          // 对 Java 类型保存 javaEnvironmentId 属性
+          // 对 Java 类型保存相关属性
           if (itemType === 'java') {
             AppConfig.items[index].javaEnvironmentId = javaEnvironmentId;
+            AppConfig.items[index].javaProgramParams = javaProgramParams;
           } else {
-            // 如果不是 Java 类型，移除该属性
+            // 如果不是 Java 类型，移除相关属性
             delete AppConfig.items[index].javaEnvironmentId;
+            delete AppConfig.items[index].javaProgramParams;
           }
           
           showNotification('成功', '项目已更新', 'success');
@@ -724,9 +749,10 @@ function setupItemEvents() {
           newItem.runInTerminal = runInTerminal;
         }
         
-        // 对 Java 类型添加 javaEnvironmentId 属性
+        // 对 Java 类型添加相关属性
         if (itemType === 'java') {
           newItem.javaEnvironmentId = javaEnvironmentId;
+          newItem.javaProgramParams = javaProgramParams;
         }
         
         AppConfig.items.push(newItem);
@@ -812,10 +838,30 @@ function handleItemTypeChange(e) {
   
   // 根据类型显示/隐藏启动参数输入框
   const launchParamsContainer = document.getElementById('launch-params-container');
+  const javaProgramParamsContainer = document.getElementById('java-program-params-container');
   if (['python', 'java', 'application'].includes(e.target.value)) {
     launchParamsContainer.classList.remove('hidden');
+    
+    // 根据项目类型更新启动参数的标签和提示
+    const launchParamsLabel = launchParamsContainer.querySelector('label');
+    const launchParamsInput = document.getElementById('item-launch-params');
+    
+    if (e.target.value === 'java') {
+      launchParamsLabel.textContent = 'Java 参数';
+      launchParamsInput.placeholder = '-jar --module-path \"路径\"';
+      javaProgramParamsContainer.classList.remove('hidden');
+    } else if (e.target.value === 'python') {
+      launchParamsLabel.textContent = '启动参数';
+      launchParamsInput.placeholder = '输入启动参数（可选）';
+      javaProgramParamsContainer.classList.add('hidden');
+    } else if (e.target.value === 'application') {
+      launchParamsLabel.textContent = '启动参数';
+      launchParamsInput.placeholder = '输入启动参数（可选）';
+      javaProgramParamsContainer.classList.add('hidden');
+    }
   } else {
     launchParamsContainer.classList.add('hidden');
+    javaProgramParamsContainer.classList.add('hidden');
   }
   
   // 根据类型显示/隐藏终端选项
@@ -1090,8 +1136,10 @@ async function runItem(item) {
 
         const jarPath = item.command.trim();
         const params = item.launchParams ? ` ${item.launchParams}` : '';
+        const programParams = item.javaProgramParams ? ` ${item.javaProgramParams}` : '';
         const workingDir = getWorkingDirectory(jarPath);
-        const fullCmd = `"${javaPath}"${params} -jar "${jarPath}"`;
+        // 添加编码参数，确保Java程序使用UTF-8编码输出
+        const fullCmd = `"${javaPath}" -Dfile.encoding=utf-8${params} -jar "${jarPath}"${programParams}`;
 
         // —— 打开终端 ——
         if (item.runInTerminal) {
@@ -1402,10 +1450,22 @@ function handleDragStart(e) {
   this.classList.add('dragging');
   isDragging = true;
   
-  // 立即清除所有卡片的tooltip
+  // 立即清除所有卡片的tooltip，就像鼠标离开卡片时那样
   document.querySelectorAll('.item-tooltip').forEach(t => {
+    // 临时移除过渡效果，确保立即隐藏
+    const originalTransition = t.style.transition;
+    t.style.transition = 'none';
+    
     t.classList.add('opacity-0', 'invisible', '-translate-y-2');
     t.classList.remove('opacity-100', 'visible', 'translate-y-0');
+    
+    // 强制重绘
+    t.offsetHeight;
+    
+    // 恢复原始过渡效果
+    setTimeout(() => {
+      t.style.transition = originalTransition;
+    }, 0);
   });
   
   // 清除所有卡片的hover定时器

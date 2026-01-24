@@ -299,17 +299,24 @@
             <p id="item-command-error" class="text-danger text-xs mt-1 hidden">请输入命令或路径</p>
           </div>
           
-          <div id="launch-params-container" class="mb-4 hidden">
-            <label for="item-launch-params" class="block text-sm font-medium text-dark-2 mb-1">启动参数</label>
-            <input type="text" id="item-launch-params" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入启动参数（可选）">
-          </div>
-          
           <!-- Java 环境选择 -->
           <div id="java-environment-option" class="mb-4 hidden">
             <label for="item-java-environment" class="block text-sm font-medium text-dark-2 mb-1">Java 环境</label>
             <select id="item-java-environment" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom">
               <!-- Java 环境选项将在这里动态生成 -->
             </select>
+          </div>
+          
+          <!-- 启动参数（Java参数） -->
+          <div id="launch-params-container" class="mb-4 hidden">
+            <label for="item-launch-params" class="block text-sm font-medium text-dark-2 mb-1">Java 参数</label>
+            <input type="text" id="item-launch-params" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="-jar --module-path \"路径\"">
+          </div>
+          
+          <!-- Java 程序参数输入 -->
+          <div id="java-program-params-container" class="mb-4 hidden">
+            <label for="item-java-program-params" class="block text-sm font-medium text-dark-2 mb-1">启动参数</label>
+            <input type="text" id="item-java-program-params" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="-hh">
           </div>
           
           <div class="mb-4">
@@ -551,7 +558,7 @@
             <i class="fas fa-info-circle mr-2 text-primary"></i> 关于
           </h4>
           <div class="text-sm text-dark-2">
-            <p>版本: 1.0.6</p>
+            <p>版本: 1.0.7</p>
             <p class="mt-1">渗透武器库 - Windows 专用启动器管理工具</p>
             <p class="mt-1">作者: DemonRR</p>
             <p class="mt-1 flex items-center">

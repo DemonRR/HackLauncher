@@ -981,6 +981,39 @@ ipcMain.handle('execute-command-in-terminal', async (event, command, cwd) => {
       const pythonDir = path.dirname(config.environment.python);
       // 设置 PATH 环境变量，将 Python 目录添加到最前面
       envSetup += ` & set "PATH=${pythonDir};%PATH%"`;
+    } 
+    // 检查命令是否包含 Java 执行
+    else if (command.includes('java.exe') || command.includes('.jar')) {
+      // 尝试从命令中提取 Java 路径
+      const javaPathMatch = command.match(/"([^"]*java\.exe)"/i);
+      if (javaPathMatch) {
+        // 从命令中提取的 Java 路径
+        const javaPath = javaPathMatch[1];
+        const javaDir = path.dirname(javaPath);
+        // 设置 PATH 环境变量，将 Java 目录添加到最前面
+        envSetup += ` & set "PATH=${javaDir};%PATH%"`;
+      } else if (config.environment.java) {
+        // 回退：使用配置的 Java 路径
+        let javaDir;
+        if (config.environment.java.endsWith('java.exe')) {
+          javaDir = path.dirname(config.environment.java);
+        } else {
+          javaDir = config.environment.java;
+        }
+        envSetup += ` & set "PATH=${javaDir};%PATH%"`;
+      } else if (config.environment.javaEnvironments) {
+        // 回退：尝试从 Java 环境列表中找到默认环境
+        const defaultEnv = config.environment.javaEnvironments.find(e => e.id === config.environment.defaultJavaEnvironmentId);
+        if (defaultEnv && defaultEnv.path) {
+          let javaDir;
+          if (defaultEnv.path.endsWith('java.exe')) {
+            javaDir = path.dirname(defaultEnv.path);
+          } else {
+            javaDir = defaultEnv.path;
+          }
+          envSetup += ` & set "PATH=${javaDir};%PATH%"`;
+        }
+      }
     }
     
     if (cwd && cwd.trim()) {
@@ -1318,7 +1351,8 @@ ipcMain.handle('execute-with-environment', (event, item) => {
         }
       }
       
-      finalCommand = `"${javaPath}" -jar "${command}" ${args}`.trim();
+      // 添加编码参数，确保Java程序使用UTF-8编码输出
+      finalCommand = `"${javaPath}" -Dfile.encoding=utf-8 -jar "${command}" ${args}`.trim();
     } else if (item.type === 'application') {
       const argString = args ? ` ${args}` : '';
       finalCommand = `"${command}"${argString}`.trim();
@@ -1338,6 +1372,32 @@ ipcMain.handle('execute-with-environment', (event, item) => {
         const pythonDir = path.dirname(config.environment.python);
         // 设置PATH环境变量，将Python目录添加到最前面
         envSetup += ` & set "PATH=${pythonDir};%PATH%"`;
+      } 
+      // 如果是Java类型的项目，修改PATH环境变量
+      else if (item.type === 'java') {
+        let javaDir = '';
+        // 根据项目选择的Java环境获取路径
+        if (item.javaEnvironmentId && config.environment.javaEnvironments) {
+          const selectedEnv = config.environment.javaEnvironments.find(e => e.id === item.javaEnvironmentId);
+          if (selectedEnv && selectedEnv.path) {
+            if (selectedEnv.path.endsWith('java.exe')) {
+              javaDir = path.dirname(selectedEnv.path);
+            } else {
+              javaDir = selectedEnv.path;
+            }
+          }
+        } else if (config.environment.java) {
+          // 向后兼容：使用旧的Java路径
+          if (config.environment.java.endsWith('java.exe')) {
+            javaDir = path.dirname(config.environment.java);
+          } else {
+            javaDir = config.environment.java;
+          }
+        }
+        // 设置PATH环境变量，将Java目录添加到最前面
+        if (javaDir) {
+          envSetup += ` & set "PATH=${javaDir};%PATH%"`;
+        }
       }
       
       const cmd = 'cmd.exe';
