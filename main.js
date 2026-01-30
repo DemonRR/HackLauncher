@@ -63,8 +63,19 @@ if (app.isPackaged) {
 const CONFIG_DIR = path.join(INSTALL_DIR, 'config');
 // 设置配置文件路径
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.db');
-// 设置日志文件路径
-const LOG_PATH = path.join(CONFIG_DIR, 'hacklauncher.log');
+// 设置日志文件基础路径
+const LOG_EXTENSION = '.log';
+const LOGS_DIR = path.join(INSTALL_DIR, 'logs');
+
+// 动态生成日志文件路径函数
+function getLogPath() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
+  return path.join(LOGS_DIR, `${dateStr}${LOG_EXTENSION}`);
+}
 
 let config = {
   categories: [],
@@ -540,22 +551,39 @@ async function saveConfig() {
     // 保存分类
     await new Promise((resolve, reject) => {
       db.serialize(() => {
-        // 先删除所有分类
-        db.run('DELETE FROM categories', err => {
+        // 首先删除数据库中存在但不在当前config.categories中的分类
+        const currentCategoryIds = config.categories.map(cat => cat.id);
+        db.all('SELECT id FROM categories', (err, rows) => {
           if (err) {
             reject(err);
             return;
           }
           
-          // 再插入所有分类
-          const stmt = db.prepare('INSERT INTO categories (id, name, icon) VALUES (?, ?, ?)');
-          config.categories.forEach(category => {
-            stmt.run(category.id, category.name, category.icon || 'fa-folder');
-          });
-          stmt.finalize(err => {
-            if (err) reject(err);
-            else resolve();
-          });
+          // 删除不在当前列表中的分类
+          const deletePromises = rows
+            .filter(row => !currentCategoryIds.includes(row.id))
+            .map(row => {
+              return new Promise((delResolve, delReject) => {
+                db.run('DELETE FROM categories WHERE id = ?', row.id, err => {
+                  if (err) delReject(err);
+                  else delResolve();
+                });
+              });
+            });
+          
+          Promise.all(deletePromises)
+            .then(() => {
+              // 然后更新或插入当前分类
+              const stmt = db.prepare('INSERT OR REPLACE INTO categories (id, name, icon) VALUES (?, ?, ?)');
+              config.categories.forEach(category => {
+                stmt.run(category.id, category.name, category.icon || 'fa-folder');
+              });
+              stmt.finalize(err => {
+                if (err) reject(err);
+                else resolve();
+              });
+            })
+            .catch(err => reject(err));
         });
       });
     });
@@ -563,42 +591,59 @@ async function saveConfig() {
     // 保存项目
     await new Promise((resolve, reject) => {
       db.serialize(() => {
-        // 先删除所有项目
-        db.run('DELETE FROM items', err => {
+        // 首先删除数据库中存在但不在当前config.items中的项目
+        const currentItemIds = config.items.map(item => item.id);
+        db.all('SELECT id FROM items', (err, rows) => {
           if (err) {
             reject(err);
             return;
           }
           
-          // 再插入所有项目
-          const stmt = db.prepare(`
-            INSERT INTO items (
-              id, name, type, command, categoryId, categoryName, icon, iconType, 
-              imagePath, launchParams, description, runInTerminal, isFavorite, javaEnvironmentId
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `);
-          config.items.forEach(item => {
-            stmt.run(
-              item.id,
-              item.name,
-              item.type,
-              item.command,
-              item.categoryId,
-              item.categoryName,
-              item.icon,
-              item.iconType || 'fa',
-              item.imagePath || '',
-              item.launchParams || '',
-              item.description || '',
-              item.runInTerminal ? 1 : 0,
-              item.isFavorite ? 1 : 0,
-              item.javaEnvironmentId || ''
-            );
-          });
-          stmt.finalize(err => {
-            if (err) reject(err);
-            else resolve();
-          });
+          // 删除不在当前列表中的项目
+          const deletePromises = rows
+            .filter(row => !currentItemIds.includes(row.id))
+            .map(row => {
+              return new Promise((delResolve, delReject) => {
+                db.run('DELETE FROM items WHERE id = ?', row.id, err => {
+                  if (err) delReject(err);
+                  else delResolve();
+                });
+              });
+            });
+          
+          Promise.all(deletePromises)
+            .then(() => {
+              // 然后更新或插入当前项目
+              const stmt = db.prepare(`
+                INSERT OR REPLACE INTO items (
+                  id, name, type, command, categoryId, categoryName, icon, iconType, 
+                  imagePath, launchParams, description, runInTerminal, isFavorite, javaEnvironmentId
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `);
+              config.items.forEach(item => {
+                stmt.run(
+                  item.id,
+                  item.name,
+                  item.type,
+                  item.command,
+                  item.categoryId,
+                  item.categoryName,
+                  item.icon,
+                  item.iconType || 'fa',
+                  item.imagePath || '',
+                  item.launchParams || '',
+                  item.description || '',
+                  item.runInTerminal ? 1 : 0,
+                  item.isFavorite ? 1 : 0,
+                  item.javaEnvironmentId || ''
+                );
+              });
+              stmt.finalize(err => {
+                if (err) reject(err);
+                else resolve();
+              });
+            })
+            .catch(err => reject(err));
         });
       });
     });
@@ -1079,21 +1124,16 @@ function log(level, message) {
   // 只将错误、警告以及非无用的信息写入日志文件
   if ((level === 'error' || level === 'warn' || level === 'info') && !isExcluded) {
     try {
-      // 确保配置目录存在
-      if (!fs.existsSync(CONFIG_DIR)) {
-        fs.mkdirSync(CONFIG_DIR, { recursive: true });
+      // 确保日志目录存在
+      if (!fs.existsSync(LOGS_DIR)) {
+        fs.mkdirSync(LOGS_DIR, { recursive: true });
       }
+      
+      // 获取当日日志文件路径
+      const currentLogPath = getLogPath();
       
       // 写入日志文件，使用UTF-8编码
-      fs.appendFileSync(LOG_PATH, logMessage, { encoding: 'utf8' });
-      
-      // 检查日志文件大小，如果超过10MB，进行简单的日志轮转
-      const stats = fs.statSync(LOG_PATH);
-      if (stats.size > 10 * 1024 * 1024) {
-        // 重命名旧日志文件
-        const oldLogPath = path.join(CONFIG_DIR, `hacklauncher.log.${Date.now()}`);
-        fs.renameSync(LOG_PATH, oldLogPath);
-      }
+      fs.appendFileSync(currentLogPath, logMessage, { encoding: 'utf8' });
     } catch (error) {
       console.error('写入日志失败:', error);
     }
@@ -1306,17 +1346,16 @@ ipcMain.handle('get-exe-icon', async (event, exePath) => {
 
 ipcMain.handle('open-log-file', async () => {
   try {
-    // 确保日志文件存在
-    if (!fs.existsSync(LOG_PATH)) {
-      // 如果日志文件不存在，创建一个空文件
-      fs.writeFileSync(LOG_PATH, '', { encoding: 'utf8' });
+    // 确保日志目录存在
+    if (!fs.existsSync(LOGS_DIR)) {
+      fs.mkdirSync(LOGS_DIR, { recursive: true });
     }
     
-    // 使用默认应用打开日志文件
-    await shell.openPath(LOG_PATH);
+    // 使用默认应用打开日志文件夹
+    await shell.openPath(LOGS_DIR);
     return true;
   } catch (error) {
-    logger.error(`打开日志文件失败: ${error}`);
+    logger.error(`打开日志文件夹失败: ${error}`);
     return false;
   }
 });

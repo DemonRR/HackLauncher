@@ -29,6 +29,7 @@ const getCategoryName = (categoryId) => {
 function renderItems(searchTerm = '') {
   const itemsGrid = document.getElementById('items-grid');
   const emptyState = document.getElementById('empty-state');
+  const searchResultsCount = document.getElementById('search-results-count');
   
   // 保存当前搜索词
   currentSearchTerm = searchTerm;
@@ -49,14 +50,45 @@ function renderItems(searchTerm = '') {
   // 应用搜索筛选
   if (searchTerm) {
     const lowerSearchTerm = searchTerm.toLowerCase();
-    itemsToRender = itemsToRender.filter(item => 
-      item.name.toLowerCase().includes(lowerSearchTerm) || 
-      item.command.toLowerCase().includes(lowerSearchTerm)
-    );
+    
+    // 为每个项目计算匹配分数，只匹配名称和描述
+    itemsToRender = itemsToRender
+      .map(item => {
+        let score = 0;
+        const itemName = item.name.toLowerCase();
+        const itemDescription = (item.description || '').toLowerCase();
+        
+        // 名称匹配权重最高
+        if (itemName.includes(lowerSearchTerm)) {
+          // 完全匹配分数更高
+          if (itemName === lowerSearchTerm) {
+            score += 100;
+          } else if (itemName.startsWith(lowerSearchTerm)) {
+            score += 50;
+          } else {
+            score += 30;
+          }
+        }
+        
+        // 描述匹配权重次之
+        if (itemDescription.includes(lowerSearchTerm)) {
+          score += 20;
+        }
+        
+        return { item, score };
+      })
+      // 只保留有匹配的项目
+      .filter(({ score }) => score > 0)
+      // 按匹配分数降序排序
+      .sort((a, b) => b.score - a.score)
+      // 提取排序后的项目
+      .map(({ item }) => item);
   }
   
-  // 应用排序
-  itemsToRender = applySortOrder(itemsToRender);
+  // 只有在非搜索状态下才应用自定义排序，搜索结果优先按照匹配度排序
+  if (!searchTerm) {
+    itemsToRender = applySortOrder(itemsToRender);
+  }
   
   // 显示空状态或项目列表
   if (itemsToRender.length === 0) {
@@ -70,6 +102,17 @@ function renderItems(searchTerm = '') {
     } else {
       document.querySelector('#empty-state h3').textContent = '暂无项目';
       document.querySelector('#empty-state p').textContent = '添加您的第一个启动器项目，快速访问常用应用和命令';
+    }
+    
+    // 更新搜索结果数量显示（空结果情况）
+    const searchResultsCount = document.getElementById('search-results-count');
+    if (searchResultsCount) {
+      if (searchTerm) {
+        searchResultsCount.textContent = '0';
+        searchResultsCount.style.display = 'block';
+      } else {
+        searchResultsCount.style.display = 'none';
+      }
     }
     
     return;
@@ -367,6 +410,18 @@ function renderItems(searchTerm = '') {
       });
     }
   });
+  
+  // 更新搜索结果数量显示
+  if (searchResultsCount) {
+    if (searchTerm) {
+      searchResultsCount.textContent = `${itemsToRender.length}`;
+      searchResultsCount.style.display = 'block';
+    } else {
+      searchResultsCount.style.display = 'none';
+    }
+  }
+  
+
 }
 
 // 辅助函数：获取命令输入框（根据类型）
@@ -677,7 +732,15 @@ function setupItemEvents() {
       document.getElementById('item-command-error').classList.remove('hidden');
       isValid = false;
     } else {
-      document.getElementById('item-command-error').classList.add('hidden');
+      // 检查路径或命令中是否包含CMD特殊符号
+      const specialChars = /[&|<>()^]/;
+      if (itemType !== 'url' && specialChars.test(itemCommand)) {
+        document.getElementById('item-command-error').textContent = '路径或命令中包含特殊符号(&|<>()^)，请修改后重试';
+        document.getElementById('item-command-error').classList.remove('hidden');
+        isValid = false;
+      } else {
+        document.getElementById('item-command-error').classList.add('hidden');
+      }
     }
 
     // 检查重名
@@ -788,8 +851,18 @@ function setupItemEvents() {
   
   // 设置搜索功能
   const searchInput = document.getElementById('search-input');
+  
+  // 防抖函数
+  let debounceTimer;
+  const debounceSearch = (term) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      renderItems(term);
+    }, 300); // 300ms防抖延迟
+  };
+  
   searchInput.addEventListener('input', (e) => {
-    renderItems(e.target.value.trim());
+    debounceSearch(e.target.value.trim());
   });
   
   // 添加键盘事件支持 - 按ESC清除搜索
@@ -993,6 +1066,13 @@ function getWorkingDirectory(filePath) {
 // 运行项目（最终完整版，稳定可交付）
 async function runItem(item) {
   try {
+    // 检查路径或命令中是否包含CMD特殊符号（URL类型除外）
+    const specialChars = /[&|<>()^]/;
+    if (item.type !== 'url' && specialChars.test(item.command)) {
+      showNotification('错误', `项目"${item.name}"的路径或命令中包含特殊符号(&|<>()^)，无法执行`, 'error');
+      return;
+    }
+    
     switch (item.type) {
 
       /* ================= URL ================= */

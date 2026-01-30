@@ -1,6 +1,6 @@
 {
   "name": "hacklauncher",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "渗透工具箱",
   "productName": "HackLauncher",
   "main": "main.js",
@@ -43,7 +43,8 @@
     },
     "files": [
       "**/*",
-      "!config/**"
+      "!config/**",
+      "!logs/**"
     ],
     "extraResources": [
       {

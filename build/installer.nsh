@@ -4,15 +4,22 @@
 !macroend
 
 !macro customInit
-  ; 备份 config 文件夹
+  ; 备份 config 和 logs 文件夹
   IfFileExists "$INSTDIR\config" 0 noConfigBackup
   
   ; 创建临时目录用于备份
-  CreateDirectory "$TEMP\HackLauncherBackup"
+  CreateDirectory "$TEMP\HackLauncherBackup\config"
+  CreateDirectory "$TEMP\HackLauncherBackup\logs"
   
   ; 备份 config 文件夹
-  CopyFiles /SILENT /FILESONLY "$INSTDIR\config\*.*" "$TEMP\HackLauncherBackup\"
+  CopyFiles /SILENT /FILESONLY "$INSTDIR\config\*.*" "$TEMP\HackLauncherBackup\config\"
   
+  ; 备份 logs 文件夹
+  IfFileExists "$INSTDIR\logs" 0 noLogsBackup
+  CopyFiles /SILENT /FILESONLY "$INSTDIR\logs\*.*" "$TEMP\HackLauncherBackup\logs\"
+  DetailPrint "已备份日志文件到临时目录"
+
+noLogsBackup:
   ; 记录备份完成
   DetailPrint "已备份配置文件到临时目录"
 
@@ -20,22 +27,30 @@ noConfigBackup:
 !macroend
 
 !macro customInstall
-  ; 安装后恢复 config 文件夹
-  IfFileExists "$TEMP\HackLauncherBackup\*.*" 0 noConfigRestore
+  ; 安装后恢复 config 和 logs 文件夹
+  IfFileExists "$TEMP\HackLauncherBackup\config\*.*" 0 noConfigRestore
   
   ; 确保目标 config 文件夹存在
   CreateDirectory "$INSTDIR\config"
   
   ; 恢复 config 文件夹
-  CopyFiles /SILENT /FILESONLY "$TEMP\HackLauncherBackup\*.*" "$INSTDIR\config\"
-  
-  ; 清理临时备份目录
-  RMDir /r "$TEMP\HackLauncherBackup"
-  
-  ; 记录恢复完成
+  CopyFiles /SILENT /FILESONLY "$TEMP\HackLauncherBackup\config\*.*" "$INSTDIR\config\"
   DetailPrint "已恢复配置文件"
 
 noConfigRestore:
+  ; 恢复 logs 文件夹
+  IfFileExists "$TEMP\HackLauncherBackup\logs\*.*" 0 noLogsRestore
+  
+  ; 确保目标 logs 文件夹存在
+  CreateDirectory "$INSTDIR\logs"
+  
+  ; 恢复 logs 文件夹
+  CopyFiles /SILENT /FILESONLY "$TEMP\HackLauncherBackup\logs\*.*" "$INSTDIR\logs\"
+  DetailPrint "已恢复日志文件"
+
+noLogsRestore:
+  ; 清理临时备份目录
+  RMDir /r "$TEMP\HackLauncherBackup"
 !macroend
 
 ; 使用.onVerifyInstDir函数处理目录验证和自动填充

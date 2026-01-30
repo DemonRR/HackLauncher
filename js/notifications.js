@@ -48,15 +48,15 @@ function toggleNotification() {
   notification.classList.toggle('translate-x-full');
 }
 
-// 打开日志文件
+// 打开日志所在文件夹
 function openLogFile() {
-  // 调用Electron API打开日志文件
+  // 调用Electron API打开日志所在文件夹
   if (window.api && window.api.openLogFile) {
     window.api.openLogFile();
-    // 打开日志文件后自动隐藏提示框
+    // 打开日志文件夹后自动隐藏提示框
     hideNotification();
   } else {
-    showNotification('错误', '无法打开日志文件：API不可用', 'error');
+    showNotification('错误', '无法打开日志所在文件夹：API不可用', 'error');
   }
 }
 

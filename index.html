@@ -151,7 +151,8 @@
               placeholder="搜索项目..." 
               class="pl-9 pr-4 py-2 rounded-lg border border-light-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
             >
-            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-light-3"></i> <!-- 替换为 v5 类名 -->
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-light-3 search-icon"></i> <!-- 替换为 v5 类名 -->
+            <span id="search-results-count" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-light-3"></span>
           </div>
           <button id="add-item-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center transition-custom shadow-sm">
             <i class="fas fa-plus mr-2"></i> 新建项目
@@ -188,7 +189,7 @@
       <h3 id="notification-title" class="font-medium text-dark truncate"></h3>
       <p id="notification-message" class="text-sm text-dark-2 truncate mt-1"></p>
     </div>
-    <button id="notification-log-btn" class="ml-2 text-light-3 hover:text-primary p-1 rounded-full hover:bg-light-1 flex-shrink-0">
+    <button id="notification-log-btn" class="ml-2 text-light-3 hover:text-primary p-1 rounded-full hover:bg-light-1 flex-shrink-0" title="打开日志所在文件夹">
       <i class="fa fa-file-alt text-sm"></i>
     </button>
     <button onclick="hideNotification()" class="modal-close-btn ml-2">
@@ -558,7 +559,7 @@
             <i class="fas fa-info-circle mr-2 text-primary"></i> 关于
           </h4>
           <div class="text-sm text-dark-2">
-            <p>版本: 1.0.7</p>
+            <p>版本: 1.0.8</p>
             <p class="mt-1">渗透武器库 - Windows 专用启动器管理工具</p>
             <p class="mt-1">作者: DemonRR</p>
             <p class="mt-1 flex items-center">
