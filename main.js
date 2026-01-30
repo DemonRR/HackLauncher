@@ -548,102 +548,124 @@ async function saveConfig() {
       );
     });
     
-    // 保存分类
+    // 保存分类和项目（使用事务提升性能）
     await new Promise((resolve, reject) => {
       db.serialize(() => {
-        // 首先删除数据库中存在但不在当前config.categories中的分类
-        const currentCategoryIds = config.categories.map(cat => cat.id);
-        db.all('SELECT id FROM categories', (err, rows) => {
+        // 开始事务
+        db.run('BEGIN TRANSACTION', err => {
           if (err) {
             reject(err);
             return;
           }
           
-          // 删除不在当前列表中的分类
-          const deletePromises = rows
-            .filter(row => !currentCategoryIds.includes(row.id))
-            .map(row => {
-              return new Promise((delResolve, delReject) => {
-                db.run('DELETE FROM categories WHERE id = ?', row.id, err => {
-                  if (err) delReject(err);
-                  else delResolve();
+          // 保存分类
+          const saveCategories = () => {
+            return new Promise((catResolve, catReject) => {
+              const currentCategoryIds = config.categories.map(cat => cat.id);
+              if (currentCategoryIds.length > 0) {
+                // 使用IN子句批量删除不在当前列表中的分类
+                const placeholders = currentCategoryIds.map(() => '?').join(',');
+                const deleteSql = `DELETE FROM categories WHERE id NOT IN (${placeholders})`;
+                db.run(deleteSql, [...currentCategoryIds], err => {
+                  if (err) {
+                    catReject(err);
+                    return;
+                  }
+                  
+                  // 然后更新或插入当前分类
+                  const stmt = db.prepare('INSERT OR REPLACE INTO categories (id, name, icon) VALUES (?, ?, ?)');
+                  config.categories.forEach(category => {
+                    stmt.run(category.id, category.name, category.icon || 'fa-folder');
+                  });
+                  stmt.finalize(err => {
+                    if (err) catReject(err);
+                    else catResolve();
+                  });
                 });
-              });
+              } else {
+                // 如果没有分类，删除所有分类
+                db.run('DELETE FROM categories', err => {
+                  if (err) catReject(err);
+                  else catResolve();
+                });
+              }
             });
+          };
           
-          Promise.all(deletePromises)
+          // 保存项目
+          const saveItems = () => {
+            return new Promise((itemResolve, itemReject) => {
+              const currentItemIds = config.items.map(item => item.id);
+              if (currentItemIds.length > 0) {
+                // 使用IN子句批量删除不在当前列表中的项目
+                const placeholders = currentItemIds.map(() => '?').join(',');
+                const deleteSql = `DELETE FROM items WHERE id NOT IN (${placeholders})`;
+                db.run(deleteSql, [...currentItemIds], err => {
+                  if (err) {
+                    itemReject(err);
+                    return;
+                  }
+                  
+                  // 然后更新或插入当前项目
+                  const stmt = db.prepare(`
+                    INSERT OR REPLACE INTO items (
+                      id, name, type, command, categoryId, categoryName, icon, iconType, 
+                      imagePath, launchParams, description, runInTerminal, isFavorite, javaEnvironmentId
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  `);
+                  config.items.forEach(item => {
+                    stmt.run(
+                      item.id,
+                      item.name,
+                      item.type,
+                      item.command,
+                      item.categoryId,
+                      item.categoryName,
+                      item.icon,
+                      item.iconType || 'fa',
+                      item.imagePath || '',
+                      item.launchParams || '',
+                      item.description || '',
+                      item.runInTerminal ? 1 : 0,
+                      item.isFavorite ? 1 : 0,
+                      item.javaEnvironmentId || ''
+                    );
+                  });
+                  stmt.finalize(err => {
+                    if (err) itemReject(err);
+                    else itemResolve();
+                  });
+                });
+              } else {
+                // 如果没有项目，删除所有项目
+                db.run('DELETE FROM items', err => {
+                  if (err) itemReject(err);
+                  else itemResolve();
+                });
+              }
+            });
+          };
+          
+          // 执行保存操作
+          saveCategories()
+            .then(() => saveItems())
             .then(() => {
-              // 然后更新或插入当前分类
-              const stmt = db.prepare('INSERT OR REPLACE INTO categories (id, name, icon) VALUES (?, ?, ?)');
-              config.categories.forEach(category => {
-                stmt.run(category.id, category.name, category.icon || 'fa-folder');
-              });
-              stmt.finalize(err => {
-                if (err) reject(err);
-                else resolve();
+              // 提交事务
+              db.run('COMMIT', err => {
+                if (err) {
+                  // 回滚事务
+                  db.run('ROLLBACK');
+                  reject(err);
+                } else {
+                  resolve();
+                }
               });
             })
-            .catch(err => reject(err));
-        });
-      });
-    });
-    
-    // 保存项目
-    await new Promise((resolve, reject) => {
-      db.serialize(() => {
-        // 首先删除数据库中存在但不在当前config.items中的项目
-        const currentItemIds = config.items.map(item => item.id);
-        db.all('SELECT id FROM items', (err, rows) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          
-          // 删除不在当前列表中的项目
-          const deletePromises = rows
-            .filter(row => !currentItemIds.includes(row.id))
-            .map(row => {
-              return new Promise((delResolve, delReject) => {
-                db.run('DELETE FROM items WHERE id = ?', row.id, err => {
-                  if (err) delReject(err);
-                  else delResolve();
-                });
-              });
+            .catch(err => {
+              // 回滚事务
+              db.run('ROLLBACK');
+              reject(err);
             });
-          
-          Promise.all(deletePromises)
-            .then(() => {
-              // 然后更新或插入当前项目
-              const stmt = db.prepare(`
-                INSERT OR REPLACE INTO items (
-                  id, name, type, command, categoryId, categoryName, icon, iconType, 
-                  imagePath, launchParams, description, runInTerminal, isFavorite, javaEnvironmentId
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              `);
-              config.items.forEach(item => {
-                stmt.run(
-                  item.id,
-                  item.name,
-                  item.type,
-                  item.command,
-                  item.categoryId,
-                  item.categoryName,
-                  item.icon,
-                  item.iconType || 'fa',
-                  item.imagePath || '',
-                  item.launchParams || '',
-                  item.description || '',
-                  item.runInTerminal ? 1 : 0,
-                  item.isFavorite ? 1 : 0,
-                  item.javaEnvironmentId || ''
-                );
-              });
-              stmt.finalize(err => {
-                if (err) reject(err);
-                else resolve();
-              });
-            })
-            .catch(err => reject(err));
         });
       });
     });
