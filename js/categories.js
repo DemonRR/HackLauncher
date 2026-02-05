@@ -61,6 +61,42 @@ function renderCategories() {
   allCategoryItem.appendChild(allCategoryContent);
   categoriesList.appendChild(allCategoryItem);
 
+  // 添加"最近使用"分类项
+  const recentCategoryItem = document.createElement('div');
+  recentCategoryItem.className = `flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-light-1 transition-custom category-list-item ${currentCategoryId === 'recent' ? 'bg-primary/10 text-primary' : ''}`;
+  recentCategoryItem.dataset.id = 'recent';
+  
+  // 获取最近使用的工具数量
+  const recentItems = getRecentUsedItems();
+  const recentCount = recentItems.length;
+  
+  recentCategoryItem.addEventListener('click', () => {
+    currentCategoryId = 'recent';
+    showFavoritesOnly = false;
+    renderCategories();
+    renderItems();
+  });
+
+  const recentCategoryContent = document.createElement('div');
+  recentCategoryContent.className = 'flex items-center space-x-2';
+  
+  const recentCategoryIcon = document.createElement('i');
+  recentCategoryIcon.className = 'fas fa-clock';
+  
+  const recentCategoryName = document.createElement('span');
+  recentCategoryName.textContent = '最近使用';
+
+  const recentItemCount = document.createElement('span');
+  recentItemCount.className = 'item-count bg-light-1 text-xs text-dark-2 rounded-full w-6 h-6 flex items-center justify-center shadow-sm';
+  recentItemCount.textContent = recentCount;
+  
+  recentCategoryContent.appendChild(recentCategoryIcon);
+  recentCategoryContent.appendChild(recentCategoryName);
+  recentCategoryContent.appendChild(recentItemCount);
+  
+  recentCategoryItem.appendChild(recentCategoryContent);
+  categoriesList.appendChild(recentCategoryItem);
+
   // 添加"我的收藏"分类项
   const favoriteCategoryItem = document.createElement('div');
   favoriteCategoryItem.className = `flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-light-1 transition-custom category-list-item ${showFavoritesOnly ? 'bg-primary/10 text-primary' : ''}`;
@@ -349,8 +385,8 @@ function handleCategoryDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
   
-  // 避免在"全部项目"和"我的收藏"上放置
-  if (this.dataset.id === 'all' || this.dataset.id === 'favorites') {
+  // 避免在"全部项目"、"最近使用"和"我的收藏"上放置
+  if (this.dataset.id === 'all' || this.dataset.id === 'recent' || this.dataset.id === 'favorites') {
     return;
   }
   
@@ -369,8 +405,8 @@ function handleCategoryDragOver(e) {
 function handleCategoryDragEnter(e) {
   e.preventDefault();
   
-  // 避免在"全部项目"和"我的收藏"上放置
-  if (this.dataset.id === 'all' || this.dataset.id === 'favorites') {
+  // 避免在"全部项目"、"最近使用"和"我的收藏"上放置
+  if (this.dataset.id === 'all' || this.dataset.id === 'recent' || this.dataset.id === 'favorites') {
     return;
   }
   
@@ -388,8 +424,8 @@ function handleCategoryDragLeave(e) {
 async function handleCategoryDrop(e) {
   e.preventDefault();
   
-  // 避免在"全部项目"和"我的收藏"上放置
-  if (this.dataset.id === 'all' || this.dataset.id === 'favorites') {
+  // 避免在"全部项目"、"最近使用"和"我的收藏"上放置
+  if (this.dataset.id === 'all' || this.dataset.id === 'recent' || this.dataset.id === 'favorites') {
     return;
   }
   
@@ -446,6 +482,42 @@ async function saveCategoryOrder() {
   } catch (error) {
     console.error('保存分类排序失败:', error);
   }
+}
+
+// 获取最近使用的工具列表
+try {
+  // 确保函数只定义一次
+  if (typeof getRecentUsedItems !== 'function') {
+    window.getRecentUsedItems = function() {
+      // 确保usageStats对象存在
+      if (!AppConfig.usageStats) {
+        return [];
+      }
+      
+      // 为每个项目添加使用统计信息
+      const itemsWithUsage = AppConfig.items.map(item => {
+        const usage = AppConfig.usageStats[item.id] || { count: 0, lastUsed: 0 };
+        return {
+          ...item,
+          usageCount: usage.count,
+          lastUsed: usage.lastUsed
+        };
+      });
+      
+      // 按使用次数降序排序，然后按最后使用时间降序排序，只返回使用次数大于0的项目
+      return itemsWithUsage
+        .filter(item => item.usageCount > 0)
+        .sort((a, b) => {
+          if (b.usageCount !== a.usageCount) {
+            return b.usageCount - a.usageCount;
+          }
+          return b.lastUsed - a.lastUsed;
+        })
+        .slice(0, 16); // 只返回前16个
+    };
+  }
+} catch (error) {
+  console.error('Error defining getRecentUsedItems:', error);
 }
 
 // 获取排序后的分类列表

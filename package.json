@@ -1,6 +1,6 @@
 {
   "name": "hacklauncher",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "渗透工具箱",
   "productName": "HackLauncher",
   "main": "main.js",

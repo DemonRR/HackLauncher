@@ -23,7 +23,8 @@ let AppConfig = {
     javaEnvironments: [],
     defaultJavaEnvironmentId: '',
     customPaths: []
-  }
+  },
+  usageStats: {} // 工具使用统计，格式为 { itemId: { count: number, lastUsed: timestamp } }
 };
 
 // 加载配置
@@ -42,6 +43,10 @@ async function loadConfig() {
       // 确保categoryOrder数组存在，保持向后兼容性
       if (!config.categoryOrder) {
         config.categoryOrder = [];
+      }
+      // 确保usageStats对象存在，保持向后兼容性
+      if (!config.usageStats) {
+        config.usageStats = {};
       }
       
       // 确保categoryOrder数组包含所有当前分类的ID
@@ -83,6 +88,7 @@ async function saveConfig() {
       favorites: []
     };
     AppConfig.categoryOrder = AppConfig.categoryOrder || [];
+    AppConfig.usageStats = AppConfig.usageStats || {};
     
     // 保存到主进程
     await window.api.saveConfig(AppConfig);

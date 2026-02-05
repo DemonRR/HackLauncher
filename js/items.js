@@ -44,7 +44,12 @@ function renderItems(searchTerm = '') {
   
   // 应用分类筛选
   if (currentCategoryId) {
-    itemsToRender = itemsToRender.filter(item => item.categoryId === currentCategoryId);
+    if (currentCategoryId === 'recent') {
+      // 显示最近使用的工具
+      itemsToRender = getRecentUsedItems();
+    } else {
+      itemsToRender = itemsToRender.filter(item => item.categoryId === currentCategoryId);
+    }
   }
   
   // 应用搜索筛选
@@ -373,6 +378,16 @@ function renderItems(searchTerm = '') {
       // 确保不超出上边界
       if (top < 10) {
         top = 10;
+      }
+      
+      // 显示或隐藏"以管理员身份运行"选项
+      const adminRunMenuItem = contextMenu.querySelector('.admin-run-menu-item');
+      if (adminRunMenuItem) {
+        if (item.type === 'application') {
+          adminRunMenuItem.classList.remove('hidden');
+        } else {
+          adminRunMenuItem.classList.add('hidden');
+        }
       }
       
       contextMenu.style.top = `${top}px`;
@@ -1073,6 +1088,24 @@ async function runItem(item) {
       return;
     }
     
+    // 记录工具使用统计
+    if (!AppConfig.usageStats) {
+      AppConfig.usageStats = {};
+    }
+    
+    if (!AppConfig.usageStats[item.id]) {
+      AppConfig.usageStats[item.id] = {
+        count: 0,
+        lastUsed: 0
+      };
+    }
+    
+    AppConfig.usageStats[item.id].count += 1;
+    AppConfig.usageStats[item.id].lastUsed = Date.now();
+    
+    // 保存使用统计
+    await saveConfig();
+    
     switch (item.type) {
 
       /* ================= URL ================= */
@@ -1397,6 +1430,36 @@ function initContextMenu() {
   });
   contextMenu.appendChild(runMenuItem);
   
+  // 以管理员身份运行菜单项
+  const runAsAdminMenuItem = document.createElement('div');
+  runAsAdminMenuItem.className = 'px-3 py-1.5 cursor-pointer flex items-center context-menu-item admin-run-menu-item';
+  runAsAdminMenuItem.innerHTML = '<i class="fas fa-user-shield mr-2 text-primary"></i> 以管理员身份运行';
+  runAsAdminMenuItem.addEventListener('click', () => {
+    const itemId = contextMenu.dataset.itemId;
+    const item = AppConfig.items.find(i => i.id === itemId);
+    if (item && item.type === 'application') {
+      // 构建命令
+      const quotedCommand = `"${item.command}"`;
+      let cmd = quotedCommand;
+      if (item.launchParams) cmd += ` ${item.launchParams}`;
+      
+      // 以管理员身份执行
+      window.api.executeCommandAsAdmin(cmd).catch(err => {
+        console.error('以管理员身份运行失败:', err);
+        showNotification('错误', '以管理员身份运行失败: ' + err, 'error');
+      });
+      
+      showNotification('成功', `应用程序已以管理员身份启动: ${item.name}`, 'success');
+      
+      // 检查是否需要自动最小化
+      if (AppConfig.settings.autoMinimizeAfterRun) {
+        window.api.minimizeWindow();
+      }
+    }
+    contextMenu.classList.add('hidden');
+  });
+  contextMenu.appendChild(runAsAdminMenuItem);
+  
   // 打开程序文件夹菜单项
   const openFolderItem = document.createElement('div');
   openFolderItem.className = 'px-3 py-1.5 cursor-pointer flex items-center context-menu-item folder-menu-item';
@@ -1454,6 +1517,11 @@ function applySortOrder(items) {
     };
   }
   
+  // 对于最近使用分类，不应用自定义排序，保持按使用次数排序
+  if (currentCategoryId === 'recent') {
+    return items;
+  }
+  
   // 确定当前视图的排序键
   let sortKey;
   if (showFavoritesOnly) {
@@ -1492,6 +1560,11 @@ function applySortOrder(items) {
 
 // 保存排序顺序
 async function saveSortOrder(items) {
+  // 对于最近使用分类，不保存自定义排序
+  if (currentCategoryId === 'recent') {
+    return;
+  }
+  
   // 确保sortOrders对象存在
   if (!AppConfig.sortOrders) {
     AppConfig.sortOrders = {

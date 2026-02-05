@@ -823,6 +823,8 @@ if (!app.requestSingleInstanceLock()) {
 
 app.whenReady().then(async () => {
   await loadConfig();
+  // 检测并更新路径
+  detectAndUpdatePaths();
   createWindow();
   createTray();
 
@@ -839,6 +841,185 @@ app.on('window-all-closed', function () {
   // 但在Windows和Linux上，我们需要明确阻止退出
   // 实际上，我们已经在close事件中阻止了窗口关闭，所以这个事件可能不会触发
 });
+
+// 路径检测和更新功能
+function detectAndUpdatePaths() {
+  try {
+    // 获取当前安装目录
+    let currentInstallDir;
+    if (app.isPackaged) {
+      // 打包后模式
+      currentInstallDir = path.dirname(app.getPath('exe'));
+    } else {
+      // 开发模式
+      currentInstallDir = __dirname;
+    }
+    
+    // 获取上级目录（PenetrationToolkit目录）
+    const penetrationToolkitDir = path.dirname(currentInstallDir);
+    
+    // 构建当前的工具目录路径
+    const currentToolsDir = path.join(penetrationToolkitDir, 'Tools');
+    
+    logger.info(`当前安装目录: ${currentInstallDir}`);
+    logger.info(`当前PenetrationToolkit目录: ${penetrationToolkitDir}`);
+    logger.info(`当前工具目录: ${currentToolsDir}`);
+    
+    // 检查是否需要更新路径
+    let pathsUpdated = false;
+    
+    // 遍历所有项目，更新路径
+    config.items.forEach(item => {
+      if (item.command) {
+        let updatedCommand = item.command;
+        
+        // 检测并替换包含HackLauncher的路径
+        const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+        if (hackLauncherPattern.test(updatedCommand)) {
+          updatedCommand = updatedCommand.replace(hackLauncherPattern, currentInstallDir);
+          pathsUpdated = true;
+        }
+        
+        // 检测并替换包含Tools的路径
+        const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+        if (toolsPattern.test(updatedCommand)) {
+          updatedCommand = updatedCommand.replace(toolsPattern, currentToolsDir);
+          pathsUpdated = true;
+        }
+        
+        // 更新项目命令
+        item.command = updatedCommand;
+      }
+      
+      // 同样更新imagePath（如果有）
+      if (item.imagePath) {
+        let updatedImagePath = item.imagePath;
+        
+        // 检测并替换包含HackLauncher的路径
+        const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+        if (hackLauncherPattern.test(updatedImagePath)) {
+          updatedImagePath = updatedImagePath.replace(hackLauncherPattern, currentInstallDir);
+          pathsUpdated = true;
+        }
+        
+        // 检测并替换包含Tools的路径
+        const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+        if (toolsPattern.test(updatedImagePath)) {
+          updatedImagePath = updatedImagePath.replace(toolsPattern, currentToolsDir);
+          pathsUpdated = true;
+        }
+        
+        // 更新项目图片路径
+        item.imagePath = updatedImagePath;
+      }
+    });
+    
+    // 更新环境变量中的路径
+    if (config.environment) {
+      // 更新python路径
+      if (config.environment.python) {
+        let updatedPythonPath = config.environment.python;
+        
+        // 检测并替换包含HackLauncher的路径
+        const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+        if (hackLauncherPattern.test(updatedPythonPath)) {
+          updatedPythonPath = updatedPythonPath.replace(hackLauncherPattern, currentInstallDir);
+          pathsUpdated = true;
+        }
+        
+        // 检测并替换包含Tools的路径
+        const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+        if (toolsPattern.test(updatedPythonPath)) {
+          updatedPythonPath = updatedPythonPath.replace(toolsPattern, currentToolsDir);
+          pathsUpdated = true;
+        }
+        
+        config.environment.python = updatedPythonPath;
+      }
+      
+      // 更新java路径
+      if (config.environment.java) {
+        let updatedJavaPath = config.environment.java;
+        
+        // 检测并替换包含HackLauncher的路径
+        const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+        if (hackLauncherPattern.test(updatedJavaPath)) {
+          updatedJavaPath = updatedJavaPath.replace(hackLauncherPattern, currentInstallDir);
+          pathsUpdated = true;
+        }
+        
+        // 检测并替换包含Tools的路径
+        const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+        if (toolsPattern.test(updatedJavaPath)) {
+          updatedJavaPath = updatedJavaPath.replace(toolsPattern, currentToolsDir);
+          pathsUpdated = true;
+        }
+        
+        config.environment.java = updatedJavaPath;
+      }
+      
+      // 更新javaEnvironments中的路径
+      if (config.environment.javaEnvironments && config.environment.javaEnvironments.length > 0) {
+        config.environment.javaEnvironments.forEach(env => {
+          if (env.path) {
+            let updatedEnvPath = env.path;
+            
+            // 检测并替换包含HackLauncher的路径
+            const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+            if (hackLauncherPattern.test(updatedEnvPath)) {
+              updatedEnvPath = updatedEnvPath.replace(hackLauncherPattern, currentInstallDir);
+              pathsUpdated = true;
+            }
+            
+            // 检测并替换包含Tools的路径
+            const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+            if (toolsPattern.test(updatedEnvPath)) {
+              updatedEnvPath = updatedEnvPath.replace(toolsPattern, currentToolsDir);
+              pathsUpdated = true;
+            }
+            
+            env.path = updatedEnvPath;
+          }
+        });
+      }
+      
+      // 更新customPaths中的路径
+      if (config.environment.customPaths && config.environment.customPaths.length > 0) {
+        config.environment.customPaths.forEach((path, index) => {
+          let updatedCustomPath = path;
+          
+          // 检测并替换包含HackLauncher的路径
+          const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+          if (hackLauncherPattern.test(updatedCustomPath)) {
+            updatedCustomPath = updatedCustomPath.replace(hackLauncherPattern, currentInstallDir);
+            pathsUpdated = true;
+          }
+          
+          // 检测并替换包含Tools的路径
+          const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+          if (toolsPattern.test(updatedCustomPath)) {
+            updatedCustomPath = updatedCustomPath.replace(toolsPattern, currentToolsDir);
+            pathsUpdated = true;
+          }
+          
+          config.environment.customPaths[index] = updatedCustomPath;
+        });
+      }
+    }
+    
+    // 如果路径有更新，保存配置
+    if (pathsUpdated && db) {
+      logger.info('检测到路径变更，正在更新配置...');
+      saveConfig();
+      logger.info('路径更新完成');
+    } else if (pathsUpdated && !db) {
+      logger.warn('检测到路径变更，但数据库连接未初始化，无法保存配置');
+    }
+  } catch (error) {
+    logger.error(`路径检测和更新失败: ${error.message}`);
+    logger.error(error.stack);
+  }
+}
 
 // 当应用准备退出时，清理托盘资源
 app.on('before-quit', () => {
@@ -1031,6 +1212,73 @@ ipcMain.handle('execute-command', (event, command, cwd) => {
       logger.error(errorMessage);
       reject(errorMessage);
     });
+  });
+});
+
+ipcMain.handle('execute-command-as-admin', (event, command, cwd) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const { exec } = require('child_process');
+      
+      // 打印执行的命令
+      logger.info(`以管理员身份执行命令: ${command}`);
+      
+      // 直接执行应用程序，不通过cmd.exe
+      // 解析命令，提取应用程序路径和参数
+      let appPath = command;
+      let args = '';
+      
+      // 处理带引号的路径
+      if (command.startsWith('"')) {
+        const quoteIndex = command.indexOf('"', 1);
+        if (quoteIndex !== -1) {
+          appPath = command.substring(1, quoteIndex);
+          args = command.substring(quoteIndex + 1).trim();
+        }
+      } else {
+        // 处理不带引号的路径
+        const spaceIndex = command.indexOf(' ');
+        if (spaceIndex !== -1) {
+          appPath = command.substring(0, spaceIndex);
+          args = command.substring(spaceIndex + 1).trim();
+        }
+      }
+      
+      // 使用 PowerShell 的 Start-Process 命令以管理员身份运行
+      let psCommand;
+      if (args) {
+        if (cwd && cwd.trim()) {
+          psCommand = `powershell -Command "Start-Process '${appPath.replace(/'/g, "''")}' -ArgumentList '${args.replace(/'/g, "''")}' -WorkingDirectory '${cwd.replace(/'/g, "''")}' -Verb RunAs"`;
+        } else {
+          psCommand = `powershell -Command "Start-Process '${appPath.replace(/'/g, "''")}' -ArgumentList '${args.replace(/'/g, "''")}' -Verb RunAs"`;
+        }
+      } else {
+        if (cwd && cwd.trim()) {
+          psCommand = `powershell -Command "Start-Process '${appPath.replace(/'/g, "''")}' -WorkingDirectory '${cwd.replace(/'/g, "''")}' -Verb RunAs"`;
+        } else {
+          psCommand = `powershell -Command "Start-Process '${appPath.replace(/'/g, "''")}' -Verb RunAs"`;
+        }
+      }
+      
+      // 执行 PowerShell 命令
+      exec(psCommand, (error, stdout, stderr) => {
+        if (error) {
+          // 检查是否是用户取消了UAC提示
+          if (error.code === 1 && stderr.includes('操作已取消')) {
+            resolve('用户取消了管理员权限请求');
+          } else {
+            logger.error(`以管理员身份执行命令失败: ${error.message}`);
+            reject(`以管理员身份执行命令失败: ${error.message}`);
+          }
+        } else {
+          logger.info('以管理员身份执行命令成功');
+          resolve('命令已以管理员身份启动');
+        }
+      });
+    } catch (error) {
+      logger.error(`以管理员身份执行命令失败: ${error.message}`);
+      reject(`以管理员身份执行命令失败: ${error.message}`);
+    }
   });
 });
 

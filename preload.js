@@ -31,5 +31,7 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('show-close-confirm', callback);
   },
   confirmQuit: () => ipcRenderer.send('confirm-quit'),
-  confirmMinimize: () => ipcRenderer.send('confirm-minimize')
+  confirmMinimize: () => ipcRenderer.send('confirm-minimize'),
+  // 以管理员身份执行命令
+  executeCommandAsAdmin: (command, cwd) => ipcRenderer.invoke('execute-command-as-admin', command, cwd)
 });
