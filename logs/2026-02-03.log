@@ -1,0 +1,49 @@
+2026-02-03 15:30:05.101 [INFO] 以管理员身份执行命令: "H:\Penetration Toolkit\Tools\TrafficTools\Yakit\Yakit.exe"
+2026-02-03 15:30:06.112 [INFO] 以管理员身份执行命令成功
+2026-02-03 15:30:43.423 [INFO] 以管理员身份执行命令: "F:\PenetrationToolkit\Tools\TrafficTools\Yakit\Yakit.exe"
+2026-02-03 15:30:44.509 [INFO] 以管理员身份执行命令成功
+2026-02-03 15:32:37.083 [INFO] 以管理员身份执行命令: "F:\PenetrationToolkit\Tools\TrafficTools\Yakit\Yakit.exe"
+2026-02-03 15:32:38.694 [INFO] 以管理员身份执行命令成功
+2026-02-03 15:54:56.636 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-03 15:54:56.636 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-03 15:54:56.649 [INFO] 当前工具目录: F:\Tools
+2026-02-03 15:54:56.651 [INFO] 检测到路径变更，正在更新配置...
+2026-02-03 15:54:56.652 [INFO] 路径更新完成
+2026-02-03 15:55:34.120 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-03 15:55:34.120 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-03 15:55:34.121 [INFO] 当前工具目录: F:\Tools
+2026-02-03 15:55:34.122 [INFO] 检测到路径变更，正在更新配置...
+2026-02-03 15:55:34.123 [INFO] 路径更新完成
+2026-02-03 15:55:44.465 [ERROR] 获取 EXE 图标失败: Error: 文件不存在
+2026-02-03 16:03:14.747 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-03 16:03:14.747 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-03 16:03:14.748 [INFO] 当前工具目录: F:\Tools
+2026-02-03 16:03:14.749 [INFO] 检测到路径变更，正在更新配置...
+2026-02-03 16:03:14.750 [INFO] 路径更新完成
+2026-02-03 16:12:29.238 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-03 16:12:29.238 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-03 16:12:29.239 [INFO] 当前工具目录: F:\Tools
+2026-02-03 16:12:56.648 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-03 16:12:56.649 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-03 16:12:56.649 [INFO] 当前工具目录: F:\Tools
+2026-02-03 16:13:12.602 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-03 16:13:12.602 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-03 16:13:12.603 [INFO] 当前工具目录: F:\Tools
+2026-02-03 16:13:36.067 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-03 16:13:36.068 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-03 16:13:36.068 [INFO] 当前工具目录: F:\Tools
+2026-02-03 16:13:36.069 [INFO] 检测到路径变更，正在更新配置...
+2026-02-03 16:13:36.070 [INFO] 路径更新完成
+2026-02-03 16:37:06.914 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-03 16:37:06.914 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-03 16:37:06.915 [INFO] 当前工具目录: F:\Tools
+2026-02-03 16:37:39.382 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-03 16:37:39.383 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-03 16:37:39.383 [INFO] 当前工具目录: F:\Tools
+2026-02-03 16:39:41.895 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-03 16:39:41.896 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-03 16:39:41.896 [INFO] 当前工具目录: F:\Tools
+2026-02-03 16:39:47.275 [INFO] 执行命令: "F:\Tools\TrafficTools\Yakit\Yakit.exe"
+2026-02-03 16:39:47.327 [ERROR] 命令执行失败: '"F:\Tools\TrafficTools\Yakit\Yakit.exe"' 不是内部或外部命令，也不是可运行的程序
+或批处理文件。
+

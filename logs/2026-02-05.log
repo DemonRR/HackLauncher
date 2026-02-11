@@ -1,0 +1,20 @@
+2026-02-05 11:05:40.864 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-05 11:05:40.865 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-05 11:05:40.865 [INFO] 当前工具目录: F:\Tools
+2026-02-05 11:05:47.677 [INFO] 执行终端命令: start "Runner" cmd /k "chcp 65001 >nul & set "PATH=F:\Tools\system\python3;%PATH%" & cd /d "F:\Tools\DatabaseTools\sqlmap-1.9.12" & "F:\Tools\system\python3\python.exe" "F:\Tools\DatabaseTools\sqlmap-1.9.12\sqlmap.py" -h"
+2026-02-05 11:06:01.276 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-05 11:06:01.277 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-05 11:06:01.277 [INFO] 当前工具目录: F:\Tools
+2026-02-05 17:01:23.351 [INFO] 当前安装目录: F:\HackLauncher
+2026-02-05 17:01:23.359 [INFO] 当前PenetrationToolkit目录: F:\
+2026-02-05 17:01:23.359 [INFO] 当前工具目录: F:\Tools
+2026-02-05 17:01:26.821 [INFO] 以管理员身份执行命令: "F:\Tools\TrafficTools\Yakit\Yakit.exe"
+2026-02-05 17:01:28.067 [ERROR] 以管理员身份执行命令失败: Command failed: powershell -Command "Start-Process 'F:\Tools\TrafficTools\Yakit\Yakit.exe' -Verb RunAs"
+Start-Process : ���ڳ������´����޷����д�����: ϵͳ�Ҳ���ָ�����ļ�����
+����λ�� ��:1 �ַ�: 1
++ Start-Process 'F:\Tools\TrafficTools\Yakit\Yakit.exe' -Verb RunAs
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [Start-Process]��InvalidOperationException
+    + FullyQualifiedErrorId : InvalidOperationException,Microsoft.PowerShell.Commands.StartProcessCommand
+ 
+

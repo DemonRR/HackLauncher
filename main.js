@@ -93,7 +93,8 @@ let config = {
     python: '',
     java: '',
     customPaths: []
-  }
+  },
+  usageStats: {} // 工具使用统计
 };
 
 // SQLite 数据库连接
@@ -426,6 +427,17 @@ async function loadConfig() {
       config.categoryOrder = JSON.parse(categoryOrderRow.value);
     }
     
+    // 加载使用统计
+    const usageStatsRow = await new Promise((resolve, reject) => {
+      db.get('SELECT value FROM config WHERE key = ?', 'usageStats', (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    if (usageStatsRow) {
+      config.usageStats = JSON.parse(usageStatsRow.value);
+    }
+    
     // 确保配置结构完整
     if (!config.settings) {
       config.settings = {
@@ -475,7 +487,8 @@ async function loadConfig() {
         closeBehavior: 'ask',
         autoMinimizeAfterRun: false
       },
-      environment: { python: '', java: '', customPaths: [] }
+      environment: { python: '', java: '', customPaths: [] },
+      usageStats: {}
     };
     await saveConfig();
   }
@@ -541,6 +554,19 @@ async function saveConfig() {
         'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
         'categoryOrder',
         JSON.stringify(config.categoryOrder),
+        err => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+    
+    // 保存使用统计
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+        'usageStats',
+        JSON.stringify(config.usageStats),
         err => {
           if (err) reject(err);
           else resolve();
@@ -874,14 +900,14 @@ function detectAndUpdatePaths() {
         let updatedCommand = item.command;
         
         // 检测并替换包含HackLauncher的路径
-        const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+        const hackLauncherPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*HackLauncher/g;
         if (hackLauncherPattern.test(updatedCommand)) {
           updatedCommand = updatedCommand.replace(hackLauncherPattern, currentInstallDir);
           pathsUpdated = true;
         }
         
         // 检测并替换包含Tools的路径
-        const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+        const toolsPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*Tools/g;
         if (toolsPattern.test(updatedCommand)) {
           updatedCommand = updatedCommand.replace(toolsPattern, currentToolsDir);
           pathsUpdated = true;
@@ -896,14 +922,14 @@ function detectAndUpdatePaths() {
         let updatedImagePath = item.imagePath;
         
         // 检测并替换包含HackLauncher的路径
-        const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+        const hackLauncherPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*HackLauncher/g;
         if (hackLauncherPattern.test(updatedImagePath)) {
           updatedImagePath = updatedImagePath.replace(hackLauncherPattern, currentInstallDir);
           pathsUpdated = true;
         }
         
         // 检测并替换包含Tools的路径
-        const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+        const toolsPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*Tools/g;
         if (toolsPattern.test(updatedImagePath)) {
           updatedImagePath = updatedImagePath.replace(toolsPattern, currentToolsDir);
           pathsUpdated = true;
@@ -921,14 +947,14 @@ function detectAndUpdatePaths() {
         let updatedPythonPath = config.environment.python;
         
         // 检测并替换包含HackLauncher的路径
-        const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+        const hackLauncherPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*HackLauncher/g;
         if (hackLauncherPattern.test(updatedPythonPath)) {
           updatedPythonPath = updatedPythonPath.replace(hackLauncherPattern, currentInstallDir);
           pathsUpdated = true;
         }
         
         // 检测并替换包含Tools的路径
-        const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+        const toolsPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*Tools/g;
         if (toolsPattern.test(updatedPythonPath)) {
           updatedPythonPath = updatedPythonPath.replace(toolsPattern, currentToolsDir);
           pathsUpdated = true;
@@ -942,14 +968,14 @@ function detectAndUpdatePaths() {
         let updatedJavaPath = config.environment.java;
         
         // 检测并替换包含HackLauncher的路径
-        const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+        const hackLauncherPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*HackLauncher/g;
         if (hackLauncherPattern.test(updatedJavaPath)) {
           updatedJavaPath = updatedJavaPath.replace(hackLauncherPattern, currentInstallDir);
           pathsUpdated = true;
         }
         
         // 检测并替换包含Tools的路径
-        const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+        const toolsPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*Tools/g;
         if (toolsPattern.test(updatedJavaPath)) {
           updatedJavaPath = updatedJavaPath.replace(toolsPattern, currentToolsDir);
           pathsUpdated = true;
@@ -965,14 +991,14 @@ function detectAndUpdatePaths() {
             let updatedEnvPath = env.path;
             
             // 检测并替换包含HackLauncher的路径
-            const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+            const hackLauncherPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*HackLauncher/g;
             if (hackLauncherPattern.test(updatedEnvPath)) {
               updatedEnvPath = updatedEnvPath.replace(hackLauncherPattern, currentInstallDir);
               pathsUpdated = true;
             }
             
             // 检测并替换包含Tools的路径
-            const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+            const toolsPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*Tools/g;
             if (toolsPattern.test(updatedEnvPath)) {
               updatedEnvPath = updatedEnvPath.replace(toolsPattern, currentToolsDir);
               pathsUpdated = true;
@@ -989,14 +1015,14 @@ function detectAndUpdatePaths() {
           let updatedCustomPath = path;
           
           // 检测并替换包含HackLauncher的路径
-          const hackLauncherPattern = /[a-zA-Z]:\\[^\\]+\\HackLauncher/g;
+          const hackLauncherPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*HackLauncher/g;
           if (hackLauncherPattern.test(updatedCustomPath)) {
             updatedCustomPath = updatedCustomPath.replace(hackLauncherPattern, currentInstallDir);
             pathsUpdated = true;
           }
           
           // 检测并替换包含Tools的路径
-          const toolsPattern = /[a-zA-Z]:\\[^\\]+\\Tools/g;
+          const toolsPattern = /[a-zA-Z]:\\(?:[^\\]+\\)*Tools/g;
           if (toolsPattern.test(updatedCustomPath)) {
             updatedCustomPath = updatedCustomPath.replace(toolsPattern, currentToolsDir);
             pathsUpdated = true;

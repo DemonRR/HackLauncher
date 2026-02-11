@@ -1106,6 +1106,9 @@ async function runItem(item) {
     // 保存使用统计
     await saveConfig();
     
+    // 重新渲染分类列表，更新最近使用的数量
+    renderCategories();
+    
     switch (item.type) {
 
       /* ================= URL ================= */
@@ -1342,41 +1345,53 @@ async function runItem(item) {
 
 
 // 打开程序文件夹
-async function openFolder(command) {
+async function openFolder(command, itemType) {
   try {
     let folderPath = '';
     
-    // 获取Python脚本所在目录
-    if (command.includes('.py')) {
-      const match = command.match(/(.+?[\\/][^\\/]+\.py)/);
-      if (match) {
-        folderPath = match[1].replace(/[\\/][^\\/]+$/, '');
+    // 特殊处理文件和文件夹类型
+    if (itemType === 'folder') {
+      // 文件夹类型直接使用command作为文件夹路径
+      folderPath = command;
+    } else if (itemType === 'file') {
+      // 文件类型提取所在目录
+      if (command) {
+        folderPath = command.replace(/[\\/][^\\/]+$/, '');
       }
-    }
-    // 获取Java/JAR文件所在目录
-    else if (command.includes('.jar') || command.match(/\.class\b/)) {
-      const match = command.match(/(.+?[\\/][^\\/]+\.(jar|class))/)
-                 || command.match(/(.+?[\\/][^\\/]+)$/);
-      if (match) {
-        folderPath = match[1].replace(/[\\/][^\\/]+$/, '');
+    } else {
+      // 其他类型的处理逻辑保持不变
+      // 获取Python脚本所在目录
+      if (command.includes('.py')) {
+        const match = command.match(/(.+?[\\/][^\\/]+\.py)/);
+        if (match) {
+          folderPath = match[1].replace(/[\\/][^\\/]+$/, '');
+        }
       }
-    }
-    // 获取应用程序所在目录
-    else if (command.includes('.exe') || command.includes('.lnk')) {
-      const match = command.match(/(.+?[\\/][^\\/]+\.(exe|lnk))/)
-                 || command.match(/(.+?[\\/][^\\/]+)$/);
-      if (match) {
-        folderPath = match[1].replace(/[\\/][^\\/]+$/, '');
+      // 获取Java/JAR文件所在目录
+      else if (command.includes('.jar') || command.match(/\.class\b/)) {
+        const match = command.match(/(.+?[\\/][^\\/]+\.(jar|class))/)
+                   || command.match(/(.+?[\\/][^\\/]+)$/);
+        if (match) {
+          folderPath = match[1].replace(/[\\/][^\\/]+$/, '');
+        }
       }
-    }
-    // 尝试从完整路径提取目录
-    else {
-      const match = command.match(/(.+?[\\/][^\\/]+)/);
-      if (match) {
-        const potentialPath = match[1];
-        // 检查是否是有效路径
-        if (potentialPath.includes(':') || potentialPath.startsWith('\\\\')) {
-          folderPath = potentialPath.replace(/[\\/][^\\/]+$/, '');
+      // 获取应用程序所在目录
+      else if (command.includes('.exe') || command.includes('.lnk')) {
+        const match = command.match(/(.+?[\\/][^\\/]+\.(exe|lnk))/)
+                   || command.match(/(.+?[\\/][^\\/]+)$/);
+        if (match) {
+          folderPath = match[1].replace(/[\\/][^\\/]+$/, '');
+        }
+      }
+      // 尝试从完整路径提取目录
+      else {
+        const match = command.match(/(.+?[\\/][^\\/]+)/);
+        if (match) {
+          const potentialPath = match[1];
+          // 检查是否是有效路径
+          if (potentialPath.includes(':') || potentialPath.startsWith('\\\\')) {
+            folderPath = potentialPath.replace(/[\\/][^\\/]+$/, '');
+          }
         }
       }
     }
@@ -1434,10 +1449,31 @@ function initContextMenu() {
   const runAsAdminMenuItem = document.createElement('div');
   runAsAdminMenuItem.className = 'px-3 py-1.5 cursor-pointer flex items-center context-menu-item admin-run-menu-item';
   runAsAdminMenuItem.innerHTML = '<i class="fas fa-user-shield mr-2 text-primary"></i> 以管理员身份运行';
-  runAsAdminMenuItem.addEventListener('click', () => {
+  runAsAdminMenuItem.addEventListener('click', async () => {
     const itemId = contextMenu.dataset.itemId;
     const item = AppConfig.items.find(i => i.id === itemId);
     if (item && item.type === 'application') {
+      // 记录工具使用统计
+      if (!AppConfig.usageStats) {
+        AppConfig.usageStats = {};
+      }
+      
+      if (!AppConfig.usageStats[item.id]) {
+        AppConfig.usageStats[item.id] = {
+          count: 0,
+          lastUsed: 0
+        };
+      }
+      
+      AppConfig.usageStats[item.id].count += 1;
+      AppConfig.usageStats[item.id].lastUsed = Date.now();
+      
+      // 保存使用统计
+      await saveConfig();
+      
+      // 重新渲染分类列表，更新最近使用的数量
+      renderCategories();
+      
       // 构建命令
       const quotedCommand = `"${item.command}"`;
       let cmd = quotedCommand;
@@ -1468,7 +1504,7 @@ function initContextMenu() {
     const itemId = contextMenu.dataset.itemId;
     const item = AppConfig.items.find(i => i.id === itemId);
     if (item && item.type !== 'url') {
-      openFolder(item.command);
+      openFolder(item.command, item.type);
     }
     contextMenu.classList.add('hidden');
   });

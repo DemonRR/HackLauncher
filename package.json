@@ -1,6 +1,6 @@
 {
   "name": "hacklauncher",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "渗透工具箱",
   "productName": "HackLauncher",
   "main": "main.js",
@@ -8,7 +8,7 @@
     "start": "chcp 65001 >nul && electron . --no-sandbox",
     "dev": "chcp 65001 >nul && NODE_ENV=development electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
+    "dist": "electron-builder --win --x64",
     "lint": "eslint .",
     "build:clean": "rimraf dist && rimraf node_modules/.cache && rimraf node_modules/.rpt2_cache",
     "postinstall": "electron-builder install-app-deps"
