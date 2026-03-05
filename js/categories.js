@@ -94,7 +94,48 @@ function renderCategories() {
   recentCategoryContent.appendChild(recentCategoryName);
   recentCategoryContent.appendChild(recentItemCount);
   
+  // 添加清除最近使用记录的按钮
+  const actionButtons = document.createElement('div');
+  actionButtons.className = 'flex items-center space-x-0 opacity-0 hover:opacity-100 transition-custom';
+  
+  const clearRecentButton = document.createElement('button');
+  clearRecentButton.className = 'p-0.5 text-dark-2 hover:text-danger transition-custom';
+  clearRecentButton.innerHTML = '<i class="fas fa-broom text-sm"></i>';
+  clearRecentButton.title = '清除最近使用记录';
+  clearRecentButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // 设置确认弹窗的标题和消息
+    document.getElementById('confirm-title').textContent = '确认清除';
+    document.getElementById('confirm-message').textContent = '确定要清除所有最近使用记录吗？';
+    document.getElementById('confirm-ok-btn').textContent = '确认清除';
+    
+    // 显示确认弹窗
+    document.getElementById('confirm-modal').classList.remove('hidden');
+    
+    // 保存原始的确认按钮点击事件
+    const originalOkHandler = document.getElementById('confirm-ok-btn').onclick;
+    
+    // 设置新的确认按钮点击事件
+    document.getElementById('confirm-ok-btn').onclick = async () => {
+      // 清除最近使用记录
+      AppConfig.usageStats = {};
+      // 保存配置
+      await saveConfig();
+      // 重新渲染分类和项目
+      renderCategories();
+      renderItems();
+      showNotification('成功', '最近使用记录已清除', 'success');
+      // 关闭弹窗
+      document.getElementById('confirm-modal').classList.add('hidden');
+      // 恢复原始的确认按钮点击事件
+      document.getElementById('confirm-ok-btn').onclick = originalOkHandler;
+    };
+  });
+  
+  actionButtons.appendChild(clearRecentButton);
+  
   recentCategoryItem.appendChild(recentCategoryContent);
+  recentCategoryItem.appendChild(actionButtons);
   categoriesList.appendChild(recentCategoryItem);
 
   // 添加"我的收藏"分类项

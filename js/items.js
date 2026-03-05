@@ -100,13 +100,27 @@ function renderItems(searchTerm = '') {
     itemsGrid.innerHTML = '';
     emptyState.classList.remove('hidden');
     
+    // 获取添加项目按钮
+    const addItemBtn = document.getElementById('empty-add-item-btn');
+    
     // 如果有搜索词但没有结果，显示搜索无结果提示
     if (searchTerm) {
       document.querySelector('#empty-state h3').textContent = '未找到匹配项目';
       document.querySelector('#empty-state p').textContent = '尝试使用不同的关键词或清除搜索条件';
+      // 显示添加项目按钮
+      if (addItemBtn) addItemBtn.classList.remove('hidden');
+    } else if (currentCategoryId === 'recent') {
+      // 最近使用分类为空的情况
+      document.querySelector('#empty-state h3').textContent = '暂无最近使用记录';
+      document.querySelector('#empty-state p').textContent = '使用应用或命令后，它们将显示在这里';
+      // 隐藏添加项目按钮
+      if (addItemBtn) addItemBtn.classList.add('hidden');
     } else {
+      // 其他分类为空的情况
       document.querySelector('#empty-state h3').textContent = '暂无项目';
       document.querySelector('#empty-state p').textContent = '添加您的第一个启动器项目，快速访问常用应用和命令';
+      // 显示添加项目按钮
+      if (addItemBtn) addItemBtn.classList.remove('hidden');
     }
     
     // 更新搜索结果数量显示（空结果情况）
