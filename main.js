@@ -1055,6 +1055,17 @@ app.on('before-quit', () => {
   }
 });
 
+// 移除系统主题变化监听器，让软件主题保持用户手动设置的状态
+// if (process.platform === 'win32') {
+//   const { systemPreferences } = require('electron');
+//   systemPreferences.on('system-color-changed', () => {
+//     const isDarkMode = systemPreferences.isDarkMode();
+//     if (mainWindow) {
+//       mainWindow.webContents.send('system-theme-changed', isDarkMode);
+//     }
+//   });
+// }
+
 Menu.setApplicationMenu(null);
 
 // 窗口控制相关IPC处理

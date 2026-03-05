@@ -645,6 +645,11 @@ body.dark .font-medium.text-dark {
   color: #ffffff; /* 确保项目卡片名称在暗主题下为白色 */
 }
 
+/* 项目卡片描述样式 */
+body.dark .text-xs.text-gray-500 {
+  color: #ffffff; /* 确保项目卡片描述在暗主题下为白色，更醒目 */
+}
+
 /* 关于部分样式 */
 body.dark #settings-modal .text-sm.text-dark-2 {
   color: #cbd5e1; /* 确保关于部分文本在暗主题下为亮灰色 */
@@ -1341,17 +1346,30 @@ body.dark .bg-white.rounded-xl.shadow-sm.hover-scale:hover .item-icon-container 
   transform: scale(1.2);
 }
 
-/* 分类徽章悬停效果 */
+/* 分类徽章样式 */
 .px-2.py-0\.5.bg-gray-100 {
   transition: all 0.3s ease;
+  background-color: #f3f4f6 !important;
+  color: #4b5563 !important;
 }
 
+body.light .px-2.py-0\.5.bg-gray-100 {
+  background-color: #f3f4f6 !important;
+  color: #4b5563 !important;
+}
+
+body.dark .px-2.py-0\.5.bg-gray-100 {
+  background-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+/* 分类徽章悬停效果 */
 .bg-white.rounded-xl.shadow-sm.hover-scale:hover .px-2.py-0\.5.bg-gray-100 {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-body.dark .bg-white.rounded-xl.shadow-sm.hover-scale:hover .px-2.py-0\.5.dark\:bg-dark-2 {
+body.dark .bg-white.rounded-xl.shadow-sm.hover-scale:hover .px-2.py-0\.5.bg-gray-100 {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 

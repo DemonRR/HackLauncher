@@ -32,6 +32,10 @@ contextBridge.exposeInMainWorld('api', {
   },
   confirmQuit: () => ipcRenderer.send('confirm-quit'),
   confirmMinimize: () => ipcRenderer.send('confirm-minimize'),
+  // 系统主题变化相关
+  receive: (channel, callback) => {
+    ipcRenderer.on(channel, (event, ...args) => callback(...args));
+  },
   // 以管理员身份执行命令
   executeCommandAsAdmin: (command, cwd) => ipcRenderer.invoke('execute-command-as-admin', command, cwd)
 });
