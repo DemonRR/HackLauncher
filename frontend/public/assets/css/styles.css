@@ -1,0 +1,2582 @@
+/* assets/css/styles.css */
+
+/* 主题颜色变量 */
+:root {
+  --theme-color: #165DFF;
+  --theme-color-light: rgba(22, 93, 255, 0.12);
+  --theme-color-hover: #0F4BD8;
+}
+
+/* 最小窗口尺寸限制 - 水平布局 (md以上) */
+@media (min-width: 768px) {
+  html, body {
+    min-width: 640px !important;
+    min-height: 700px !important;
+  }
+}
+
+/* 最小窗口尺寸限制 - 垂直布局 (768px以下) */
+@media (max-width: 767px) {
+  html, body {
+    min-width: 400px !important;
+    min-height: 800px !important;
+  }
+}
+
+/* 项目列表区域粘性定位 - 滚动时固定搜索框、新建按钮、刷新按钮 */
+#items-grid {
+  margin-top: 1rem;
+}
+
+#items-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 40px);
+  background-color: transparent;
+}
+
+/* 固定在顶部的操作栏 */
+#items-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: inherit;
+  padding: 0.75rem 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid transparent;
+}
+
+/* 滚动容器，包含卡片区域的所有内容（空状态和卡片网格） */
+#items-scroll-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+#items-scroll-container::-webkit-scrollbar-thumb {
+  visibility: hidden;
+}
+
+#items-scroll-container:hover::-webkit-scrollbar-thumb {
+  visibility: visible;
+}
+
+/* 确保items-scroll-container背景色为透明 */
+body.light #items-scroll-container {
+  background-color: transparent;
+}
+
+body.dark #items-scroll-container {
+  background-color: transparent;
+}
+
+/* 确保粘性区域背景跟随主题 */
+body.light #items-header {
+  background-color: #f9fafb;
+}
+
+body.dark #items-header {
+  background-color: #0f172a;
+}
+
+/* 输入框 focus 状态使用主题颜色 */
+input:focus,
+select:focus,
+textarea:focus {
+  --tw-ring-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.3) !important;
+  border-color: var(--theme-color, #165DFF) !important;
+  box-shadow: 0 0 0 2px rgba(var(--theme-color-rgb, 22, 93, 255), 0.1) !important;
+}
+
+/* 表单元素基础样式 */
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--theme-color, #165DFF) !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 重置浏览器默认样式 */
+input[type="radio"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  position: relative;
+}
+
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  position: relative;
+}
+
+/* 亮色主题下的表单元素样式 */
+body.light input[type="radio"],
+body.light input[type="checkbox"] {
+  background-color: #ffffff;
+  border: 2px solid #d1d5db;
+}
+
+body.light input[type="radio"]:checked,
+body.light input[type="checkbox"]:checked {
+  background-color: var(--theme-color, #165DFF);
+  border-color: var(--theme-color, #165DFF);
+}
+
+body.light input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: white;
+}
+
+body.light input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+body.light input[type="radio"]:hover,
+body.light input[type="checkbox"]:hover {
+  border-color: var(--theme-color, #165DFF);
+}
+
+/* 暗色主题下的表单元素样式 */
+body.dark input[type="radio"],
+body.dark input[type="checkbox"] {
+  background-color: #374151;
+  border: 2px solid #4B5563;
+}
+
+body.dark input[type="radio"]:checked,
+body.dark input[type="checkbox"]:checked {
+  background-color: var(--theme-color, #165DFF);
+  border-color: var(--theme-color, #165DFF);
+}
+
+body.dark input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: white;
+}
+
+body.dark input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+body.dark input[type="radio"]:hover,
+body.dark input[type="checkbox"]:hover {
+  border-color: var(--theme-color, #165DFF);
+}
+
+/* 暗色主题下的标签样式 */
+body.dark label {
+  color: #E5E7EB !important;
+}
+
+body.dark label.text-dark-2 {
+  color: #9CA3AF !important;
+}
+
+/* 暗色主题下的复选框文字样式 */
+body.dark label span {
+  color: #E5E7EB !important;
+}
+
+/* 暗色主题下特定类的复选框文字样式 */
+body.dark label span.text-gray-700 {
+  color: #E5E7EB !important;
+}
+
+/* 之前的代码保持不变 */
+
+/* 自定义标题栏样式 */
+#custom-titlebar {
+  height: 36px;
+  line-height: 36px;
+  border-bottom: 1px solid #dcdcdc;
+  -webkit-app-region: drag; /* 允许拖拽 */
+  background-color: #ffffff;
+}
+
+/* 标题栏内不可拖拽区域 */
+#custom-titlebar button {
+  -webkit-app-region: no-drag; /* 按钮不可拖拽 */
+  font-size: 12px;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* 主题切换开关样式 */
+#custom-titlebar div#theme-toggle-btn.theme-toggle {
+  background-color: #E5E6EB;
+  -webkit-app-region: no-drag;
+  width: 44px !important;
+  height: 24px !important;
+}
+
+#custom-titlebar div#theme-toggle-btn.theme-toggle:hover {
+  background-color: #D9DCE2;
+}
+
+/* 主题切换开关 - 暗色主题激活状态 */
+#custom-titlebar div#theme-toggle-btn.theme-toggle.active {
+  background-color: #165DFF;
+}
+
+/* 主题切换开关 - 图标样式 */
+#custom-titlebar div#theme-toggle-btn.theme-toggle .theme-toggle-icons i {
+  font-size: 10px;
+  transition: opacity 0.3s ease;
+}
+
+/* 主题切换开关 - 亮色主题下图标显示 */
+#custom-titlebar div#theme-toggle-btn.theme-toggle:not(.active) .theme-toggle-icons i.fas.fa-moon {
+  opacity: 0.7;
+}
+
+#custom-titlebar div#theme-toggle-btn.theme-toggle:not(.active) .theme-toggle-icons i.fas.fa-sun {
+  opacity: 0.2;
+}
+
+/* 主题切换开关 - 暗色主题下图标显示 */
+#custom-titlebar div#theme-toggle-btn.theme-toggle.active .theme-toggle-icons i.fas.fa-moon {
+  opacity: 0.2;
+}
+
+#custom-titlebar div#theme-toggle-btn.theme-toggle.active .theme-toggle-icons i.fas.fa-sun {
+  opacity: 0.7;
+}
+
+/* 确保主题切换开关的宽度准确 */
+#custom-titlebar div#theme-toggle-btn.theme-toggle {
+  width: 44px !important;
+  height: 24px !important;
+}
+
+/* 确保旋钮能够准确到达边缘 */
+#custom-titlebar div#theme-toggle-btn.theme-toggle .theme-toggle-knob {
+  width: 20px !important;
+  height: 20px !important;
+  top: 2px !important;
+  left: 2px !important;
+}
+
+#custom-titlebar div#theme-toggle-btn.theme-toggle.active .theme-toggle-knob {
+  transform: translateX(20px) !important;
+}
+
+/* 主题切换开关 - 旋钮样式 */
+#custom-titlebar div#theme-toggle-btn.theme-toggle .theme-toggle-knob {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  width: 20px !important;
+  height: 20px !important;
+  top: 2px !important;
+  left: 2px !important;
+}
+
+/* 主题切换开关 - 暗色主题下旋钮位置 */
+#custom-titlebar div#theme-toggle-btn.theme-toggle.active .theme-toggle-knob {
+  transform: translateX(20px) !important;
+}
+
+/* Java 环境默认开关样式 - 使用与主题切换按钮相同的样式 */
+.java-environment-item .theme-toggle {
+  background-color: #E5E6EB;
+  -webkit-app-region: no-drag;
+  width: 44px !important;
+  height: 24px !important;
+  transition: all 0.3s ease;
+  border-radius: 12px !important;
+}
+
+.java-environment-item .theme-toggle:hover {
+  background-color: #D9DCE2;
+}
+
+/* Java 环境默认开关 - 激活状态 */
+.java-environment-item .theme-toggle.active {
+  background-color: var(--theme-color, #165DFF) !important;
+}
+
+/* Java 环境默认开关 - 旋钮样式 */
+.java-environment-item .theme-toggle .theme-toggle-knob {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  width: 20px !important;
+  height: 20px !important;
+  top: 2px !important;
+  left: 2px !important;
+  border-radius: 50% !important;
+  position: absolute;
+  transition: transform 0.3s ease;
+}
+
+/* Java 环境默认开关 - 激活状态下旋钮位置 */
+.java-environment-item .theme-toggle.active .theme-toggle-knob {
+  transform: translateX(20px) !important;
+}
+
+/* 暗主题下 Java 环境默认开关样式 */
+body.dark .java-environment-item .theme-toggle {
+  background-color: #374151 !important;
+  border: 1px solid #4B5563 !important;
+}
+
+body.dark .java-environment-item .theme-toggle:hover {
+  background-color: #4B5563 !important;
+}
+
+/* 暗主题下 Java 环境默认开关 - 激活状态 */
+body.dark .java-environment-item .theme-toggle.active {
+  background-color: var(--theme-color, #165DFF) !important;
+  border-color: var(--theme-color, #165DFF) !important;
+}
+
+/* 暗主题下 Java 环境默认开关 - 旋钮样式 */
+body.dark .java-environment-item .theme-toggle .theme-toggle-knob {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 暗主题下 Java 环境添加按钮样式 */
+body.dark button[onclick="addJavaEnvironment()"] i:hover {
+  background-color: rgba(96, 165, 250, 0.15) !important;
+}
+
+/* 亮主题下提示文字样式 */
+body.light .text-xs.text-light-3 {
+  color: #6B7280 !important;
+}
+
+/* 暗主题下确认对话框样式 */
+body.dark #confirm-modal .bg-white {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+}
+
+body.dark #confirm-modal .border-t.border-light-2 {
+  border-color: #334155 !important;
+}
+
+body.dark #confirm-modal h3#confirm-title {
+  color: #ffffff !important;
+}
+
+body.dark #confirm-modal p#confirm-message {
+  color: #CBD5E1 !important;
+}
+
+body.dark #confirm-modal button#confirm-cancel-btn {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #CBD5E1 !important;
+}
+
+body.dark #confirm-modal button#confirm-cancel-btn:hover {
+  background-color: #475569 !important;
+}
+
+body.dark #confirm-modal button#confirm-ok-btn {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+body.dark #confirm-modal button#confirm-ok-btn:hover {
+  background-color: #dc2626 !important;
+}
+
+/* 标题栏中间按钮样式 - 亮色主题 */
+#custom-titlebar button#export-btn,
+#custom-titlebar button#import-btn,
+#custom-titlebar button#settings-btn {
+  padding: 0;
+  margin: 0;
+  border-radius: 4px;
+  color: #4E5969;
+  transition: color 0.2s ease;
+  background-color: transparent !important;
+}
+
+/* 标题栏中间按钮样式 - 暗色主题 */
+body.dark #custom-titlebar button#export-btn,
+body.dark #custom-titlebar button#import-btn,
+body.dark #custom-titlebar button#settings-btn {
+  color: #94A3B8;
+  background-color: transparent !important;
+}
+
+/* 标题栏中间按钮悬停效果 - 亮色主题 */
+#custom-titlebar button#export-btn:hover,
+#custom-titlebar button#import-btn:hover,
+#custom-titlebar button#settings-btn:hover {
+  background-color: transparent !important;
+  color: var(--theme-color, #165DFF);
+  box-shadow: none !important;
+}
+
+/* 窗口控制按钮样式 */
+#custom-titlebar button#minimize-btn,
+#custom-titlebar button#maximize-btn,
+#custom-titlebar button#close-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #4E5969;
+  transition: color 0.2s ease;
+  margin-left: -2px;
+}
+
+/* 关闭按钮悬停效果 */
+#custom-titlebar button#close-btn:hover {
+  background-color: transparent !important;
+  color: #ff4d4f !important;
+}
+
+/* 最大化/最小化按钮悬停效果 - 亮色主题 */
+#custom-titlebar button#minimize-btn:hover,
+#custom-titlebar button#maximize-btn:hover {
+  background-color: transparent !important;
+  color: var(--theme-color, #165DFF) !important;
+}
+
+/* 暗色主题下标题栏背景 */
+body.dark #custom-titlebar {
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+/* 暗色主题下标题栏所有按钮基础样式（统一颜色） */
+body.dark #custom-titlebar button#export-btn,
+body.dark #custom-titlebar button#import-btn,
+body.dark #custom-titlebar button#settings-btn,
+body.dark #custom-titlebar button#minimize-btn,
+body.dark #custom-titlebar button#maximize-btn,
+body.dark #custom-titlebar button#close-btn {
+  color: #CBD5E1 !important;
+  background-color: transparent !important;
+}
+
+/* 暗色主题下标题栏按钮悬停效果（统一处理） */
+body.dark #custom-titlebar button#export-btn:hover,
+body.dark #custom-titlebar button#import-btn:hover,
+body.dark #custom-titlebar button#settings-btn:hover,
+body.dark #custom-titlebar button#minimize-btn:hover,
+body.dark #custom-titlebar button#maximize-btn:hover {
+  background-color: transparent !important;
+  color: var(--theme-color, #60A5FA) !important;
+  box-shadow: none !important;
+}
+
+/* 暗色主题下关闭按钮悬停效果（保持红色，符合用户预期） */
+body.dark #custom-titlebar button#close-btn:hover {
+  background-color: transparent !important;
+  color: #f87171 !important;
+}
+
+/* 暗色主题下分割线样式 */
+body.dark #custom-titlebar .w-px.h-6.bg-gray-300 {
+  background-color: #334155 !important;
+}
+
+/* 暗主题样式 */
+body.dark {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+body.dark #custom-titlebar {
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+body.dark #custom-titlebar button,
+body.dark #custom-titlebar .text-dark-2 {
+  color: #e2e8f0 !important;
+}
+
+body.dark #custom-titlebar button:hover {
+  color: var(--theme-color, #60a5fa) !important;
+}
+
+
+
+body.dark header {
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+body.dark header button,
+body.dark header .text-dark-2 {
+  color: #e2e8f0 !important;
+}
+
+body.dark header button:hover {
+  color: var(--theme-color, #60a5fa) !important;
+}
+
+body.dark .bg-gray-100 {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark aside {
+  background-color: #1e293b;
+  border-right: 1px solid #334155;
+}
+
+body.dark .bg-white {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+body.dark input,
+body.dark select,
+body.dark textarea {
+  background-color: #27374D;
+  color: #DDE6ED;
+  border: 1px solid #526D82;
+  /* 移除自定义下拉箭头，使用浏览器默认样式 */
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark input::placeholder,
+body.dark select::placeholder,
+body.dark textarea::placeholder {
+  color: #9DB2BF;
+}
+
+body.dark input:focus,
+body.dark select:focus,
+body.dark textarea:focus {
+  border-color: #9DB2BF;
+  box-shadow: 0 0 0 2px rgba(157, 178, 191, 0.2);
+}
+
+/* 移除自定义下拉箭头 */
+select {
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark select {
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark .btn-primary {
+  background-color: var(--theme-color, #3b82f6);
+  color: #ffffff;
+}
+
+body.dark .btn-primary:hover {
+  background-color: var(--theme-color-hover, #2563eb);
+}
+
+body.dark .btn-secondary {
+  background-color: #64748b;
+  color: #ffffff;
+}
+
+body.dark .btn-secondary:hover {
+  background-color: #475569;
+}
+
+body.dark .modal-content {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+body.dark .modal-header {
+  border-bottom: 1px solid #334155;
+}
+
+body.dark .modal-footer {
+  border-top: 1px solid #334155;
+}
+
+body.dark label {
+  color: #e2e8f0;
+}
+
+/* 项目卡片名称样式 */
+body.dark .font-medium.text-dark {
+  color: #ffffff; /* 确保项目卡片名称在暗主题下为白色 */
+}
+
+/* 项目卡片描述样式 */
+body.dark .text-xs.text-gray-500 {
+  color: #ffffff; /* 确保项目卡片描述在暗主题下为白色，更醒目 */
+}
+
+/* 关于部分样式 */
+body.dark #settings-modal .text-sm.text-dark-2 {
+  color: #cbd5e1; /* 确保关于部分文本在暗主题下为亮灰色 */
+}
+
+body.dark #settings-modal a.text-primary {
+  color: var(--theme-color, #60a5fa); /* 确保关于部分链接在暗主题下使用主题颜色 */
+}
+
+body.dark #settings-modal a.text-primary:hover {
+  color: var(--theme-color, #3b82f6); /* 确保关于部分链接悬停时在暗主题下使用主题颜色 */
+}
+
+body.dark #settings-modal i {
+  color: #cbd5e1; /* 确保关于部分图标在暗主题下为亮灰色 */
+}
+
+/* Tooltip 样式 */
+.group:hover .absolute {
+  z-index: 100;
+}
+
+/* 通知组件样式 */
+#notification {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background-color: #ffffff;
+  z-index: 9999;
+}
+
+/* Diagnostics center */
+#logs-btn {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 8px;
+  color: #607087;
+}
+#logs-btn:hover { background: var(--theme-color-light); color: var(--theme-color); }
+#logs-modal {
+  background: rgba(10, 20, 38, 0.52) !important;
+  backdrop-filter: blur(6px);
+}
+.logs-dialog {
+  width: min(980px, 92vw) !important;
+  height: min(680px, 86vh);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 30px 90px rgba(7, 18, 38, 0.28);
+}
+.logs-header {
+  display: flex;
+  min-height: 92px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px 22px;
+  border-bottom: 1px solid var(--enterprise-border);
+  background: linear-gradient(135deg, #fff, #f7faff);
+}
+.logs-header h3 { margin-top: 4px; color: var(--enterprise-navy); font-size: 20px; font-weight: 760; }
+.logs-header p { margin-top: 4px; color: #8b97a9; font-size: 10px; }
+.logs-header .modal-close-btn { width: 34px; height: 34px; border: 1px solid #e3e8ef; background: #fff; }
+.logs-toolbar {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--enterprise-border);
+  background: #fff;
+}
+.logs-filter { display: flex; gap: 5px; padding: 4px; border-radius: 9px; background: #f3f6fa; }
+.logs-filter button {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 7px;
+  color: #718096;
+  font-size: 10px;
+  font-weight: 650;
+}
+.logs-filter button i { margin-right: 5px; }
+.logs-filter button span { display: inline-grid; min-width: 18px; height: 18px; margin-left: 5px; place-items: center; border-radius: 999px; background: #e8edf4; font-size: 8px; }
+.logs-filter button.active { background: #fff; color: var(--theme-color); box-shadow: 0 2px 7px rgba(25, 42, 70, 0.09); }
+.logs-actions { display: flex; gap: 6px; }
+.logs-actions button { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #e1e7ef; border-radius: 8px; color: #66758a; font-size: 11px; }
+.logs-actions button:hover { border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.28); background: var(--theme-color-light); color: var(--theme-color); }
+.logs-table-header, .log-row {
+  display: grid;
+  grid-template-columns: 76px 164px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  padding: 0 18px;
+}
+.logs-table-header { min-height: 36px; border-bottom: 1px solid var(--enterprise-border); background: #f8fafc; color: #94a0b1; font-size: 8px; font-weight: 750; letter-spacing: 0.06em; }
+.logs-list { flex: 1; min-height: 0; overflow-y: auto; background: #fff; }
+.log-row { min-height: 44px; border-bottom: 1px solid #eef1f5; color: #647186; font-size: 10px; }
+.log-row:hover { background: #f8faff; }
+.log-level { display: inline-flex; width: fit-content; min-width: 46px; justify-content: center; padding: 3px 7px; border-radius: 999px; background: #eaf7f1; color: #13805e; font-size: 8px; font-weight: 800; }
+.level-warn .log-level { background: #fff5df; color: #aa6b0a; }
+.level-error .log-level { background: #fff0f0; color: #d73c42; }
+.log-row time { color: #8b97a8; font-family: Consolas, monospace; font-size: 9px; }
+.log-message { overflow: hidden; color: #435167; text-overflow: ellipsis; white-space: nowrap; }
+.level-error .log-message { color: #b33238; }
+.logs-empty { flex: 1; min-height: 0; align-items: center; justify-content: center; flex-direction: column; gap: 7px; color: #9ba6b5; }
+.logs-empty:not(.hidden) { display: flex; }
+.logs-empty i { display: grid; width: 54px; height: 54px; place-items: center; border-radius: 15px; background: #edf8f4; color: #1a9a70; font-size: 20px; }
+.logs-empty strong { margin-top: 5px; color: #526077; font-size: 12px; }
+.logs-empty span { font-size: 9px; }
+.logs-footer { display: flex; min-height: 42px; align-items: center; justify-content: space-between; padding: 0 18px; border-top: 1px solid var(--enterprise-border); background: #fafbfd; color: #8b97a8; font-size: 9px; }
+.logs-footer i { margin-right: 5px; color: #38a47b; }
+
+body.dark #logs-btn { color: #aeb9c8; }
+body.dark .logs-dialog, body.dark .logs-toolbar, body.dark .logs-list { background: #121d30; }
+body.dark .logs-header { background: linear-gradient(135deg, #121d30, #16243a); }
+body.dark .logs-header .modal-close-btn, body.dark .logs-actions button { border-color: #2d3a50; background: #162238; color: #aeb9c8; }
+body.dark .logs-filter, body.dark .logs-table-header, body.dark .logs-footer { background: #0e192a; }
+body.dark .logs-filter button.active { background: #1b2940; }
+body.dark .log-row { border-bottom-color: #26344a; }
+body.dark .log-row:hover { background: #17243a; }
+body.dark .log-message { color: #c1cad6; }
+body.dark .level-error .log-message { color: #ff9da1; }
+
+/* 通知类型样式 */
+#notification.success {
+  background-color: #f0fdf4;
+  border-left: 4px solid #10b981;
+}
+
+#notification.error {
+  background-color: #fef2f2;
+  border-left: 4px solid #ef4444;
+}
+
+#notification.warning {
+  background-color: #fffbeb;
+  border-left: 4px solid #f59e0b;
+}
+
+#notification.info {
+  background-color: #eff6ff;
+  border-left: 4px solid #3b82f6;
+}
+
+/* 亮主题文字颜色 */
+#notification-title {
+  color: #1f2937;
+}
+
+#notification-message {
+  color: #6b7280;
+}
+
+/* 暗主题通知样式 */
+body.dark #notification {
+  background-color: #1f2937;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+body.dark #notification.success {
+  background-color: #1f2937;
+  border-left-color: #34d399;
+}
+
+body.dark #notification.error {
+  background-color: #1f2937;
+  border-left-color: #f87171;
+}
+
+body.dark #notification.warning {
+  background-color: #1f2937;
+  border-left-color: #fbbf24;
+}
+
+body.dark #notification.info {
+  background-color: #1f2937;
+  border-left-color: #60a5fa;
+}
+
+body.dark #notification-title {
+  color: #ffffff;
+}
+
+body.dark #notification-message {
+  color: #e2e8f0;
+}
+
+/* 通知按钮样式 */
+#notification button {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+#notification button i {
+  color: inherit;
+}
+
+/* 日志按钮样式 */
+#notification-log-btn {
+  color: #64748b;
+}
+
+#notification-log-btn:hover {
+  color: var(--theme-color, #165DFF);
+  background-color: rgba(0, 0, 0, 0.05);
+  opacity: 1;
+}
+
+/* 关闭按钮样式（使用模态框关闭按钮样式） */
+#notification .modal-close-btn {
+  color: #64748b;
+}
+
+#notification .modal-close-btn:hover {
+  color: #1f2937;
+  background-color: rgba(0, 0, 0, 0.05);
+  opacity: 1;
+}
+
+/* 暗主题通知按钮样式 */
+body.dark #notification button {
+  opacity: 0.7;
+}
+
+body.dark #notification-log-btn {
+  color: #94a3b8;
+}
+
+body.dark #notification-log-btn:hover {
+  color: var(--theme-color, #165DFF);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark #notification .modal-close-btn {
+  color: #94a3b8;
+}
+
+body.dark #notification .modal-close-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 分类列表样式 */
+.category-list-item {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  border: 2px solid transparent;
+}
+
+.category-list-item i {
+  margin-right: 0.5rem;
+}
+
+body.light .category-list-item:hover {
+  background-color: #f1f5f9;
+}
+
+body.dark .category-list-item:hover {
+  background-color: #2a3a50;
+}
+
+/* 暗主题下分类列表选中状态样式 */
+body.dark .category-list-item.bg-primary\/10 {
+  background-color: var(--theme-color-light, rgba(22, 93, 255, 0.2)) !important;
+  color: var(--theme-color, #165DFF) !important;
+}
+
+body.dark .category-list-item.bg-primary\/10 i {
+  color: var(--theme-color, #165DFF) !important;
+}
+
+/* 右键菜单样式 */
+.context-menu {
+  position: fixed;
+  border-radius: 0.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 100;
+  min-width: 100px; /* 将最小宽度调小 */
+}
+
+body.light .context-menu {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+body.dark .context-menu {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+.context-menu-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.context-menu-item i {
+  margin-right: 0.5rem;
+}
+
+body.light .context-menu-item:hover {
+  background-color: #f1f5f9;
+}
+
+body.dark .context-menu-item:hover {
+  background-color: var(--theme-color-light, rgba(22, 93, 255, 0.2));
+  color: #93c5fd;
+}
+
+body.dark .context-menu-item:hover i {
+  color: #93c5fd;
+}
+
+body.dark .context-menu-item.text-danger:hover,
+body.dark .context-menu-item.text-danger:hover i {
+  color: #ef4444;
+}
+
+/* 搜索框样式 */
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 300px;
+}
+
+.search-container input {
+  width: 100%;
+  padding-left: 2.5rem; /* 为左侧图标留出空间 */
+}
+
+.search-container .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  pointer-events: none; /* 确保图标不会干扰输入 */
+}
+
+/* 项目卡片 Tooltip 样式 */
+body.light .item-tooltip {
+  background-color: #f8fafc;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body.dark .item-tooltip {
+  background-color: #334155;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.light .search-container .search-icon {
+  color: #94a3b8;
+}
+
+body.dark .search-container .search-icon {
+  color: #64748b;
+}
+
+/* 刷新按钮暗主题下的悬停样式 */
+body.dark #refresh-btn:hover {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 按钮悬停效果优化 */
+button {
+  transition: all 0.2s ease;
+}
+
+/* 分类管理添加按钮悬停效果 */
+#add-category-btn {
+  transition: all 0.2s ease;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#add-category-btn:hover {
+  color: var(--theme-color-hover, #0F4BD8);
+  font-weight: 600;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 新建项目按钮悬停效果 */
+#add-item-btn {
+  transition: all 0.2s ease;
+}
+
+#add-item-btn:hover {
+  background-color: var(--theme-color-hover, #0F4BD8);
+}
+
+/* 刷新按钮悬停效果 */
+#refresh-btn {
+  transition: all 0.2s ease;
+  background: transparent !important;
+}
+
+#refresh-btn:hover {
+  color: var(--theme-color-hover, #0F4BD8);
+  transform: none;
+  background: var(--theme-color-light, rgba(22, 93, 255, 0.12)) !important;
+  box-shadow: none !important;
+}
+
+#refresh-btn > i {
+  transition: transform 0.25s ease;
+  transform-origin: center;
+}
+
+#refresh-btn:hover > i:not(.fa-spin) {
+  transform: rotate(90deg);
+}
+
+/* Java 环境管理添加按钮悬停效果 */
+button[onclick="addJavaEnvironment()"] {
+  transition: all 0.2s ease;
+  background: transparent !important;
+}
+
+button[onclick="addJavaEnvironment()"]:hover {
+  color: var(--theme-color-hover, #0F4BD8);
+  font-weight: 600;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 保存修改按钮悬停效果 */
+#item-submit-btn {
+  transition: all 0.2s ease;
+}
+
+#item-submit-btn:hover {
+  background-color: var(--theme-color-hover, #0F4BD8);
+}
+
+/* 新建项目卡片时的添加项目按钮悬停效果 */
+#empty-add-item-btn {
+  transition: all 0.2s ease;
+}
+
+#empty-add-item-btn:hover {
+  background-color: var(--theme-color-hover, #0F4BD8);
+}
+
+/* 分类模态框保存按钮悬停效果 */
+#category-modal button[type="submit"] {
+  transition: all 0.2s ease;
+}
+
+#category-modal button[type="submit"]:hover {
+  background-color: var(--theme-color-hover, #0F4BD8);
+}
+
+/* 设置里保存按钮悬停效果 */
+button[onclick="saveSettings()"] {
+  transition: all 0.2s ease;
+}
+
+button[onclick="saveSettings()"]:hover {
+  background-color: var(--theme-color-hover, #0F4BD8);
+}
+
+/* 过渡动画 */
+body, header, aside, .bg-white, input, select, textarea, .btn, .modal-content, .category-list-item, .context-menu-item {
+  transition: all 0.3s ease;
+}
+
+/* 暗主题下取消按钮的悬停样式 */
+body.dark #confirm-cancel-btn:hover,
+body.dark #item-modal-close:hover,
+body.dark button:hover[onclick*="category-modal"],
+body.dark button:hover[class*="browse"],
+body.dark button:hover[onclick*="browsePath"],
+body.dark button:hover[onclick*="browseJavaEnvPath"],
+body.dark button:hover[onclick*="browseItemPath"],
+body.dark #settings-modal button:hover[onclick*="closeSettingsModal"],
+body.dark #settings-modal button[onclick="closeSettingsModal()"]:hover,
+body.dark #close-confirm-cancel:hover,
+body.dark #close-confirm-minimize:hover,
+body.dark .java-environment-item button:hover {
+  background-color: #2a3a50;
+  color: #ffffff;
+}
+
+/* 暗主题下关闭确认模态框的边框颜色 */
+body.dark #close-confirm-modal .border-t,
+body.dark #close-confirm-modal .border-t.border-light-2 {
+  border-color: #334155;
+}
+
+body.dark #close-confirm-modal .border,
+body.dark #close-confirm-modal .border.border-light-2 {
+  border-color: #526D82;
+}
+
+/* 暗主题下所有对话框和快捷菜单的分割线样式 */
+body.dark .border-light-2,
+body.dark .border-t.border-light-2,
+body.dark .border-b.border-light-2 {
+  border-color: #334155;
+}
+
+/* 暗主题下快捷菜单分割线样式 */
+body.dark .context-menu .border-light-2,
+body.dark .context-menu .border-b {
+  border-color: #334155;
+}
+
+/* 暗主题下图标选择区域悬停样式 */
+body.dark #icon-image-dropzone:hover {
+  border-color: var(--theme-color, #165DFF);
+}
+
+body.dark #icon-image-dropzone:hover i,
+body.dark #icon-image-dropzone:hover p {
+  color: #e2e8f0 !important;
+}
+
+/* 暗色模式下移除图片按钮悬停样式 */
+body.dark button:hover[onclick*="removeIconImage"] {
+  color: var(--theme-color, #165DFF) !important;
+}
+
+/* 右键菜单标题截断样式 */
+.menu-title-truncate {
+  max-width: 150px; /* 可根据需要调整最大宽度 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 项目数量统计样式 */
+.item-count {
+  background-color: #F2F3F5; /* 亮主题下的背景色 */
+  color: #4E5969; /* 亮主题下的文字颜色 */
+}
+
+body.dark .item-count {
+  background-color: #27374D; /* 暗主题下的背景色 */
+  color: #DDE6ED; /* 暗主题下的文字颜色 */
+}
+
+
+
+/* 亮主题样式调整 */
+body {
+  background-color: #f4f4f4; /* 将背景色调整为稍微柔和的灰色 */
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* 确保html元素也禁用滚动 */
+html {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* 确保main元素高度正确 */
+main {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+header {
+  background-color: #e9e9e9; /* 调整头部背景色 */
+  border-bottom: 1px solid #dcdcdc; /* 增加底部边框以增强层次感 */
+}
+
+aside {
+  background-color: #e9e9e9; /* 调整侧边栏背景色 */
+  border-right: 1px solid #dcdcdc; /* 增加右边框以增强层次感 */
+  position: relative;
+  z-index: 10;
+}
+
+.bg-white {
+  background-color: #ffffff; /* 保持白色背景，但可以考虑添加边框 */
+  border: 1px solid #dcdcdc; /* 增加边框以增强层次感 */
+}
+
+/* 项目卡片图标样式 */
+body.dark .bg-white .text-primary {
+  color: var(--theme-color, #60a5fa);
+}
+
+body.dark .bg-white .bg-primary\/10 {
+  background-color: var(--theme-color-light, rgba(96, 165, 250, 0.15));
+}
+
+/* 确保所有图标正确显示 */
+.fa, .fas, .far, .fad, .fal, .fab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  font-family: "Font Awesome 5 Free", "Font Awesome 5 Brands";
+  font-weight: 900;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 修复暗主题下模态框内图标颜色 */
+body.dark .modal-content .text-primary {
+  color: var(--theme-color, #60a5fa);
+}
+
+body.dark .modal-content button i {
+  color: inherit;
+}
+
+/* 模态框关闭按钮样式 */
+.modal-close-btn {
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+}
+
+.modal-close-btn:hover {
+  background: transparent;
+}
+
+/* 暗色主题下模态框关闭按钮样式 */
+body.dark .modal-close-btn {
+  color: #9ca3af;
+}
+
+body.dark .modal-close-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark .modal-close-btn i {
+  color: inherit;
+}
+
+body.dark .modal-close-btn:hover i {
+  color: inherit;
+}
+
+/* 项目卡片图标强制颜色 */
+.item-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-icon-container i {
+  color: var(--theme-color, #165DFF);
+  font-size: 1.25rem;
+}
+
+body.dark .item-icon-container i {
+  color: var(--theme-color, #60a5fa);
+}
+
+/* 拖拽排序样式 */
+.draggable {
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.draggable:hover {
+  cursor: grab;
+}
+
+.draggable:active {
+  cursor: grabbing;
+}
+
+.dragging {
+  opacity: 0.5;
+  transform: scale(1.05);
+  z-index: 1000;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+}
+
+body.dark .dragging {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+
+.drag-over {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.2);
+  border: 2px dashed var(--theme-color, #165DFF);
+  background-color: rgba(22, 93, 255, 0.05);
+}
+
+body.dark .drag-over {
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+  border: 2px dashed var(--theme-color, #60a5fa);
+  background-color: rgba(96, 165, 250, 0.1);
+}
+
+
+/* 卡片移位动画 */
+.item-card {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item-card.animate-move {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 确保拖拽时其他卡片的动画效果 */
+#items-grid {
+  position: relative;
+}
+
+/* 确保背景色正确 */
+.bg-primary\/10 {
+  background-color: var(--theme-color-light, rgba(22, 93, 255, 0.1));
+}
+
+body.dark .bg-primary\/10 {
+  background-color: var(--theme-color-light, rgba(96, 165, 250, 0.15));
+}
+
+/* 项目卡片悬停效果优化 */
+.hover-scale {
+  transform: scale(1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0.3s ease;
+  z-index: 1;
+}
+
+.hover-scale:hover {
+  transform: scale(1.03);
+  z-index: 10;
+}
+
+/* 增强卡片悬停效果 */
+.bg-white.rounded-xl.shadow-sm.hover-scale {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bg-white.rounded-xl.shadow-sm.hover-scale:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: rgba(22, 93, 255, 0.2);
+  z-index: 10;
+}
+
+/* 暗主题下的卡片悬停效果 */
+body.dark .bg-white.rounded-xl.shadow-sm.hover-scale:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  border-color: rgba(96, 165, 250, 0.3);
+  z-index: 10;
+}
+
+/* 图标容器悬停效果 */
+.item-icon-container {
+  transition: all 0.3s ease;
+}
+
+.bg-white.rounded-xl.shadow-sm.hover-scale:hover .item-icon-container {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.2);
+}
+
+body.dark .bg-white.rounded-xl.shadow-sm.hover-scale:hover .item-icon-container {
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+}
+
+/* 收藏按钮增强效果 */
+.favorite-btn {
+  transition: all 0.2s ease;
+}
+
+.favorite-btn:hover {
+  transform: scale(1.2);
+}
+
+/* 分类徽章样式 */
+.px-2.py-0\.5.bg-gray-100 {
+  transition: all 0.3s ease;
+  background-color: #f3f4f6 !important;
+  color: #4b5563 !important;
+}
+
+body.light .px-2.py-0\.5.bg-gray-100 {
+  background-color: #f3f4f6 !important;
+  color: #4b5563 !important;
+}
+
+body.dark .px-2.py-0\.5.bg-gray-100 {
+  background-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+/* 分类徽章悬停效果 */
+.bg-white.rounded-xl.shadow-sm.hover-scale:hover .px-2.py-0\.5.bg-gray-100 {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+body.dark .bg-white.rounded-xl.shadow-sm.hover-scale:hover .px-2.py-0\.5.bg-gray-100 {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 图标类型切换按钮 */
+#icon-type-fa, #icon-type-image {
+  font-weight: 500;
+}
+
+#icon-type-fa.active, #icon-type-image.active {
+  font-weight: 600;
+}
+
+/* 暗主题下图标类型按钮悬停效果（未选中状态） */
+body.dark #icon-type-fa:not([style*="background-color"]):hover,
+body.dark #icon-type-image:not([style*="background-color"]):hover {
+  background-color: #475569 !important;
+  border-color: #94a3b8 !important;
+}
+
+/* 暗主题下图标类型按钮选中状态悬停效果 */
+body.dark #icon-type-fa[style*="background-color"]:hover,
+body.dark #icon-type-image[style*="background-color"]:hover {
+  filter: brightness(0.9);
+}
+
+/* 暗主题下顶部导航按钮悬停样式 */
+body.dark header button[id$="-btn"]:hover,
+body.dark #theme-toggle-btn:hover,
+body.dark #export-btn:hover,
+body.dark #import-btn:hover,
+body.dark #settings-btn:hover {
+  color: var(--theme-color, #60a5fa) !important;
+}
+
+/* 自定义悬停类样式 */
+.custom-hover:hover {
+  background-color: #F2F3F5;
+}
+
+/* 自定义提示框样式 */
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 99999;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  margin-top: 24px;
+}
+
+.tooltip-content {
+  background-color: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 3px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  position: relative;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+/* 提示框箭头 */
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 3px;
+  border-style: solid;
+  border-color: transparent transparent rgba(0, 0, 0, 0.85) transparent;
+}
+
+/* 悬停时显示提示框 */
+.tooltip-container:hover .tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 暗主题下的提示框样式 */
+body.dark .tooltip-content {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+body.dark .tooltip-content::after {
+  border-color: transparent transparent rgba(255, 255, 255, 0.9) transparent;
+}
+
+/* 提示框容器样式 */
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 图片上传区域样式 */
+#icon-image-dropzone {
+  background-color: transparent;
+}
+
+#icon-image-dropzone:hover {
+  background-color: rgba(22, 93, 255, 0.05);
+}
+
+body.dark #icon-image-dropzone:hover {
+  background-color: rgba(96, 165, 250, 0.1);
+  border-color: var(--theme-color, #165DFF);
+}
+
+body.dark #icon-image-dropzone:hover i,
+body.dark #icon-image-dropzone:hover p {
+  color: #e2e8f0 !important;
+}
+
+#icon-image-dropzone.dragover {
+  border-color: #165DFF;
+  background-color: rgba(22, 93, 255, 0.1);
+}
+
+body.dark #icon-image-dropzone.dragover {
+  border-color: var(--theme-color, #165DFF);
+  background-color: rgba(96, 165, 250, 0.15);
+}
+
+#icon-image-preview {
+  border: 2px solid #e2e8f0;
+}
+
+body.dark #icon-image-preview {
+  border-color: #334155;
+}
+
+input,
+select,
+textarea {
+  background-color: #ffffff; /* 保持输入框白色背景 */
+  color: #333333; /* 调整文本颜色 */
+  border: 1px solid #dcdcdc; /* 增加边框以增强层次感 */
+  /* 移除自定义下拉箭头，使用浏览器默认样式 */
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+input::placeholder,
+select::placeholder,
+textarea::placeholder {
+  color: #999999; /* 调整占位符文本颜色 */
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #999999; /* 调整聚焦时的边框颜色 */
+  box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.2); /* 增加聚焦时的阴影效果 */
+}
+
+.btn-primary {
+  background-color: #007bff; /* 保持主要按钮颜色 */
+  color: #ffffff; /* 保持主要按钮文本颜色 */
+}
+
+.btn-primary:hover {
+  background-color: #0056b3; /* 调整主要按钮悬停时的颜色 */
+}
+
+.btn-secondary {
+  background-color: #6c757d; /* 保持次要按钮颜色 */
+  color: #ffffff; /* 保持次要按钮文本颜色 */
+}
+
+.btn-secondary:hover {
+  background-color: #545b62; /* 调整次要按钮悬停时的颜色 */
+}
+
+.modal-content {
+  /* 可以根据需要调整模态框内容的样式 */
+}
+
+/* 暗主题样式保持不变 */
+body.dark {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+body.dark header {
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+body.dark aside {
+  background-color: #1e293b;
+  border-right: 1px solid #334155;
+}
+
+body.dark .bg-white {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+body.dark input,
+body.dark select,
+body.dark textarea {
+  background-color: #27374D;
+  color: #DDE6ED;
+  border: 1px solid #526D82;
+  /* 移除自定义下拉箭头，使用浏览器默认样式 */
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark input::placeholder,
+body.dark select::placeholder,
+body.dark textarea::placeholder {
+  color: #9DB2BF;
+}
+
+body.dark input:focus,
+body.dark select:focus,
+body.dark textarea:focus {
+  border-color: #9DB2BF;
+  box-shadow: 0 0 0 2px rgba(157, 178, 191, 0.2);
+}
+
+/* 移除自定义下拉箭头 */
+select {
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark select {
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+body.dark .btn-primary {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+body.dark .btn-primary:hover {
+  background-color: #2563eb;
+}
+
+body.dark .btn-secondary {
+  background-color: #64748b;
+  color: #ffffff;
+}
+
+body.dark .btn-secondary:hover {
+  background-color: #475569;
+}
+
+body.dark .modal-content {
+  /* 可以根据需要调整暗主题下模态框内容的样式 */
+}
+
+/* 美化滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.7);
+}
+
+/* 只在鼠标悬停在容器上时显示滚动条 */
+.scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  visibility: hidden;
+}
+
+.scroll-container:hover::-webkit-scrollbar-thumb {
+  visibility: visible;
+}
+
+/* 新增：暗主题下空状态图标背景颜色 */
+body.dark .bg-light-1 {
+  background-color: #27374D;
+}
+
+/* 复选框主题颜色样式 */
+input[type="checkbox"] {
+  accent-color: var(--theme-color, #165DFF);
+  cursor: pointer;
+  width: 1.2em;
+  height: 1.2em;
+  border: 2px solid var(--theme-color, #165DFF);
+  border-radius: 0.25em;
+  background-color: transparent;
+  transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--theme-color, #165DFF);
+  border-color: var(--theme-color, #165DFF);
+}
+
+input[type="checkbox"]:not(:checked) {
+  background-color: transparent;
+}
+
+input[type="checkbox"]:focus {
+  box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 22, 93, 255), 0.3);
+  outline: none;
+}
+
+input[type="checkbox"]:hover {
+  border-color: var(--theme-color-hover, #0F4BD8);
+}
+
+body.dark input[type="checkbox"] {
+  border-color: var(--theme-color, #60a5fa);
+}
+
+body.dark input[type="checkbox"]:checked {
+  background-color: var(--theme-color, #60a5fa);
+  border-color: var(--theme-color, #60a5fa);
+}
+
+body.dark input[type="checkbox"]:focus {
+  box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 96, 165, 250), 0.3);
+}
+
+body.dark input[type="checkbox"]:hover {
+  border-color: var(--theme-color, #93c5fd);
+}
+
+/* 下拉列表选项悬停效果 */
+select option:hover,
+select option:focus {
+  background-color: var(--theme-color, #165DFF) !important;
+  color: #ffffff !important;
+}
+
+body.dark select option:hover,
+body.dark select option:focus {
+  background-color: var(--theme-color, #60a5fa) !important;
+  color: #ffffff !important;
+}
+
+/* 分类拖拽样式 */
+.category-list-item.draggable {
+  cursor: grab;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.category-list-item.draggable:hover {
+  cursor: grab;
+}
+
+.category-list-item.draggable:active {
+  cursor: grabbing;
+}
+
+.category-list-item.dragging {
+  opacity: 0.95;
+  transform: scale(1);
+  z-index: 9999;
+  position: relative;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.1), 0 1px 4px -2px rgba(0, 0, 0, 0.05);
+  border-radius: 0.5rem;
+  overflow: visible;
+}
+
+body.dark .category-list-item.dragging {
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.2), 0 1px 4px -2px rgba(0, 0, 0, 0.15);
+}
+
+.category-list-item.drag-over {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.2);
+  border: 2px dashed var(--theme-color, #165DFF);
+  background-color: rgba(22, 93, 255, 0.05);
+}
+
+body.dark .category-list-item.drag-over {
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.3);
+  border: 2px dashed var(--theme-color, #165DFF);
+  background-color: rgba(22, 93, 255, 0.1);
+}
+
+/* 确保"全部项目"和"我的收藏"不可拖拽 */
+.category-list-item[data-id="all"],
+.category-list-item[data-id="favorites"] {
+  cursor: pointer !important;
+}
+
+.category-list-item[data-id="all"]:hover,
+.category-list-item[data-id="favorites"]:hover {
+  cursor: pointer !important;
+}
+/* Wails v2 frameless window drag region */
+#custom-titlebar {
+  --wails-draggable: drag;
+}
+
+#custom-titlebar button,
+#custom-titlebar a,
+#custom-titlebar input,
+#custom-titlebar .tooltip-container {
+  --wails-draggable: no-drag;
+}
+
+/* Enterprise workspace refresh */
+:root {
+  --enterprise-navy: #0b1739;
+  --enterprise-slate: #526077;
+  --enterprise-border: #e4e9f2;
+  --enterprise-surface: #ffffff;
+  --enterprise-canvas: #f4f7fb;
+  --enterprise-shadow: 0 8px 24px rgba(25, 42, 70, 0.07);
+}
+
+body {
+  background:
+    radial-gradient(circle at 88% 4%, rgba(var(--theme-color-rgb, 22, 93, 255), 0.08), transparent 26rem),
+    var(--enterprise-canvas) !important;
+  color: var(--enterprise-navy);
+  letter-spacing: -0.01em;
+}
+
+#custom-titlebar {
+  height: 58px;
+  padding: 0 10px 0 14px !important;
+  border-bottom: 1px solid var(--enterprise-border);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02) !important;
+}
+
+.brand-lockup { gap: 10px; }
+.brand-logo {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 9px !important;
+  box-shadow: 0 4px 10px rgba(11, 23, 57, 0.18);
+}
+.brand-copy { display: flex; flex-direction: column; line-height: 1; }
+.brand-title { color: var(--enterprise-navy); font-size: 15px; font-weight: 750; letter-spacing: 0.02em; }
+.brand-subtitle { margin-top: 5px; color: #8c98aa; font-size: 8px; font-weight: 700; letter-spacing: 0.16em; }
+
+.app-shell {
+  gap: 18px !important;
+  padding: 18px !important;
+  height: calc(100vh - 58px);
+  min-height: 0;
+}
+
+.workspace-sidebar {
+  width: 270px !important;
+  height: 100% !important;
+  top: 0 !important;
+  padding: 14px !important;
+  border: 1px solid var(--enterprise-border);
+  border-radius: 14px !important;
+  box-shadow: var(--enterprise-shadow) !important;
+}
+
+.workspace-identity {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 12px;
+  border: 1px solid rgba(var(--theme-color-rgb, 22, 93, 255), 0.16);
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(var(--theme-color-rgb, 22, 93, 255), 0.09), rgba(var(--theme-color-rgb, 22, 93, 255), 0.025));
+}
+.workspace-identity-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--theme-color);
+  color: #fff;
+  box-shadow: 0 6px 12px rgba(var(--theme-color-rgb, 22, 93, 255), 0.2);
+}
+.workspace-identity div:nth-child(2) { display: flex; min-width: 0; flex-direction: column; }
+.workspace-eyebrow { color: #7c899e; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; }
+.workspace-identity strong { overflow: hidden; margin-top: 3px; color: var(--enterprise-navy); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-status { color: #13966a; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.workspace-status i { margin-right: 3px; font-size: 6px; }
+.section-label { color: #758197; font-size: 11px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; }
+.icon-action { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 7px; }
+.icon-action:hover { background: var(--theme-color-light); }
+
+.category-list-item {
+  min-height: 42px;
+  margin-bottom: 3px;
+  padding: 9px 10px !important;
+  border: 1px solid transparent;
+  border-radius: 9px !important;
+  color: #4c5a70;
+  font-size: 13px;
+  font-weight: 520;
+}
+.category-list-item:hover { border-color: #edf0f5; background: #f7f9fc !important; color: var(--enterprise-navy); }
+.category-list-item.bg-primary\/10 {
+  border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.12);
+  background: var(--theme-color-light) !important;
+  color: var(--theme-color) !important;
+  font-weight: 650;
+}
+.category-list-item .item-count {
+  width: auto !important;
+  min-width: 22px;
+  height: 20px !important;
+  padding: 0 6px;
+  border: 1px solid #e8ecf2;
+  background: #fff !important;
+  box-shadow: none !important;
+  font-size: 10px;
+}
+
+.workspace-content { min-width: 0; height: 100% !important; }
+.workspace-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 62px;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+.hero-eyebrow { color: var(--theme-color); font-size: 9px; font-weight: 800; letter-spacing: 0.16em; }
+.workspace-hero h2 { margin-top: 3px; color: var(--enterprise-navy); font-size: 23px; font-weight: 760; line-height: 1.15; }
+.workspace-hero p { margin-top: 5px; color: #77849a; font-size: 12px; }
+.environment-health {
+  display: flex;
+  min-width: 174px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--enterprise-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  transition: 160ms ease;
+}
+.environment-health:hover { border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.35); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(25, 42, 70, 0.08); }
+.environment-health > div { display: flex; flex: 1; flex-direction: column; }
+.environment-health small { color: #8b97a9; font-size: 9px; font-weight: 650; }
+.environment-health strong { margin-top: 2px; color: var(--enterprise-navy); font-size: 11px; }
+.environment-health > i { color: #a3adbb; font-size: 9px; }
+.health-indicator { width: 8px; height: 8px; border-radius: 50%; background: #18b47c; box-shadow: 0 0 0 4px rgba(24, 180, 124, 0.12); }
+.environment-health.warning .health-indicator { background: #f5a524; box-shadow: 0 0 0 4px rgba(245, 165, 36, 0.14); }
+.environment-health.error .health-indicator { background: #e5484d; box-shadow: 0 0 0 4px rgba(229, 72, 77, 0.14); }
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.metric-card {
+  display: flex;
+  min-height: 70px;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 14px;
+  border: 1px solid var(--enterprise-border);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 14px rgba(25, 42, 70, 0.035);
+}
+.metric-icon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 9px; font-size: 13px; }
+.metric-icon.blue { color: #2b6ef3; background: #edf4ff; }
+.metric-icon.violet { color: #7755d9; background: #f2efff; }
+.metric-icon.amber { color: #d98a12; background: #fff6e5; }
+.metric-icon.emerald { color: #118b64; background: #e9f8f2; }
+.metric-card > div { display: flex; flex-direction: column; }
+.metric-card small { color: #8591a4; font-size: 10px; font-weight: 600; }
+.metric-card strong { margin-top: 2px; color: var(--enterprise-navy); font-size: 20px; font-weight: 750; line-height: 1; }
+
+#items-header {
+  position: relative !important;
+  top: auto !important;
+  min-height: 62px;
+  padding: 9px 12px !important;
+  border: 1px solid var(--enterprise-border) !important;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 4px 14px rgba(25, 42, 70, 0.035);
+}
+.content-title { color: var(--enterprise-navy); font-size: 14px; font-weight: 720; }
+.content-subtitle { margin-top: 3px; color: #909bad; font-size: 10px; }
+.enterprise-search { width: min(280px, 24vw); }
+.enterprise-search input { width: 100%; height: 38px; padding-right: 58px !important; border-color: #dfe5ee !important; background: #f8fafc; font-size: 12px; }
+.enterprise-search kbd {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  padding: 2px 5px;
+  border: 1px solid #dfe5ec;
+  border-radius: 4px;
+  background: #fff;
+  color: #8a96a8;
+  font-size: 8px;
+  transform: translateY(-50%);
+}
+#search-results-count:not(:empty) + kbd { display: none; }
+.toolbar-select { height: 38px; min-width: 112px; padding: 0 28px 0 10px; border: 1px solid #dfe5ee; border-radius: 8px; background: #fff; color: #526077; font-size: 11px; }
+.view-switch { display: flex; padding: 3px; border: 1px solid #dfe5ee; border-radius: 8px; background: #f5f7fa; }
+.view-switch button { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 6px; color: #8a96a8; font-size: 11px; }
+.view-switch button.active { background: #fff; color: var(--theme-color); box-shadow: 0 1px 4px rgba(25, 42, 70, 0.1); }
+#add-item-btn { height: 38px; border-radius: 8px !important; font-size: 11px; font-weight: 650; box-shadow: 0 5px 12px rgba(var(--theme-color-rgb, 22, 93, 255), 0.2) !important; }
+#refresh-btn { width: 38px; height: 38px; border: 1px solid #dfe5ee; background: #fff; color: #69768a; }
+#items-scroll-container { padding: 0 2px 18px !important; }
+#items-grid { margin-top: 12px !important; gap: 10px !important; }
+
+.item-card {
+  min-height: 108px !important;
+  padding: 13px !important;
+  border: 1px solid var(--enterprise-border);
+  border-radius: 11px !important;
+  box-shadow: 0 3px 12px rgba(25, 42, 70, 0.04) !important;
+}
+.item-card:hover { border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.3); box-shadow: 0 10px 24px rgba(25, 42, 70, 0.1) !important; transform: translateY(-2px) !important; }
+.item-card h3 { color: var(--enterprise-navy); font-size: 13px !important; font-weight: 680; }
+.item-icon-container { display: grid !important; width: 42px !important; height: 42px !important; place-items: center; border: 1px solid rgba(var(--theme-color-rgb, 22, 93, 255), 0.1); box-shadow: none !important; }
+.item-card .run-btn { right: 12px !important; bottom: 12px !important; width: 32px; height: 32px; padding: 0 !important; }
+.item-card .favorite-btn { opacity: 0.62; }
+.item-card:hover .favorite-btn { opacity: 1; }
+.item-badges { display: flex; min-width: 0; align-items: center; gap: 5px; }
+.item-type-badge, .item-category-badge {
+  max-width: 100px;
+  overflow: hidden;
+  padding: 2px 7px !important;
+  border: 1px solid #e7ebf1;
+  border-radius: 999px;
+  background: #f6f8fb !important;
+  color: #6f7c90;
+  font-size: 9px !important;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-type-badge { border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.12); background: var(--theme-color-light) !important; color: var(--theme-color); }
+.item-usage-summary, .item-last-used-summary { display: none; }
+.compact-list-header { display: none; }
+.compact-list-header.active {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 50px minmax(150px, 0.75fr) minmax(240px, 1.25fr) 104px 64px 38px;
+  align-items: center;
+  min-height: 38px;
+  margin-top: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--enterprise-border);
+  border-bottom: 0;
+  border-radius: 11px 11px 0 0;
+  background: #f8fafc;
+  color: #8a96a8;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.compact-list-header span:nth-child(1) { grid-column: 1 / 3; }
+.compact-list-header span:nth-child(2) { grid-column: 3; }
+.compact-list-header span:nth-child(3) { grid-column: 4; }
+.compact-list-header span:nth-child(4) { grid-column: 5; text-align: center; }
+.compact-list-header span:nth-child(5) { grid-column: 6; text-align: center; }
+
+#items-grid.compact-view {
+  grid-template-columns: 1fr !important;
+  gap: 0 !important;
+  margin-top: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--enterprise-border);
+  border-radius: 0 0 11px 11px;
+  background: #fff;
+}
+#items-grid.compact-view .item-card {
+  min-height: 68px !important;
+  display: grid !important;
+  grid-template-columns: 50px minmax(150px, 0.75fr) minmax(240px, 1.25fr) 104px 64px 38px;
+  grid-template-rows: 1fr;
+  align-items: center;
+  gap: 14px !important;
+  padding: 8px 14px !important;
+  border: 0;
+  border-bottom: 1px solid #edf0f5;
+  border-radius: 0 !important;
+  background: #fff;
+  box-shadow: none !important;
+}
+#items-grid.compact-view .item-card:last-child { border-bottom: 0; }
+#items-grid.compact-view .item-card:hover { z-index: 1; border-color: #e5eaf2; background: #f9fbfe !important; box-shadow: inset 3px 0 0 var(--theme-color) !important; transform: none !important; }
+#items-grid.compact-view .item-card-heading {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  padding-right: 4px;
+}
+#items-grid.compact-view .item-card-heading h3 { font-size: 13px !important; }
+#items-grid.compact-view .item-card-main { display: contents !important; }
+#items-grid.compact-view .item-icon-container {
+  grid-column: 1;
+  grid-row: 1;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 10px !important;
+}
+#items-grid.compact-view .item-card-details {
+  grid-column: 3;
+  grid-row: 1;
+  width: 100%;
+  height: auto !important;
+  gap: 6px;
+}
+#items-grid.compact-view .item-card-details > p { font-size: 11px !important; }
+#items-grid.compact-view .item-badges { margin-top: 1px; }
+#items-grid.compact-view .item-type-badge, #items-grid.compact-view .item-category-badge { padding: 1px 6px !important; font-size: 8px !important; }
+#items-grid.compact-view .item-last-used-summary {
+  display: block;
+  grid-column: 4;
+  grid-row: 1;
+  color: #7f8b9e;
+  font-size: 10px;
+  white-space: nowrap;
+}
+#items-grid.compact-view .item-usage-summary {
+  display: block;
+  grid-column: 5;
+  grid-row: 1;
+  color: #526077;
+  font-size: 12px;
+  text-align: center;
+}
+#items-grid.compact-view .item-usage-summary strong { font-weight: 720; }
+#items-grid.compact-view .item-card .run-btn {
+  position: static !important;
+  grid-column: 6;
+  grid-row: 1;
+  width: 32px;
+  height: 32px;
+  box-shadow: 0 3px 8px rgba(var(--theme-color-rgb, 22, 93, 255), 0.2) !important;
+}
+#items-grid.compact-view .item-card .item-tooltip { display: none; }
+
+/* Unified modal and form components */
+#category-modal, #item-modal, #settings-modal, #confirm-modal, #close-confirm-modal {
+  background: rgba(10, 20, 38, 0.48) !important;
+  backdrop-filter: blur(5px);
+}
+#category-modal > .bg-white, #item-modal > .bg-white, #confirm-modal > .bg-white, #close-confirm-modal > .bg-white {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 16px !important;
+  box-shadow: 0 24px 70px rgba(8, 20, 40, 0.22) !important;
+}
+#category-modal input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#item-modal input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), #item-modal textarea, #item-modal select,
+.settings-dialog input:not([type="radio"]):not([type="checkbox"]), .settings-dialog select {
+  min-height: 42px;
+  border-color: #dfe5ee !important;
+  border-radius: 9px !important;
+  background: #fbfcfe;
+  color: var(--enterprise-navy);
+}
+#item-modal input[type="checkbox"] {
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  flex: 0 0 18px;
+  border-radius: 5px !important;
+}
+#settings-modal .close-behavior-options input[type="radio"] {
+  position: absolute !important;
+  width: 1px !important;
+  min-width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+}
+#settings-modal .settings-radio-indicator {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  margin-right: 9px;
+  border: 2px solid #cbd4e1;
+  border-radius: 50%;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+#settings-modal .settings-radio-indicator::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--theme-color);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.55);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+#settings-modal .close-behavior-options input[type="radio"]:checked + .settings-radio-indicator {
+  border-color: var(--theme-color);
+  box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 22, 93, 255), 0.12);
+}
+#settings-modal .close-behavior-options input[type="radio"]:checked + .settings-radio-indicator::after {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+#settings-modal .close-behavior-options input[type="radio"]:focus-visible + .settings-radio-indicator {
+  outline: 2px solid rgba(var(--theme-color-rgb, 22, 93, 255), 0.28);
+  outline-offset: 2px;
+}
+#settings-modal input[type="checkbox"] {
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  flex: 0 0 18px;
+  border-radius: 5px !important;
+}
+#category-modal label, #item-modal label, .settings-dialog label { color: #5d6a7e; font-size: 11px; font-weight: 650; }
+#category-modal button, #item-modal button, .settings-dialog button, #confirm-modal button, #close-confirm-modal button { border-radius: 9px !important; }
+
+.settings-dialog {
+  width: min(820px, 92vw) !important;
+  max-width: 820px !important;
+  height: min(650px, 88vh);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 18px !important;
+  box-shadow: 0 28px 80px rgba(8, 20, 40, 0.25) !important;
+}
+.settings-header {
+  min-height: 88px;
+  padding: 17px 22px !important;
+  background: linear-gradient(135deg, #fff, #f7faff);
+}
+.settings-eyebrow { color: var(--theme-color); font-size: 8px; font-weight: 800; letter-spacing: 0.16em; }
+.settings-header h3 { margin-top: 4px; color: var(--enterprise-navy); font-size: 20px; font-weight: 760; }
+.settings-header p { margin-top: 4px; color: #8b97a9; font-size: 10px; }
+.settings-header .modal-close-btn { width: 34px; height: 34px; border: 1px solid #e5eaf1; background: #fff; }
+.settings-body {
+  display: grid;
+  grid-template-columns: 172px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 16px;
+  min-height: 0;
+  padding: 16px !important;
+  overflow: hidden !important;
+  background: #f5f7fb;
+}
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid var(--enterprise-border);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.78);
+}
+.settings-nav::before {
+  content: '设置中心';
+  padding: 8px 10px 10px;
+  color: #9aa5b4;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+.settings-nav button {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  color: #66748a;
+  font-size: 11px;
+  font-weight: 620;
+  text-align: left;
+}
+.settings-nav button i { display: grid; width: 20px; place-items: center; color: #9aa5b4; font-size: 11px; }
+.settings-nav button:hover { background: #f5f8fc; color: var(--enterprise-navy); }
+.settings-nav button.active {
+  border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.14);
+  background: var(--theme-color-light);
+  color: var(--theme-color);
+}
+.settings-nav button.active i { color: var(--theme-color); }
+.settings-panels { min-width: 0; overflow-y: auto; padding-right: 3px; }
+.settings-section {
+  display: none;
+  min-height: 100%;
+  margin: 0 !important;
+  padding: 20px;
+  border: 1px solid var(--enterprise-border);
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(25, 42, 70, 0.035);
+}
+.settings-section.active { display: block; animation: settings-panel-in 160ms ease-out; }
+@keyframes settings-panel-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.settings-section > h4 { margin-bottom: 14px !important; color: var(--enterprise-navy); font-size: 12px; font-weight: 720; }
+.settings-section > h4 i {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  margin-right: 8px !important;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--theme-color-light);
+  font-size: 11px;
+}
+.settings-about > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; }
+.settings-about p { margin-top: 0 !important; color: #718096; font-size: 10px; }
+.settings-dialog .color-option { width: 30px !important; height: 30px !important; border: 3px solid #fff; box-shadow: 0 0 0 1px #dfe5ee; }
+.settings-dialog .close-behavior-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.settings-dialog .close-behavior-options > label {
+  margin: 0 !important;
+  padding: 11px;
+  border: 1px solid #e5eaf1;
+  border-radius: 9px;
+  background: #fafbfd;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+.settings-dialog .close-behavior-options > label:hover {
+  border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.35);
+  background: #fff;
+}
+.settings-dialog .close-behavior-options > label:has(input:checked) {
+  border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.45);
+  background: rgba(var(--theme-color-rgb, 22, 93, 255), 0.055);
+  box-shadow: 0 4px 12px rgba(var(--theme-color-rgb, 22, 93, 255), 0.08);
+}
+.hotkey-setting {
+  margin-top: 18px;
+  padding: 15px;
+  border: 1px solid #e4e9f1;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #fbfcfe, #f6f9fd);
+}
+.hotkey-setting-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.hotkey-setting-heading label { color: var(--enterprise-navy); font-size: 11px; font-weight: 700; }
+.hotkey-setting-heading p { margin-top: 3px; color: #8b97a8; font-size: 9px; }
+.hotkey-setting-heading > span {
+  display: inline-flex;
+  height: 22px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--theme-color-light);
+  color: var(--theme-color);
+  font-size: 8px;
+  font-weight: 750;
+}
+.hotkey-input-row { display: flex; gap: 8px; margin-top: 12px; }
+.hotkey-input-wrap { position: relative; flex: 1; min-width: 0; }
+.hotkey-input-wrap > i {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 13px;
+  color: #8895a7;
+  font-size: 11px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+#show-window-hotkey {
+  width: 100%;
+  padding-left: 36px !important;
+  cursor: pointer;
+  color: var(--enterprise-navy);
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+#show-window-hotkey:focus { background: #fff; }
+#reset-show-window-hotkey {
+  min-width: 76px;
+  padding: 0 12px;
+  border: 1px solid #dfe5ee;
+  border-radius: 9px;
+  background: #fff;
+  color: #66758a;
+  font-size: 9px;
+  font-weight: 650;
+}
+#reset-show-window-hotkey:hover { border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.3); color: var(--theme-color); }
+.hotkey-help { margin-top: 8px; color: #8793a5; font-size: 8px; }
+.hotkey-help i { width: 13px; color: var(--theme-color); }
+.hotkey-help.error, .hotkey-help.error i { color: #dc4c55; }
+.settings-dialog .java-environment-item {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 9px !important;
+  padding: 12px !important;
+  border-color: #e3e8f0 !important;
+  background: #fafbfd;
+}
+.settings-dialog .java-environment-item > div { width: 100%; }
+.settings-dialog .java-environment-item .java-env-path { min-width: 0; }
+.settings-dialog .java-env-name { width: 180px !important; }
+.settings-footer { padding: 12px 20px !important; background: #fff; }
+.settings-footer button { min-width: 84px; min-height: 38px; font-size: 11px; font-weight: 650; }
+.settings-footer button:last-child { box-shadow: 0 6px 14px rgba(var(--theme-color-rgb, 22, 93, 255), 0.18); }
+
+#notification {
+  border: 1px solid var(--enterprise-border);
+  border-left: 3px solid var(--theme-color);
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(8, 20, 40, 0.16) !important;
+}
+
+body.dark {
+  --enterprise-navy: #f2f5fa;
+  --enterprise-slate: #a8b2c2;
+  --enterprise-border: #27344a;
+  --enterprise-surface: #121d30;
+  --enterprise-canvas: #0b1322;
+  background: radial-gradient(circle at 88% 4%, rgba(var(--theme-color-rgb, 22, 93, 255), 0.12), transparent 28rem), var(--enterprise-canvas) !important;
+}
+body.dark #custom-titlebar, body.dark .workspace-sidebar, body.dark #items-header, body.dark .metric-card, body.dark .environment-health { background: rgba(18, 29, 48, 0.94) !important; }
+body.dark .workspace-identity { background: rgba(var(--theme-color-rgb, 22, 93, 255), 0.1); }
+body.dark .category-list-item { color: #aeb8c7; }
+body.dark .category-list-item:hover { border-color: #2b3950; background: #18253a !important; color: #f2f5fa; }
+body.dark .category-list-item .item-count, body.dark .enterprise-search kbd, body.dark .toolbar-select, body.dark .view-switch button.active, body.dark #refresh-btn { border-color: #2e3b50; background: #162238 !important; color: #b6c0ce; }
+body.dark .enterprise-search input, body.dark .view-switch { border-color: #2e3b50 !important; background: #0f192b !important; }
+body.dark .item-card { border-color: #27344a; background: #121d30 !important; }
+body.dark .item-card:hover { border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.45); }
+body.dark .item-type-badge, body.dark .item-category-badge { border-color: #324058; background: #18263c !important; color: #aeb9c8; }
+body.dark #items-grid.compact-view .item-usage-summary strong { color: #d9e0e9; }
+body.dark .compact-list-header { border-color: #27344a; background: #111d30; }
+body.dark #items-grid.compact-view { border-color: #27344a; background: #121d30; }
+body.dark #items-grid.compact-view .item-card { border-bottom-color: #27344a; background: #121d30 !important; }
+body.dark #items-grid.compact-view .item-card:hover { background: #162338 !important; }
+body.dark .settings-header, body.dark .settings-footer, body.dark .settings-section { background: #121d30 !important; }
+body.dark .settings-body { background: #0e1829; }
+body.dark .settings-nav { border-color: #2c3a50; background: rgba(18, 29, 48, 0.9); }
+body.dark .settings-nav button:hover { background: #1a283e; }
+body.dark .settings-header .modal-close-btn, body.dark .settings-dialog .close-behavior-options > label, body.dark .settings-dialog .java-environment-item { border-color: #2c3a50 !important; background: #162238 !important; }
+body.dark .hotkey-setting { border-color: #2c3a50; background: linear-gradient(135deg, #162238, #121d30); }
+body.dark #show-window-hotkey, body.dark #reset-show-window-hotkey { border-color: #314057 !important; background: #101b2d !important; color: #d7deea; }
+body.dark .metric-icon.blue { background: rgba(43, 110, 243, 0.15); }
+body.dark .metric-icon.violet { background: rgba(119, 85, 217, 0.16); }
+body.dark .metric-icon.amber { background: rgba(217, 138, 18, 0.14); }
+body.dark .metric-icon.emerald { background: rgba(17, 139, 100, 0.16); }
+
+@media (max-width: 1100px) {
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .enterprise-search { width: 200px; }
+  .toolbar-select { display: none; }
+  .workspace-hero { min-height: 56px; }
+}
+
+@media (max-width: 800px) {
+  .workspace-sidebar { width: 220px !important; }
+  .metrics-grid { display: none; }
+  .view-switch { display: none; }
+  .content-subtitle { display: none; }
+  .compact-list-header.active { grid-template-columns: 48px minmax(130px, 0.8fr) minmax(180px, 1.2fr) 38px; }
+  .compact-list-header span:nth-child(3), .compact-list-header span:nth-child(4) { display: none; }
+  .compact-list-header span:nth-child(5) { grid-column: 4; }
+  #items-grid.compact-view .item-card { grid-template-columns: 48px minmax(130px, 0.8fr) minmax(180px, 1.2fr) 38px; }
+  #items-grid.compact-view .item-usage-summary, #items-grid.compact-view .item-last-used-summary { display: none; }
+  #items-grid.compact-view .item-card .run-btn { grid-column: 4; }
+  .settings-body { grid-template-columns: 1fr; }
+  .settings-nav { flex-direction: row; overflow-x: auto; }
+  .settings-nav::before { display: none; }
+  .settings-nav button { min-width: max-content; }
+}

@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tailwind cannot infer alpha variants from a hex-valued CSS variable. */
+.bg-primary\/10 {
+  background-color: color-mix(in srgb, var(--theme-color, #165DFF) 10%, transparent);
+}
+
+.text-primary\/50 {
+  color: color-mix(in srgb, var(--theme-color, #165DFF) 50%, transparent);
+}
+
+.hover\:bg-primary\/10:hover {
+  background-color: color-mix(in srgb, var(--theme-color, #165DFF) 10%, transparent);
+}
+
+.hover\:bg-primary\/90:hover {
+  background-color: color-mix(in srgb, var(--theme-color, #165DFF) 90%, transparent);
+}
+
+.hover\:bg-primary\/95:hover {
+  background-color: color-mix(in srgb, var(--theme-color, #165DFF) 95%, transparent);
+}
+
+.hover\:text-primary\/80:hover {
+  color: color-mix(in srgb, var(--theme-color, #165DFF) 80%, transparent);
+}
+
+.focus\:ring-primary\/50:focus {
+  --tw-ring-color: color-mix(in srgb, var(--theme-color, #165DFF) 50%, transparent);
+}

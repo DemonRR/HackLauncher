@@ -1,48 +1,92 @@
-<p align="center">
-  <h1 align="center">HackLauncher</h1>
-</p>
+# HackLauncher
 
+HackLauncher（渗透武器库）是面向 Windows 的本地安全工具资产管理与启动平台。当前版本为 **1.1.3**，项目已全面迁移至 **Go + Wails v2**，不再包含或维护 Electron 运行版本。
 
-<p align="center">
-<a href="https://github.com/DemonRR/HackLauncher/releases/"><img src="https://img.shields.io/github/release/DemonRR/HackLauncher?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&style=square"></a>
-<a href="https://github.com/DemonRR/HackLauncher/releases"><img src="https://img.shields.io/github/downloads/DemonRR/HackLauncher/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&style=square"></a>
-<a href="https://github.com/DemonRR/HackLauncher/issues"><img src="https://img.shields.io/github/issues-raw/DemonRR/HackLauncher?label=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88&style=square"></a>
-<a href="https://github.com/DemonRR/HackLauncher/discussions"><img src="https://img.shields.io/github/stars/DemonRR/HackLauncher?label=%E7%82%B9%E8%B5%9E%E6%98%9F%E6%98%9F&style=square"></a>
-</p>
+## 主要功能
 
-# 完整工具工具箱
-完整工具箱包含所有工具
+- 统一管理应用程序、命令、Python、Java、文件、文件夹与 URL
+- 分类导航、收藏、最近使用、搜索与自定义排序
+- 指定 Python 解释器，并管理多个 Java 运行环境
+- 普通启动、独立终端启动及 UAC 管理员权限启动
+- 网格与紧凑视图、明暗主题和多种企业主题色
+- SQLite 本地配置、配置导入导出、自动备份与损坏恢复
+- 运行审计、退出码跟踪、错误日志分流及日志自动分段
+- 单实例、无边框窗口、系统托盘、全局窗口唤醒快捷键与关闭行为设置
+- 自动提取 EXE 图标
 
-网盘链接：https://pan.quark.cn/s/9e408697afec 提取码：LQ2u
+## 技术栈
 
-# HackLauncher (渗透武器库 / 渗透工具箱)
-> 基于 AI 辅助开发 | Electron 技术栈 | 仅支持 Windows 系统
+- Go 1.23+
+- Wails v2
+- Microsoft WebView2 Runtime
+- SQLite（纯 Go 驱动）
+- Vanilla JavaScript、Vite、Tailwind CSS
 
-一款专为渗透测试从业者开发的一站式工具启动器，解决渗透测试过程中工具繁多、存放目录分散、启动查找繁琐的痛点，统一管理所有常用渗透工具，提升工作效率。
+## 开发环境
 
-## 🖼 界面展示
-<img width="1528" height="890" alt="PixPin_2026-02-11_09-52-09" src="https://github.com/user-attachments/assets/ecd0669e-bc51-400c-8eda-34deeb13f2ff" />
+需要安装 Go、Node.js、npm、Wails v2 CLI，以及 Microsoft WebView2 Runtime。
 
+```powershell
+wails doctor
+npm --prefix frontend install
+wails dev
+```
 
+`wails dev` 会启动前端开发服务器并运行桌面应用。前端代码位于 `frontend/`，CSS 会在启动前自动生成。
 
+## 生产构建
 
-## ✨ 核心功能
-✅ 多类型工具一键启动：支持命令行、Python 脚本、Java 程序、应用程序、文件、文件夹、URL
+```powershell
+wails build -clean -platform windows/amd64 -o HackLauncher.exe
+```
 
-✅ 自定义图标配置：兼容 Font Awesome 图标 + 自定义图片上传
+构建产物位于：
 
-✅ 运行环境配置：可在设置中自定义配置 Python/Java 运行环境路径（Java多版本支持）
+```text
+build/bin/HackLauncher.exe
+```
 
-✅ 独立环境变量：以终端运行时会自动加载用户配置的环境变量
+## 测试与检查
 
-✅ 主题个性化：支持明暗主题切换，可自定义主题配色
+```powershell
+go test -race ./...
+go vet ./...
+npm --prefix frontend run build
+```
 
-✅ 配置灵活迁移：工具列表及所有配置支持导入/导出
+## 数据与日志
 
-✅ 灵活排序：分类/卡片支持拖拽排序
+应用采用便携式数据布局，配置、备份和日志统一保存在 `HackLauncher.exe` 所在目录：
 
-## 🛠 开发说明
-- 开发框架：Electron
-- 开发方式：AI 辅助完成开发
-- 运行环境：Windows 操作系统（全版本适配）
+```text
+HackLauncher.exe
+config.db                           当前配置
+backups/                            配置备份
+logs/                               运行与错误日志
+```
 
+首次启动时，如果 EXE 目录尚无数据，程序会从 `%APPDATA%/HackLauncher/` 自动复制已有配置、备份和日志。后续数据只写入 EXE 所在目录。日志采用 JSONL 格式，分别保存运行日志和错误日志；单文件达到 5 MiB 后自动分段。终端工具执行完成后会回传退出码，非零退出码自动进入错误日志。
+
+请确保 EXE 所在目录具有写入权限。开发时执行 `wails build -clean` 会清理 `build/bin/`，如已在其中运行并产生数据，请先备份 `config.db`、`backups/` 和 `logs/`。
+
+迁移过程中发现的本地 Electron 配置和日志会保存在 `legacy-electron-data/`。该目录不会提交到 Git，仅用于数据保留及首次迁移兼容。
+
+## 项目结构
+
+```text
+app.go              Wails 后端、启动与系统能力
+main.go             应用入口和窗口配置
+store.go            SQLite 配置存储、备份与旧数据迁移
+logs.go             JSONL 运行日志与错误日志
+tray.go             Windows 系统托盘
+elevation_*.go      Windows UAC 管理员启动
+frontend/           HTML、CSS、JavaScript 前端
+resources/          嵌入式脚本资源
+build/windows/      Windows 图标、清单与安装器资源
+```
+
+## 项目信息
+
+- 版本：1.1.3
+- 作者：Demon
+- 许可证：MIT

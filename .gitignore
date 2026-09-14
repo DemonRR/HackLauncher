@@ -1,0 +1,11 @@
+**/node_modules/
+config/
+config.db
+backups/
+logs/
+legacy-electron-data/
+dist/
+.wails-template/
+.restore-backup/
+frontend/dist/
+build/bin/
