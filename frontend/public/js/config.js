@@ -17,7 +17,9 @@ let AppConfig = {
     animations: true,
     closeBehavior: 'ask',
     autoMinimizeAfterRun: false,
-    showWindowHotkey: 'Ctrl+Shift+H'
+    showWindowHotkey: 'Ctrl+Shift+H',
+    initialWindowWidth: 1190,
+    initialWindowHeight: 680
   },
   environment: {
     python: '',

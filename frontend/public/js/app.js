@@ -458,6 +458,7 @@ async function openSettingsModal() {
     // 更新自动最小化复选框
     document.getElementById('auto-minimize').checked = autoMinimize;
     document.getElementById('show-window-hotkey').value = showWindowHotkey;
+    await refreshCurrentWindowSize();
     
     document.getElementById('settings-modal').classList.remove('hidden');
   } catch (error) {
@@ -469,6 +470,34 @@ async function openSettingsModal() {
 // 关闭设置模态框
 function closeSettingsModal() {
   document.getElementById('settings-modal').classList.add('hidden');
+}
+
+async function refreshCurrentWindowSize() {
+  const label = document.getElementById('current-window-size');
+  if (!label) return;
+  try {
+    const size = await window.api.getCurrentWindowSize();
+    label.textContent = `${size.width} × ${size.height}`;
+  } catch (_) {
+    label.textContent = '读取失败';
+  }
+}
+
+async function saveCurrentWindowSize() {
+  const button = document.getElementById('save-current-window-size');
+  try {
+    button.disabled = true;
+    const size = await window.api.saveCurrentWindowSize();
+    AppConfig.settings = AppConfig.settings || {};
+    AppConfig.settings.initialWindowWidth = size.width;
+    AppConfig.settings.initialWindowHeight = size.height;
+    document.getElementById('current-window-size').textContent = `${size.width} × ${size.height}`;
+    showNotification('成功', `已将 ${size.width} × ${size.height} 保存为初始窗口大小`, 'success');
+  } catch (error) {
+    showNotification('错误', '保存窗口大小失败: ' + (error?.message || String(error)), 'error');
+  } finally {
+    button.disabled = false;
+  }
 }
 
 // 保存设置
@@ -795,6 +824,7 @@ function initImageDropzone() {
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(initImageDropzone, 100);
   setupShowWindowHotkeyInput();
+  document.getElementById('save-current-window-size')?.addEventListener('click', saveCurrentWindowSize);
   
   // 设置关闭确认弹窗事件监听
   window.api.onCloseConfirm(() => {

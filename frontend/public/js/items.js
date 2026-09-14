@@ -1186,128 +1186,47 @@ async function runItem(item) {
 
       /* ================= PYTHON ================= */
       case 'python': {
-        const env = await window.api.getEnvironment();
-        const pythonPath = env.python || 'python';
-
         const scriptPath = item.command.trim();
-        const params = item.launchParams ? ` ${item.launchParams}` : '';
         const workingDir = getWorkingDirectory(scriptPath);
-
-        // —— 打开终端 ——
-        if (item.runInTerminal) {
-          const cmd = `"${pythonPath}" "${scriptPath}"${params}`;
-          await window.api.executeCommandInTerminal(cmd, workingDir, '');
-          await logItemRun(item, 'LAUNCHED', `Python 已在终端启动：${scriptPath}`);
-          showNotification('成功', `Python 已在终端启动: ${item.name}`, 'success');
-          
-          // 检查是否需要自动最小化
-          if (AppConfig.settings.autoMinimizeAfterRun) {
-            window.api.minimizeWindow();
-          }
-          return;
+        const result = await window.api.executePythonTool({
+          name: item.name,
+          targetPath: scriptPath,
+          programArgs: item.launchParams || '',
+          workingDirectory: workingDir,
+          runInTerminal: Boolean(item.runInTerminal)
+        });
+        await logItemRun(item, 'LAUNCHED', result.message);
+        showNotification('已启动', item.runInTerminal
+          ? `Python 已在终端启动: ${item.name}`
+          : `Python 已启动: ${item.name}（PID ${result.pid}）`, 'success');
+        if (AppConfig.settings.autoMinimizeAfterRun) {
+          window.api.minimizeWindow();
         }
-
-        const cmd = `"${pythonPath}" "${scriptPath}"${params}`;
-        let finished = false;
-        const successTimer = setTimeout(() => {
-          if (finished) return;
-          finished = true;
-          showNotification('成功', `Python 启动成功: ${item.name}`, 'success');
-          if (AppConfig.settings.autoMinimizeAfterRun) {
-            window.api.minimizeWindow();
-          }
-        }, 300);
-        window.api.executeCommand(cmd, workingDir)
-          .then(() => logItemRun(item, 'SUCCESS', `Python 执行完成：${scriptPath}`))
-          .catch(err => {
-            logItemRun(item, 'ERROR', `Python 执行失败：${String(err)}`);
-            if (finished) return;
-            finished = true;
-            clearTimeout(successTimer);
-            showNotification('错误', `Python 启动失败: ${err}`, 'error');
-          });
         return;
       }
 
       /* ================= JAVA ================= */
       case 'java': {
-        const env = await window.api.getEnvironment();
-        let javaPath = 'java';
-
-        // 根据项目选择的 Java 环境获取路径
-        if (item.javaEnvironmentId) {
-          const selectedEnv = env.javaEnvironments?.find(e => e.id === item.javaEnvironmentId);
-          if (selectedEnv) {
-            javaPath = selectedEnv.path.endsWith('java.exe')
-              ? selectedEnv.path
-              : `${selectedEnv.path}\\java.exe`;
-          } else if (env.java) {
-            // 如果选择的环境不存在，使用默认 Java 路径
-            javaPath = env.java.endsWith('java.exe')
-              ? env.java
-              : `${env.java}\\java.exe`;
-          }
-        } else if (env.defaultJavaEnvironmentId) {
-          // 如果项目没有选择环境，使用默认环境
-          const defaultEnv = env.javaEnvironments?.find(e => e.id === env.defaultJavaEnvironmentId);
-          if (defaultEnv) {
-            javaPath = defaultEnv.path.endsWith('java.exe')
-              ? defaultEnv.path
-              : `${defaultEnv.path}\\java.exe`;
-          } else if (env.java) {
-            // 如果默认环境不存在，使用旧的 Java 路径
-            javaPath = env.java.endsWith('java.exe')
-              ? env.java
-              : `${env.java}\\java.exe`;
-          }
-        } else if (env.java) {
-          // 向后兼容：使用旧的 Java 路径
-          javaPath = env.java.endsWith('java.exe')
-            ? env.java
-            : `${env.java}\\java.exe`;
-        }
-
         const jarPath = item.command.trim();
-        const params = item.launchParams ? ` ${item.launchParams}` : '';
-        const programParams = item.javaProgramParams ? ` ${item.javaProgramParams}` : '';
         const workingDir = getWorkingDirectory(jarPath);
-        // 添加编码参数，确保Java程序使用UTF-8编码输出
-        const fullCmd = `"${javaPath}" -Dfile.encoding=utf-8${params} -jar "${jarPath}"${programParams}`;
-
-        // —— 打开终端 ——
-        if (item.runInTerminal) {
-          await window.api.executeCommandInTerminal(fullCmd, workingDir, javaPath);
-          await logItemRun(item, 'LAUNCHED', `Java 已在终端启动：${jarPath}`);
-          showNotification('成功', `Java 已在终端启动: ${item.name}`, 'success');
-          
-          // 检查是否需要自动最小化
-          if (AppConfig.settings.autoMinimizeAfterRun) {
-            window.api.minimizeWindow();
-          }
-          return;
+        const result = await window.api.executeJavaTool({
+          name: item.name,
+          targetPath: jarPath,
+          runtimeArgs: item.launchParams || '',
+          programArgs: item.javaProgramParams || '',
+          workingDirectory: workingDir,
+          javaEnvironmentId: item.javaEnvironmentId || '',
+          runInTerminal: Boolean(item.runInTerminal)
+        });
+        await logItemRun(item, 'LAUNCHED', `${result.message}，Java ${result.runtimeVersion}`);
+        showNotification('已启动', item.runInTerminal
+          ? `Java ${result.runtimeVersion} 已在终端启动: ${item.name}`
+          : `Java ${result.runtimeVersion} 已启动: ${item.name}（PID ${result.pid}）`, 'success');
+        if (AppConfig.settings.autoMinimizeAfterRun) {
+          window.api.minimizeWindow();
         }
-
-        let finished = false;
-        const successTimer = setTimeout(() => {
-          if (finished) return;
-          finished = true;
-          showNotification('成功', `Java 启动成功: ${item.name}`, 'success');
-          if (AppConfig.settings.autoMinimizeAfterRun) {
-            window.api.minimizeWindow();
-          }
-        }, 300);
-        window.api.executeCommand(fullCmd, workingDir)
-          .then(() => logItemRun(item, 'SUCCESS', `Java 执行完成：${jarPath}`))
-          .catch(err => {
-            logItemRun(item, 'ERROR', `Java 执行失败：${String(err)}`);
-            if (finished) return;
-            finished = true;
-            clearTimeout(successTimer);
-            showNotification('错误', `Java 启动失败: ${err}`, 'error');
-          });
         return;
       }
-
       /* ================= APPLICATION ================= */
       case 'application': {
         const workingDir = getWorkingDirectory(item.command);
@@ -1839,3 +1758,11 @@ async function reorderItems(startIndex, endIndex) {
     showNotification('错误', '保存排序失败: ' + error.message, 'error');
   }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  window.api.receive('runtime-tool-finished', result => {
+    if (result?.status !== 'ERROR') return;
+    const detail = result.detail ? `：${result.detail}` : '';
+    showNotification('运行异常', `${result.name || '工具'} 已退出${detail}`, 'error', { log: false });
+  });
+});

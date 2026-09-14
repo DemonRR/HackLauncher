@@ -212,18 +212,19 @@
   </main>
 
   <!-- 通知组件 -->
-  <div id="notification" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-x-full flex items-center max-w-sm z-50 cursor-pointer">
+  <div id="notification" class="fixed bg-white rounded-lg shadow-lg p-4 flex items-center max-w-sm z-50" role="status" aria-live="polite" aria-atomic="true">
     <div id="notification-icon" class="mr-3 text-xl flex-shrink-0"></div>
     <div class="flex-grow min-w-0">
-      <h3 id="notification-title" class="font-medium text-dark truncate"></h3>
-      <p id="notification-message" class="text-sm text-dark-2 truncate mt-1"></p>
+      <h3 id="notification-title" class="font-medium text-dark"></h3>
+      <p id="notification-message" class="text-sm text-dark-2 mt-1"></p>
     </div>
     <button id="notification-log-btn" class="ml-2 text-light-3 hover:text-primary p-1 rounded-full hover:bg-light-1 flex-shrink-0" title="打开日志中心">
       <i class="fa fa-file-alt text-sm"></i>
     </button>
-    <button onclick="hideNotification()" class="modal-close-btn ml-2">
+    <button onclick="hideNotification()" class="modal-close-btn ml-2" title="关闭通知">
       <i class="fa fa-times text-sm"></i>
     </button>
+    <span id="notification-progress" aria-hidden="true"></span>
   </div>
 
   <!-- 日志中心 -->
@@ -248,12 +249,25 @@
           <button id="logs-refresh-btn" title="刷新"><i class="fas fa-sync-alt"></i></button>
           <button id="logs-copy-btn" title="复制当前日志"><i class="fas fa-copy"></i></button>
           <button id="logs-folder-btn" title="打开日志目录"><i class="fas fa-folder-open"></i></button>
+          <button id="logs-clear-btn" class="danger" title="清空全部日志"><i class="fas fa-trash-alt"></i></button>
         </div>
       </div>
       <div class="logs-table-header"><span>级别</span><span>时间</span><span>事件详情</span></div>
       <div id="logs-list" class="logs-list"></div>
       <div id="logs-empty" class="logs-empty hidden"><i class="fas fa-clipboard-check"></i><strong>暂无日志</strong><span>当前筛选条件下没有诊断记录</span></div>
       <div class="logs-footer"><span><i class="fas fa-shield-alt"></i> 日志仅保存在本机</span><span id="logs-status">显示最近 300 条记录</span></div>
+    </div>
+  </div>
+
+  <div id="logs-clear-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="logs-clear-dialog" role="alertdialog" aria-modal="true" aria-labelledby="logs-clear-title">
+      <span class="logs-clear-icon"><i class="fas fa-trash-alt"></i></span>
+      <h3 id="logs-clear-title">清空全部日志？</h3>
+      <p>运行日志与错误日志将被永久删除，此操作无法撤销。</p>
+      <div>
+        <button id="logs-clear-cancel" type="button">取消</button>
+        <button id="logs-clear-confirm" type="button">确认清空</button>
+      </div>
     </div>
   </div>
 
@@ -586,6 +600,14 @@
               <label for="auto-minimize" class="block text-sm font-medium text-dark-2">运行程序卡片后自动最小化</label>
               <input type="checkbox" id="auto-minimize" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded transition-custom">
             </div>
+          </div>
+
+          <div class="window-size-setting">
+            <div>
+              <label>初始窗口大小</label>
+              <p>当前窗口 <strong id="current-window-size">读取中...</strong>，下次启动时应用保存的尺寸</p>
+            </div>
+            <button id="save-current-window-size" type="button"><i class="fas fa-expand-alt"></i> 保存当前大小</button>
           </div>
 
           <div class="hotkey-setting">

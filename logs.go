@@ -128,3 +128,27 @@ func (s *Store) ReadLogs(level string, limit int) ([]LogEntry, error) {
 	}
 	return result, nil
 }
+
+func (s *Store) ClearLogs() (int, error) {
+	s.logMu.Lock()
+	defer s.logMu.Unlock()
+
+	entries, err := os.ReadDir(s.logDir)
+	if err != nil {
+		return 0, err
+	}
+	removed := 0
+	for _, entry := range entries {
+		name := entry.Name()
+		isLog := !entry.IsDir() && strings.HasSuffix(name, ".jsonl") &&
+			(strings.HasPrefix(name, "runtime-") || strings.HasPrefix(name, "error-"))
+		if !isLog {
+			continue
+		}
+		if err := os.Remove(filepath.Join(s.logDir, name)); err != nil {
+			return removed, fmt.Errorf("删除日志 %s 失败: %w", name, err)
+		}
+		removed++
+	}
+	return removed, nil
+}

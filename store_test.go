@@ -152,3 +152,29 @@ func TestMigrateRoamingDataCopiesExistingFiles(t *testing.T) {
 		}
 	}
 }
+
+func TestClearLogsOnlyRemovesManagedLogFiles(t *testing.T) {
+	logDir := t.TempDir()
+	store := &Store{logDir: logDir}
+	for _, name := range []string{"runtime-2026-09-14.jsonl", "error-2026-09-14.jsonl", "keep.txt"} {
+		if err := os.WriteFile(filepath.Join(logDir, name), []byte("entry"), 0o600); err != nil {
+			t.Fatalf("write fixture %s: %v", name, err)
+		}
+	}
+
+	removed, err := store.ClearLogs()
+	if err != nil {
+		t.Fatalf("ClearLogs() error = %v", err)
+	}
+	if removed != 2 {
+		t.Fatalf("ClearLogs() removed = %d, want 2", removed)
+	}
+	if _, err := os.Stat(filepath.Join(logDir, "keep.txt")); err != nil {
+		t.Fatalf("unmanaged file was removed: %v", err)
+	}
+	for _, name := range []string{"runtime-2026-09-14.jsonl", "error-2026-09-14.jsonl"} {
+		if _, err := os.Stat(filepath.Join(logDir, name)); !os.IsNotExist(err) {
+			t.Fatalf("managed log %s still exists", name)
+		}
+	}
+}

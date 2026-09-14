@@ -6,6 +6,8 @@ export function BrowsePath(arg1:string):Promise<string>;
 
 export function CheckPathExists(arg1:string):Promise<boolean>;
 
+export function ClearLogs():Promise<number>;
+
 export function ConfirmMinimize():Promise<void>;
 
 export function ConfirmQuit():Promise<void>;
@@ -16,9 +18,15 @@ export function ExecuteCommandAsAdmin(arg1:string,arg2:string):Promise<string>;
 
 export function ExecuteCommandInTerminal(arg1:string,arg2:string,arg3:string):Promise<string>;
 
+export function ExecuteJavaTool(arg1:main.RuntimeToolRequest):Promise<main.RuntimeToolResult>;
+
+export function ExecutePythonTool(arg1:main.RuntimeToolRequest):Promise<main.RuntimeToolResult>;
+
 export function ExecuteWithEnvironment(arg1:Record<string, any>):Promise<string>;
 
 export function GetConfig():Promise<main.Config>;
+
+export function GetCurrentWindowSize():Promise<Record<string, number>>;
 
 export function GetEnvironment():Promise<Record<string, any>>;
 
@@ -41,6 +49,8 @@ export function OpenPath(arg1:string):Promise<void>;
 export function OpenURL(arg1:string):Promise<void>;
 
 export function SaveConfig(arg1:main.Config):Promise<void>;
+
+export function SaveCurrentWindowSize():Promise<Record<string, number>>;
 
 export function SaveEnvironment(arg1:Record<string, any>):Promise<void>;
 

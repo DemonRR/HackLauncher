@@ -1,86 +1,65 @@
 // js/notifications.js
-// 显示通知
-function showNotification(title, message, type = 'info') {
-  const notification = document.getElementById('notification');
-  const notificationTitle = document.getElementById('notification-title');
-  const notificationMessage = document.getElementById('notification-message');
-  const notificationIcon = document.getElementById('notification-icon');
-  
-  // 移除之前的类型类
-  notification.classList.remove('success', 'error', 'warning', 'info');
-  
-  // 添加当前类型类
-  notification.classList.add(type);
-  
-  notificationTitle.textContent = title;
-  notificationMessage.textContent = message;
+let notificationTimer = null;
+let notificationSequence = 0;
 
-  if ((type === 'error' || type === 'warning') && window.api?.logFrontend) {
-    window.api.logFrontend(type === 'error' ? 'ERROR' : 'WARN', `${title}: ${message}`).catch(() => {});
+const notificationDurations = {
+  success: 3500,
+  info: 4500,
+  warning: 6000,
+  error: 8000
+};
+
+const notificationIcons = {
+  success: 'fa-check',
+  info: 'fa-info',
+  warning: 'fa-exclamation',
+  error: 'fa-times'
+};
+
+function showNotification(title, message, type = 'info', options = {}) {
+  const notification = document.getElementById('notification');
+  if (!notification) return;
+
+  const safeType = Object.prototype.hasOwnProperty.call(notificationDurations, type) ? type : 'info';
+  const sequence = ++notificationSequence;
+  const duration = notificationDurations[safeType];
+  clearTimeout(notificationTimer);
+
+  notification.classList.remove('success', 'error', 'warning', 'info', 'is-visible');
+  notification.classList.add(safeType);
+  document.getElementById('notification-title').textContent = String(title || '提示');
+  document.getElementById('notification-message').textContent = String(message || '');
+  document.getElementById('notification-icon').innerHTML = `<i class="fas ${notificationIcons[safeType]}"></i>`;
+
+  const logButton = document.getElementById('notification-log-btn');
+  logButton?.classList.toggle('hidden', safeType !== 'error' && safeType !== 'warning');
+  notification.style.setProperty('--notification-duration', `${duration}ms`);
+
+  if (options.log !== false && (safeType === 'error' || safeType === 'warning') && window.api?.logFrontend) {
+    window.api.logFrontend(safeType === 'error' ? 'ERROR' : 'WARN', `${title}: ${message}`).catch(() => {});
   }
-  
-  // 设置图标和颜色
-  notificationIcon.innerHTML = '';
-  if (type === 'success') {
-    notificationIcon.innerHTML = '<i class="fa fa-check-circle text-green-500"></i>';
-  } else if (type === 'error') {
-    notificationIcon.innerHTML = '<i class="fa fa-exclamation-circle text-red-500"></i>';
-  } else if (type === 'warning') {
-    notificationIcon.innerHTML = '<i class="fa fa-exclamation-triangle text-yellow-500"></i>';
-  } else {
-    notificationIcon.innerHTML = '<i class="fa fa-info-circle text-blue-500"></i>';
-  }
-  
-  // 确保通知是可见的
-  notification.classList.remove('translate-x-full');
-  
-  // 4秒后自动关闭
-  setTimeout(() => {
-    hideNotification();
-  }, 4000);
+
+  void notification.offsetWidth;
+  requestAnimationFrame(() => notification.classList.add('is-visible'));
+  notificationTimer = setTimeout(() => {
+    if (sequence === notificationSequence) hideNotification();
+  }, duration);
 }
 
-// 隐藏通知
 function hideNotification() {
-  const notification = document.getElementById('notification');
-  notification.classList.add('translate-x-full');
+  clearTimeout(notificationTimer);
+  notificationTimer = null;
+  notificationSequence++;
+  document.getElementById('notification')?.classList.remove('is-visible');
 }
 
-// 切换通知显示/隐藏
-function toggleNotification() {
-  const notification = document.getElementById('notification');
-  notification.classList.toggle('translate-x-full');
-}
-
-// 打开日志所在文件夹
-function openLogFile() {
+function openNotificationLogs() {
   if (typeof openLogCenter === 'function') {
     openLogCenter('ERROR');
     hideNotification();
-  } else {
-    showNotification('错误', '无法打开日志所在文件夹：API不可用', 'error');
   }
 }
 
-// 初始化通知事件监听器
 document.addEventListener('DOMContentLoaded', () => {
-  const notification = document.getElementById('notification');
-  const notificationLogBtn = document.getElementById('notification-log-btn');
-  
-  // 添加点击通知区域切换显示/隐藏的事件
-  notification.addEventListener('click', (e) => {
-    // 避免点击按钮时触发
-    if (e.target === notification || e.target.closest('#notification-icon') || 
-        e.target.closest('#notification-title') || e.target.closest('#notification-message')) {
-      toggleNotification();
-    }
-  });
-  
-  // 添加点击日志按钮打开日志文件的事件
-  if (notificationLogBtn) {
-    notificationLogBtn.addEventListener('click', (e) => {
-      e.stopPropagation(); // 防止触发通知的点击事件
-      openLogFile();
-    });
-  }
+  document.getElementById('notification-log-btn')?.addEventListener('click', openNotificationLogs);
 });

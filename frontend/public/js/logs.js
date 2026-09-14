@@ -78,6 +78,29 @@ function closeLogCenter() {
   logRefreshTimer = null;
 }
 
+function openClearLogsConfirm() {
+  document.getElementById('logs-clear-modal')?.classList.remove('hidden');
+}
+
+function closeClearLogsConfirm() {
+  document.getElementById('logs-clear-modal')?.classList.add('hidden');
+}
+
+async function clearAllLogs() {
+  const confirmButton = document.getElementById('logs-clear-confirm');
+  try {
+    confirmButton.disabled = true;
+    const removed = await window.api.clearLogs();
+    closeClearLogsConfirm();
+    await loadLogs();
+    showNotification('日志已清空', removed > 0 ? `已删除 ${removed} 个日志文件` : '当前没有可清理的日志', 'success');
+  } catch (error) {
+    showNotification('清理失败', error?.message || String(error), 'error');
+  } finally {
+    confirmButton.disabled = false;
+  }
+}
+
 async function copyVisibleLogs() {
   if (!visibleLogEntries.length) {
     showNotification('提示', '当前没有可复制的日志', 'warning');
@@ -98,6 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('logs-refresh-btn')?.addEventListener('click', loadLogs);
   document.getElementById('logs-copy-btn')?.addEventListener('click', copyVisibleLogs);
   document.getElementById('logs-folder-btn')?.addEventListener('click', () => window.api.openLogFile());
+  document.getElementById('logs-clear-btn')?.addEventListener('click', openClearLogsConfirm);
+  document.getElementById('logs-clear-cancel')?.addEventListener('click', closeClearLogsConfirm);
+  document.getElementById('logs-clear-confirm')?.addEventListener('click', clearAllLogs);
   document.querySelectorAll('[data-log-level]').forEach(button => {
     button.addEventListener('click', () => {
       activeLogLevel = button.dataset.logLevel;
@@ -107,5 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('logs-modal')?.addEventListener('click', event => {
     if (event.target.id === 'logs-modal') closeLogCenter();
+  });
+  document.getElementById('logs-clear-modal')?.addEventListener('click', event => {
+    if (event.target.id === 'logs-clear-modal') closeClearLogsConfirm();
   });
 });

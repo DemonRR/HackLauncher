@@ -902,6 +902,99 @@ body.dark #notification .modal-close-btn:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Stable toast motion and layout */
+#notification {
+  --notification-accent: #3b82f6;
+  top: 84px;
+  right: auto;
+  bottom: auto;
+  left: 20px;
+  width: min(420px, calc(100vw - 32px));
+  min-height: 72px;
+  overflow: hidden;
+  padding: 13px 12px 15px 14px !important;
+  border: 1px solid rgba(20, 35, 60, 0.1);
+  border-left: 1px solid rgba(20, 35, 60, 0.1) !important;
+  border-radius: 12px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate3d(calc(-100% - 32px), 0, 0);
+  transition: opacity 180ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 240ms;
+  box-shadow: 0 16px 42px rgba(13, 27, 49, 0.18);
+}
+#notification.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0);
+  transition-delay: 0s;
+}
+#notification.success { --notification-accent: #20a875; background: #fff; }
+#notification.info { --notification-accent: #3979ed; background: #fff; }
+#notification.warning { --notification-accent: #d98a12; background: #fff; }
+#notification.error { --notification-accent: #dc4c51; background: #fff; }
+#notification-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin-right: 11px !important;
+  place-items: center;
+  flex: none;
+  border-radius: 10px;
+  color: var(--notification-accent);
+  background: color-mix(in srgb, var(--notification-accent) 11%, white);
+  font-size: 13px !important;
+}
+#notification-title { overflow-wrap: anywhere; font-size: 12px; font-weight: 750; line-height: 1.35; }
+#notification-message { display: -webkit-box; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 3; font-size: 10px !important; line-height: 1.5; }
+#notification button { width: 28px; height: 28px; flex: none; border-radius: 7px; }
+#notification-progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--notification-accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+#notification.is-visible #notification-progress { animation: notification-progress var(--notification-duration, 4500ms) linear forwards; }
+@keyframes notification-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+body.dark #notification.success, body.dark #notification.info, body.dark #notification.warning, body.dark #notification.error {
+  border-color: #334158;
+  background: #162238;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.38);
+}
+body.dark #notification-icon { background: color-mix(in srgb, var(--notification-accent) 18%, #162238); }
+
+#logs-clear-modal {
+  z-index: 10000;
+  background: rgba(8, 17, 32, 0.58);
+  backdrop-filter: blur(5px);
+}
+.logs-clear-dialog {
+  width: min(390px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-radius: 16px;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(8, 20, 40, 0.3);
+}
+.logs-clear-icon { display: grid; width: 46px; height: 46px; margin: 0 auto 13px; place-items: center; border-radius: 13px; color: #dc4c51; background: #fff0f0; font-size: 16px; }
+.logs-clear-dialog h3 { color: var(--enterprise-navy); font-size: 16px; font-weight: 760; }
+.logs-clear-dialog p { margin-top: 7px; color: #7c889a; font-size: 10px; line-height: 1.6; }
+.logs-clear-dialog > div { display: flex; justify-content: center; gap: 9px; margin-top: 20px; }
+.logs-clear-dialog button { min-width: 92px; min-height: 36px; border: 1px solid #e1e7ef; border-radius: 9px; color: #657287; font-size: 10px; font-weight: 700; }
+#logs-clear-confirm { border-color: #dc4c51; color: #fff; background: #dc4c51; }
+#logs-clear-confirm:hover { background: #c93e43; }
+#logs-clear-confirm:disabled { cursor: wait; opacity: 0.6; }
+.logs-actions button.danger:hover { border-color: rgba(220, 76, 81, 0.35); color: #dc4c51; background: #fff2f2; }
+body.dark .logs-clear-dialog { border-color: #334158; background: #162238; }
+body.dark .logs-clear-dialog h3 { color: #eef3fa; }
+body.dark .logs-clear-dialog button:not(#logs-clear-confirm) { border-color: #334158; color: #c1cad6; background: #101b2d; }
+
 /* 分类列表样式 */
 .category-list-item {
   padding: 0.5rem 0.75rem;
@@ -2072,6 +2165,24 @@ body {
 .metric-card small { color: #8591a4; font-size: 10px; font-weight: 600; }
 .metric-card strong { margin-top: 2px; color: var(--enterprise-navy); font-size: 20px; font-weight: 750; line-height: 1; }
 
+.window-size-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #e5eaf1;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.window-size-setting label { color: var(--enterprise-navy) !important; font-size: 11px !important; font-weight: 700 !important; }
+.window-size-setting p { margin-top: 3px; color: #8995a7; font-size: 10px; }
+.window-size-setting strong { color: var(--theme-color); font-variant-numeric: tabular-nums; }
+.window-size-setting button { flex: none; padding: 8px 12px; border: 1px solid rgba(var(--theme-color-rgb, 22, 93, 255), 0.22); color: var(--theme-color); background: var(--theme-color-light); font-size: 10px; font-weight: 700; }
+.window-size-setting button:hover { border-color: var(--theme-color); }
+.window-size-setting button:disabled { cursor: wait; opacity: 0.55; }
+
 #items-header {
   position: relative !important;
   top: auto !important;
@@ -2550,6 +2661,7 @@ body.dark .settings-body { background: #0e1829; }
 body.dark .settings-nav { border-color: #2c3a50; background: rgba(18, 29, 48, 0.9); }
 body.dark .settings-nav button:hover { background: #1a283e; }
 body.dark .settings-header .modal-close-btn, body.dark .settings-dialog .close-behavior-options > label, body.dark .settings-dialog .java-environment-item { border-color: #2c3a50 !important; background: #162238 !important; }
+body.dark .window-size-setting { border-color: #2c3a50; background: #162238; }
 body.dark .hotkey-setting { border-color: #2c3a50; background: linear-gradient(135deg, #162238, #121d30); }
 body.dark #show-window-hotkey, body.dark #reset-show-window-hotkey { border-color: #314057 !important; background: #101b2d !important; color: #d7deea; }
 body.dark .metric-icon.blue { background: rgba(43, 110, 243, 0.15); }

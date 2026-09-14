@@ -171,7 +171,8 @@ func defaultConfig() Config {
 		"settings": map[string]interface{}{
 			"theme": "light", "themeColor": "#165DFF", "layout": "grid",
 			"animations": true, "closeBehavior": "ask", "autoMinimizeAfterRun": false,
-			"showWindowHotkey": "Ctrl+Shift+H",
+			"showWindowHotkey": "Ctrl+Shift+H", "initialWindowWidth": defaultWindowWidth,
+			"initialWindowHeight": defaultWindowHeight,
 		},
 		"environment": map[string]interface{}{
 			"python": "", "java": "", "javaEnvironments": []interface{}{},

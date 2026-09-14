@@ -10,6 +10,10 @@ export function CheckPathExists(arg1) {
   return window['go']['main']['App']['CheckPathExists'](arg1);
 }
 
+export function ClearLogs() {
+  return window['go']['main']['App']['ClearLogs']();
+}
+
 export function ConfirmMinimize() {
   return window['go']['main']['App']['ConfirmMinimize']();
 }
@@ -30,12 +34,24 @@ export function ExecuteCommandInTerminal(arg1, arg2, arg3) {
   return window['go']['main']['App']['ExecuteCommandInTerminal'](arg1, arg2, arg3);
 }
 
+export function ExecuteJavaTool(arg1) {
+  return window['go']['main']['App']['ExecuteJavaTool'](arg1);
+}
+
+export function ExecutePythonTool(arg1) {
+  return window['go']['main']['App']['ExecutePythonTool'](arg1);
+}
+
 export function ExecuteWithEnvironment(arg1) {
   return window['go']['main']['App']['ExecuteWithEnvironment'](arg1);
 }
 
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
+}
+
+export function GetCurrentWindowSize() {
+  return window['go']['main']['App']['GetCurrentWindowSize']();
 }
 
 export function GetEnvironment() {
@@ -80,6 +96,10 @@ export function OpenURL(arg1) {
 
 export function SaveConfig(arg1) {
   return window['go']['main']['App']['SaveConfig'](arg1);
+}
+
+export function SaveCurrentWindowSize() {
+  return window['go']['main']['App']['SaveCurrentWindowSize']();
 }
 
 export function SaveEnvironment(arg1) {

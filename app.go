@@ -162,6 +162,31 @@ func (a *App) SaveConfig(cfg Config) error {
 	return nil
 }
 
+func (a *App) GetCurrentWindowSize() map[string]int {
+	width, height := runtime.WindowGetSize(a.ctx)
+	return map[string]int{"width": width, "height": height}
+}
+
+func (a *App) SaveCurrentWindowSize() (map[string]int, error) {
+	width, height := runtime.WindowGetSize(a.ctx)
+	if width < minimumWindowWidth || height < minimumWindowHeight {
+		return nil, fmt.Errorf("窗口尺寸不能小于 %d × %d", minimumWindowWidth, minimumWindowHeight)
+	}
+	cfg := a.GetConfig()
+	settings, _ := cfg["settings"].(map[string]interface{})
+	if settings == nil {
+		settings = map[string]interface{}{}
+		cfg["settings"] = settings
+	}
+	settings["initialWindowWidth"] = width
+	settings["initialWindowHeight"] = height
+	if err := a.SaveConfig(cfg); err != nil {
+		return nil, err
+	}
+	a.logf("INFO", "已保存初始窗口尺寸: %d × %d", width, height)
+	return map[string]int{"width": width, "height": height}, nil
+}
+
 func cloneConfig(cfg Config) Config {
 	data, err := json.Marshal(cfg)
 	if err != nil {
@@ -366,19 +391,19 @@ func (a *App) ExecuteCommand(command, cwd string) (string, error) {
 		return "", err
 	}
 	startedAt := time.Now()
-	cmd := exec.Command("cmd.exe", "/d", "/s", "/c", command)
+	cmd := newShellCommand(command)
 	cmd.Dir = validatedCwd
 	output := &cappedOutput{limit: maxCommandOutput}
 	cmd.Stdout = output
 	cmd.Stderr = output
-	a.logf("INFO", "命令开始执行，工作目录=%q，命令=%q", validatedCwd, strings.TrimSpace(command))
+	a.logf("INFO", "命令开始执行，工作目录=%q，命令=%s", validatedCwd, strings.TrimSpace(command))
 	err = cmd.Run()
 	text := output.String()
 	if err != nil {
-		a.logf("ERROR", "命令执行失败，耗时=%s，错误=%v，输出=%q", time.Since(startedAt).Round(time.Millisecond), err, strings.TrimSpace(text))
+		a.logf("ERROR", "命令执行失败，耗时=%s，错误=%v，输出=%s", time.Since(startedAt).Round(time.Millisecond), err, strings.TrimSpace(text))
 		return text, fmt.Errorf("%w: %s", err, strings.TrimSpace(text))
 	}
-	a.logf("INFO", "命令执行完成，耗时=%s，输出=%q", time.Since(startedAt).Round(time.Millisecond), strings.TrimSpace(text))
+	a.logf("INFO", "命令执行完成，耗时=%s，输出=%s", time.Since(startedAt).Round(time.Millisecond), strings.TrimSpace(text))
 	return text, nil
 }
 
@@ -407,7 +432,7 @@ func (a *App) ExecuteCommandInTerminal(command, cwd, preferredJavaPath string) (
 	}
 	statusPath := cmd.Args[len(cmd.Args)-1] + ".exit"
 	go a.monitorTerminalExecution(cmd, statusPath, cleanup, command, validatedCwd)
-	a.logf("INFO", "命令已在终端启动，工作目录=%q，Python=%q，Java=%q，命令=%q", validatedCwd, pythonPath, javaPath, strings.TrimSpace(command))
+	a.logf("INFO", "命令已在终端启动，工作目录=%q，Python=%q，Java=%q，命令=%s", validatedCwd, pythonPath, javaPath, strings.TrimSpace(command))
 	return "命令已在终端启动", nil
 }
 
@@ -431,10 +456,10 @@ func (a *App) monitorTerminalExecution(cmd *exec.Cmd, statusPath string, cleanup
 	}
 	writeResult := func(exitCode int) {
 		if exitCode == 0 {
-			a.logf("INFO", "终端命令执行完成，退出码=0，耗时=%s，工作目录=%q，命令=%q", time.Since(startedAt).Round(time.Millisecond), cwd, strings.TrimSpace(command))
+			a.logf("INFO", "终端命令执行完成，退出码=0，耗时=%s，工作目录=%q，命令=%s", time.Since(startedAt).Round(time.Millisecond), cwd, strings.TrimSpace(command))
 			return
 		}
-		a.logf("ERROR", "终端命令执行失败，退出码=%d，耗时=%s，工作目录=%q，命令=%q", exitCode, time.Since(startedAt).Round(time.Millisecond), cwd, strings.TrimSpace(command))
+		a.logf("ERROR", "终端命令执行失败，退出码=%d，耗时=%s，工作目录=%q，命令=%s", exitCode, time.Since(startedAt).Round(time.Millisecond), cwd, strings.TrimSpace(command))
 	}
 
 	for {
@@ -448,13 +473,13 @@ func (a *App) monitorTerminalExecution(cmd *exec.Cmd, statusPath string, cleanup
 			if exitCode, ok := readStatus(); ok {
 				writeResult(exitCode)
 			} else if err != nil {
-				a.logf("ERROR", "终端进程异常退出，耗时=%s，错误=%v，命令=%q", time.Since(startedAt).Round(time.Millisecond), err, strings.TrimSpace(command))
+				a.logf("ERROR", "终端进程异常退出，耗时=%s，错误=%v，命令=%s", time.Since(startedAt).Round(time.Millisecond), err, strings.TrimSpace(command))
 			} else {
-				a.logf("WARN", "终端已关闭，未收到命令退出码，命令=%q", strings.TrimSpace(command))
+				a.logf("WARN", "终端已关闭，未收到命令退出码，命令=%s", strings.TrimSpace(command))
 			}
 			return
 		case <-timeout.C:
-			a.logf("WARN", "终端命令运行超过 24 小时，停止跟踪状态，命令=%q", strings.TrimSpace(command))
+			a.logf("WARN", "终端命令运行超过 24 小时，停止跟踪状态，命令=%s", strings.TrimSpace(command))
 			return
 		}
 	}
@@ -529,7 +554,7 @@ func newTerminalProcess(command, cwd, pythonPath, javaPath string) (*exec.Cmd, f
 		cleanup()
 		return nil, nil, err
 	}
-	cmd := exec.Command(shell, "/d", "/s", "/c", "start", "", "/wait", shell, "/d", "/k", scriptPath)
+	cmd := newVisibleTerminalCommand(shell, scriptPath)
 	cmd.Dir = cwd
 	cmd.Env = append(os.Environ(), "HACKLAUNCHER_STATUS_FILE="+statusPath)
 	return cmd, cleanup, nil
@@ -812,6 +837,13 @@ func (a *App) GetLogs(level string, limit int) ([]LogEntry, error) {
 		return nil, errors.New("日志目录尚未初始化")
 	}
 	return a.store.ReadLogs(level, limit)
+}
+
+func (a *App) ClearLogs() (int, error) {
+	if a.store == nil {
+		return 0, errors.New("日志目录尚未初始化")
+	}
+	return a.store.ClearLogs()
 }
 
 func (a *App) LogFrontend(level, message string) {
