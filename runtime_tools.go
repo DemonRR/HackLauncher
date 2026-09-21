@@ -134,7 +134,6 @@ func (a *App) executeRuntimeTool(kind, name, executable string, args []string, c
 		a.LogRunEvent(name, kind, "LAUNCHED", fmt.Sprintf("终端启动，运行时=%s", executable))
 		return result, nil
 	}
-
 	cmd := exec.Command(executable, args...)
 	cmd.Dir = cwd
 	prepareBackgroundProcess(cmd)

@@ -1,6 +1,7 @@
 let activeLogLevel = 'ALL';
 let visibleLogEntries = [];
 let logRefreshTimer = null;
+let activeLogSearch = '';
 
 function formatLogTime(timestamp) {
   const date = new Date(timestamp);
@@ -28,8 +29,11 @@ function renderLogs(entries) {
     time.textContent = formatLogTime(entry.timestamp);
     const message = document.createElement('span');
     message.className = 'log-message';
-    message.textContent = entry.message || '';
-    message.title = entry.message || '';
+    const structuredMessage = entry.category === 'RUN'
+      ? `${entry.tool || '未命名工具'} · ${entry.status || entry.level}${entry.detail ? ` · ${entry.detail}` : ''}`
+      : (entry.message || '');
+    message.textContent = structuredMessage;
+    message.title = structuredMessage;
 
     row.append(level, time, message);
     list.appendChild(row);
@@ -46,9 +50,15 @@ async function loadLogs() {
     const infoEntries = allEntries.filter(entry => entry.level === 'INFO');
     const warnings = allEntries.filter(entry => entry.level === 'WARN');
     const errors = allEntries.filter(entry => entry.level === 'ERROR');
-    const entries = (activeLogLevel === 'ALL'
+    const levelEntries = (activeLogLevel === 'ALL'
       ? allEntries
       : allEntries.filter(entry => entry.level === activeLogLevel)
+    );
+    const keyword = activeLogSearch.toLowerCase();
+    const entries = (keyword
+      ? levelEntries.filter(entry => [entry.message, entry.tool, entry.toolType, entry.status, entry.detail]
+          .some(value => String(value || '').toLowerCase().includes(keyword)))
+      : levelEntries
     ).slice(0, 300);
     document.getElementById('all-log-count').textContent = allEntries.length;
     document.getElementById('info-log-count').textContent = infoEntries.length;
@@ -124,6 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('logs-clear-btn')?.addEventListener('click', openClearLogsConfirm);
   document.getElementById('logs-clear-cancel')?.addEventListener('click', closeClearLogsConfirm);
   document.getElementById('logs-clear-confirm')?.addEventListener('click', clearAllLogs);
+  document.getElementById('logs-search-input')?.addEventListener('input', event => {
+    activeLogSearch = event.target.value.trim();
+    loadLogs();
+  });
   document.querySelectorAll('[data-log-level]').forEach(button => {
     button.addEventListener('click', () => {
       activeLogLevel = button.dataset.logLevel;
@@ -137,4 +151,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('logs-clear-modal')?.addEventListener('click', event => {
     if (event.target.id === 'logs-clear-modal') closeClearLogsConfirm();
   });
+  window.api.receive('open-log-center', () => openLogCenter('ALL'));
 });

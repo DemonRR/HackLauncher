@@ -22,6 +22,11 @@ type LogEntry struct {
 	Timestamp string `json:"timestamp"`
 	Level     string `json:"level"`
 	Message   string `json:"message"`
+	Category  string `json:"category,omitempty"`
+	Tool      string `json:"tool,omitempty"`
+	ToolType  string `json:"toolType,omitempty"`
+	Status    string `json:"status,omitempty"`
+	Detail    string `json:"detail,omitempty"`
 }
 
 func (s *Store) Logf(level, format string, args ...interface{}) {
@@ -32,6 +37,31 @@ func (s *Store) Logf(level, format string, args ...interface{}) {
 		message = message[:maxLogMessage] + "…[已截断]"
 	}
 	entry := LogEntry{Timestamp: time.Now().Format(time.RFC3339Nano), Level: level, Message: message}
+	s.writeLogEntry(entry)
+}
+
+func (s *Store) LogRunEvent(level, tool, toolType, status, detail string) {
+	message := fmt.Sprintf("运行审计 | 工具=%q | 类型=%s | 状态=%s", tool, toolType, status)
+	if detail != "" {
+		message += " | 详情=" + detail
+	}
+	entry := LogEntry{
+		Timestamp: time.Now().Format(time.RFC3339Nano), Level: normalizeLogLevel(level), Message: message,
+		Category: "RUN", Tool: tool, ToolType: toolType, Status: status, Detail: detail,
+	}
+	s.writeLogEntry(entry)
+}
+
+func (s *Store) writeLogEntry(entry LogEntry) {
+	entry.Message = strings.TrimSpace(entry.Message)
+	entry.Message = strings.NewReplacer("\r\n", " ⏎ ", "\n", " ⏎ ", "\r", " ⏎ ").Replace(entry.Message)
+	entry.Detail = strings.NewReplacer("\r\n", " ⏎ ", "\n", " ⏎ ", "\r", " ⏎ ").Replace(strings.TrimSpace(entry.Detail))
+	if len(entry.Message) > maxLogMessage {
+		entry.Message = entry.Message[:maxLogMessage] + "…[已截断]"
+	}
+	if len(entry.Detail) > maxLogMessage {
+		entry.Detail = entry.Detail[:maxLogMessage] + "…[已截断]"
+	}
 	data, err := json.Marshal(entry)
 	if err != nil {
 		return
@@ -41,7 +71,7 @@ func (s *Store) Logf(level, format string, args ...interface{}) {
 	s.logMu.Lock()
 	defer s.logMu.Unlock()
 	s.appendLog("runtime", data)
-	if level == "ERROR" {
+	if entry.Level == "ERROR" {
 		s.appendLog("error", data)
 	}
 }

@@ -43,4 +43,11 @@ func TestShellWindowModes(t *testing.T) {
 	if guiRuntime.SysProcAttr == nil || guiRuntime.SysProcAttr.HideWindow || guiRuntime.SysProcAttr.CreationFlags&createNoWindow == 0 {
 		t.Fatalf("GUI runtime must suppress only its console: %#v", guiRuntime.SysProcAttr)
 	}
+
+	hiddenHelper := newShellCommand("echo placeholder")
+	hiddenHelper.SysProcAttr = nil
+	prepareHiddenHelperProcess(hiddenHelper)
+	if hiddenHelper.SysProcAttr == nil || !hiddenHelper.SysProcAttr.HideWindow || hiddenHelper.SysProcAttr.CreationFlags&createNoWindow == 0 {
+		t.Fatalf("internal helper must remain fully hidden: %#v", hiddenHelper.SysProcAttr)
+	}
 }

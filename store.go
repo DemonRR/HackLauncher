@@ -36,6 +36,13 @@ type Store struct {
 	lastBackup time.Time
 }
 
+type BackupInfo struct {
+	Name      string `json:"name"`
+	CreatedAt string `json:"createdAt"`
+	Size      int64  `json:"size"`
+	ItemCount int    `json:"itemCount"`
+}
+
 func OpenStore() (*Store, error) {
 	dir, overridden, err := portableDataDir()
 	if err != nil {
@@ -171,8 +178,10 @@ func defaultConfig() Config {
 		"settings": map[string]interface{}{
 			"theme": "light", "themeColor": "#165DFF", "layout": "grid",
 			"animations": true, "closeBehavior": "ask", "autoMinimizeAfterRun": false,
-			"showWindowHotkey": "Ctrl+Shift+H", "initialWindowWidth": defaultWindowWidth,
-			"initialWindowHeight": defaultWindowHeight,
+			"initialSidebarView": "all",
+			"showWindowHotkey":   "Ctrl+Shift+H", "initialWindowWidth": defaultWindowWidth,
+			"initialWindowHeight": defaultWindowHeight, "notificationLevel": "all",
+			"autoDiagnosticsOnStartup": true,
 		},
 		"environment": map[string]interface{}{
 			"python": "", "java": "", "javaEnvironments": []interface{}{},
@@ -362,6 +371,86 @@ func (s *Store) pruneBackups() error {
 		names = names[1:]
 	}
 	return nil
+}
+
+func (s *Store) ListBackups() ([]BackupInfo, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	entries, err := os.ReadDir(s.backupDir)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]BackupInfo, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasPrefix(entry.Name(), "config-") || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		info, infoErr := entry.Info()
+		data, readErr := os.ReadFile(filepath.Join(s.backupDir, entry.Name()))
+		if infoErr != nil || readErr != nil {
+			continue
+		}
+		var cfg Config
+		if json.Unmarshal(data, &cfg) != nil {
+			continue
+		}
+		mergeConfigDefaults(cfg)
+		if validateConfig(cfg) != nil {
+			continue
+		}
+		items, _ := cfg["items"].([]interface{})
+		result = append(result, BackupInfo{
+			Name: entry.Name(), CreatedAt: info.ModTime().Format(time.RFC3339), Size: info.Size(), ItemCount: len(items),
+		})
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].CreatedAt > result[j].CreatedAt })
+	return result, nil
+}
+
+func (s *Store) CreateBackup(cfg Config) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	mergeConfigDefaults(cfg)
+	if err := validateConfig(cfg); err != nil {
+		return err
+	}
+	data, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	if err := s.writeRecoveryCopy("config-manual", data); err != nil {
+		return err
+	}
+	return s.pruneBackups()
+}
+
+func (s *Store) RestoreBackup(name string) (Config, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	name = strings.TrimSpace(name)
+	if filepath.Base(name) != name || !strings.HasPrefix(name, "config-") || !strings.HasSuffix(name, ".json") {
+		return nil, errors.New("备份名称无效")
+	}
+	data, err := os.ReadFile(filepath.Join(s.backupDir, name))
+	if err != nil {
+		return nil, err
+	}
+	var cfg Config
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("备份内容无效: %w", err)
+	}
+	mergeConfigDefaults(cfg)
+	if err := validateConfig(cfg); err != nil {
+		return nil, err
+	}
+	var current string
+	if s.db.QueryRow(`SELECT value FROM app_state WHERE key = 'config'`).Scan(&current) == nil {
+		_ = s.writeRecoveryCopy("config-before-restore", []byte(current))
+	}
+	if err := s.writeRaw(cfg); err != nil {
+		return nil, err
+	}
+	return cloneConfig(cfg), nil
 }
 
 func loadLegacyConfig() (Config, error) {

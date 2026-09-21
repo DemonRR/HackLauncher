@@ -46,3 +46,10 @@ func prepareBackgroundProcess(cmd *exec.Cmd) {
 	// be set here because GUI frameworks inherit SW_HIDE for their first window.
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: createNoWindow}
 }
+
+func prepareHiddenHelperProcess(cmd *exec.Cmd) {
+	// Internal helpers such as PowerShell icon extraction must never surface a
+	// console window. Unlike application runtimes, these helpers have no GUI
+	// window that needs to remain visible, so SW_HIDE is safe here.
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: createNoWindow}
+}

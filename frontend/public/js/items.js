@@ -66,12 +66,16 @@ function renderItems(searchTerm = '') {
   if (searchTerm) {
     const lowerSearchTerm = searchTerm.toLowerCase();
     
-    // 为每个项目计算匹配分数，只匹配名称和描述
+    // 为每个项目计算匹配分数，覆盖名称、描述、路径、类型、分类和标签。
     itemsToRender = itemsToRender
       .map(item => {
         let score = 0;
         const itemName = item.name.toLowerCase();
         const itemDescription = (item.description || '').toLowerCase();
+        const itemPath = (item.command || '').toLowerCase();
+        const itemType = `${item.type || ''} ${ITEM_TYPE_NAMES[item.type] || ''}`.toLowerCase();
+        const categoryName = getCategoryName(item.categoryId).toLowerCase();
+        const tags = Array.isArray(item.tags) ? item.tags.join(' ').toLowerCase() : '';
         
         // 名称匹配权重最高
         if (itemName.includes(lowerSearchTerm)) {
@@ -89,6 +93,10 @@ function renderItems(searchTerm = '') {
         if (itemDescription.includes(lowerSearchTerm)) {
           score += 20;
         }
+        if (categoryName.includes(lowerSearchTerm)) score += 15;
+        if (tags.includes(lowerSearchTerm)) score += 15;
+        if (itemType.includes(lowerSearchTerm)) score += 10;
+        if (itemPath.includes(lowerSearchTerm)) score += 5;
         
         return { item, score };
       })
@@ -190,7 +198,7 @@ function renderItems(searchTerm = '') {
     itemName.className = 'font-medium text-dark text-base truncate';
     itemName.textContent = item.name;
     topRow.appendChild(itemName);
-    
+
     const favoriteBtn = document.createElement('button');
     favoriteBtn.className = 'favorite-btn p-1.5 rounded-lg transition-all duration-200 flex-shrink-0 flex items-center justify-center';
     favoriteBtn.style.marginLeft = 'auto';
@@ -585,8 +593,10 @@ async function openItemModal(itemId = null) {
           // 加载启动参数和描述
           const launchParamsInput = document.getElementById('item-launch-params');
           const descriptionInput = document.getElementById('item-description');
+          const tagsInput = document.getElementById('item-tags');
           if (launchParamsInput) launchParamsInput.value = item.launchParams || '';
           if (descriptionInput) descriptionInput.value = item.description || '';
+          if (tagsInput) tagsInput.value = Array.isArray(item.tags) ? item.tags.join(', ') : '';
           
           document.getElementById('run-in-terminal').checked = Boolean(item.runInTerminal);
           document.getElementById('item-java-program-params').value = item.javaProgramParams || '';
@@ -717,7 +727,6 @@ function setupItemEvents() {
       renderCategories();
       renderItems(currentSearchTerm);
       
-      showNotification('成功', '界面已刷新', 'success');
     } catch (error) {
       console.error('刷新失败:', error);
       showNotification('错误', '刷新失败: ' + error.message, 'error');
@@ -740,6 +749,10 @@ function setupItemEvents() {
     const itemImagePath = document.getElementById('item-image-path').value.trim();
     const launchParams = document.getElementById('item-launch-params')?.value.trim() || '';
     const description = document.getElementById('item-description')?.value.trim() || '';
+    const tags = [...new Set((document.getElementById('item-tags')?.value || '')
+      .split(/[,，]/)
+      .map(tag => tag.trim())
+      .filter(Boolean))].slice(0, 10);
     
     // 获取Java程序参数
     const javaProgramParams = document.getElementById('item-java-program-params')?.value.trim() || '';
@@ -748,7 +761,7 @@ function setupItemEvents() {
     const iconType = !document.getElementById('image-icon-section').classList.contains('hidden') ? 'image' : 'fa';
     
     // 获取"在终端中打开"的状态
-    const runInTerminal = ['command', 'python', 'java'].includes(itemType) 
+    const runInTerminal = ['command', 'python', 'java', 'application'].includes(itemType)
       ? document.getElementById('run-in-terminal').checked 
       : false;
     
@@ -771,15 +784,8 @@ function setupItemEvents() {
       document.getElementById('item-command-error').classList.remove('hidden');
       isValid = false;
     } else {
-      // 检查路径或命令中是否包含CMD特殊符号
-      const specialChars = /[&|<>()^]/;
-      if (itemType !== 'url' && specialChars.test(itemCommand)) {
-        document.getElementById('item-command-error').textContent = '路径或命令中包含特殊符号(&|<>()^)，请修改后重试';
-        document.getElementById('item-command-error').classList.remove('hidden');
-        isValid = false;
-      } else {
-        document.getElementById('item-command-error').classList.add('hidden');
-      }
+      // 路径允许括号等 Windows 合法字符；命令类型本身也需要 shell 运算符。
+      document.getElementById('item-command-error').classList.add('hidden');
     }
 
     // 检查重名
@@ -809,9 +815,10 @@ function setupItemEvents() {
           AppConfig.items[index].imagePath = iconType === 'image' ? itemImagePath : '';
           AppConfig.items[index].launchParams = launchParams;
           AppConfig.items[index].description = description;
+          AppConfig.items[index].tags = tags;
           
           // 对命令/Python/Java类型保存runInTerminal属性
-          if (['command', 'python', 'java'].includes(itemType)) {
+          if (['command', 'python', 'java', 'application'].includes(itemType)) {
             AppConfig.items[index].runInTerminal = runInTerminal;
           } else {
             // 如果不是这些类型，移除该属性
@@ -843,11 +850,12 @@ function setupItemEvents() {
           iconType: iconType,
           imagePath: iconType === 'image' ? itemImagePath : '',
           launchParams: launchParams,
-          description: description
+          description: description,
+          tags: tags
         };
         
         // 对命令/Python/Java类型添加runInTerminal属性
-        if (['command', 'python', 'java'].includes(itemType)) {
+        if (['command', 'python', 'java', 'application'].includes(itemType)) {
           newItem.runInTerminal = runInTerminal;
         }
         
@@ -978,7 +986,7 @@ async function handleItemTypeChange(e, selectedJavaEnvironmentId = '', preserveI
   
   // 根据类型显示/隐藏终端选项
   const terminalOption = document.getElementById('run-in-terminal-option');
-  if (['command', 'python', 'java'].includes(e.target.value)) {
+  if (['command', 'python', 'java', 'application'].includes(e.target.value)) {
     terminalOption.classList.remove('hidden');
   } else {
     terminalOption.classList.add('hidden');
@@ -1108,31 +1116,30 @@ async function logItemRun(item, status, detail = '') {
   }
 }
 
+async function recordSuccessfulItemRun(item) {
+  if (!item?.id) return;
+  AppConfig.usageStats = AppConfig.usageStats || {};
+  const current = AppConfig.usageStats[item.id] || { count: 0, lastUsed: 0 };
+  AppConfig.usageStats[item.id] = {
+    count: Number(current.count || 0) + 1,
+    lastUsed: Date.now()
+  };
+  await saveConfig();
+  renderCategories();
+}
+
 // 运行项目（最终完整版，稳定可交付）
 async function runItem(item) {
   try {
+    if (typeof resolveItemTemplates === 'function') {
+      const resolvedItem = await resolveItemTemplates(item);
+      if (!resolvedItem) {
+        await logItemRun(item, 'CANCELLED', '用户取消填写运行参数');
+        return;
+      }
+      item = resolvedItem;
+    }
     await logItemRun(item, 'START', `目标=${item?.command || ''}`);
-    // 记录工具使用统计
-    if (!AppConfig.usageStats) {
-      AppConfig.usageStats = {};
-    }
-    
-    if (!AppConfig.usageStats[item.id]) {
-      AppConfig.usageStats[item.id] = {
-        count: 0,
-        lastUsed: 0
-      };
-    }
-    
-    AppConfig.usageStats[item.id].count += 1;
-    AppConfig.usageStats[item.id].lastUsed = Date.now();
-    
-    // 保存使用统计
-    await saveConfig();
-    
-    // 重新渲染分类列表，更新最近使用的数量
-    renderCategories();
-    
     switch (item.type) {
 
       /* ================= URL ================= */
@@ -1143,8 +1150,7 @@ async function runItem(item) {
         }
         await window.api.openUrl(url);
         await logItemRun(item, 'SUCCESS', `URL 已打开：${url}`);
-        showNotification('成功', `URL已打开: ${item.name}`, 'success');
-        
+        await recordSuccessfulItemRun(item);
         // 检查是否需要自动最小化
         if (AppConfig.settings.autoMinimizeAfterRun) {
           window.api.minimizeWindow();
@@ -1160,8 +1166,7 @@ async function runItem(item) {
         if (item.runInTerminal) {
           await window.api.executeCommandInTerminal(combinedCommand, '', '');
           await logItemRun(item, 'LAUNCHED', '命令已在终端启动');
-          showNotification('成功', `命令已在终端启动: ${item.name}`, 'success');
-          
+          await recordSuccessfulItemRun(item);
           // 检查是否需要自动最小化
           if (AppConfig.settings.autoMinimizeAfterRun) {
             window.api.minimizeWindow();
@@ -1170,16 +1175,15 @@ async function runItem(item) {
         }
 
         window.api.executeCommand(combinedCommand, '')
-          .then(() => {
+          .then(async () => {
             logItemRun(item, 'SUCCESS', '命令执行完成');
-            showNotification('成功', `命令执行完成: ${item.name}`, 'success');
+            await recordSuccessfulItemRun(item);
             if (AppConfig.settings.autoMinimizeAfterRun) {
               window.api.minimizeWindow();
             }
           })
           .catch(err => {
             logItemRun(item, 'ERROR', `命令执行失败：${String(err)}`);
-            showNotification('错误', `命令执行失败: ${err}`, 'error');
           });
         return;
       }
@@ -1196,9 +1200,7 @@ async function runItem(item) {
           runInTerminal: Boolean(item.runInTerminal)
         });
         await logItemRun(item, 'LAUNCHED', result.message);
-        showNotification('已启动', item.runInTerminal
-          ? `Python 已在终端启动: ${item.name}`
-          : `Python 已启动: ${item.name}（PID ${result.pid}）`, 'success');
+        await recordSuccessfulItemRun(item);
         if (AppConfig.settings.autoMinimizeAfterRun) {
           window.api.minimizeWindow();
         }
@@ -1219,9 +1221,7 @@ async function runItem(item) {
           runInTerminal: Boolean(item.runInTerminal)
         });
         await logItemRun(item, 'LAUNCHED', `${result.message}，Java ${result.runtimeVersion}`);
-        showNotification('已启动', item.runInTerminal
-          ? `Java ${result.runtimeVersion} 已在终端启动: ${item.name}`
-          : `Java ${result.runtimeVersion} 已启动: ${item.name}（PID ${result.pid}）`, 'success');
+        await recordSuccessfulItemRun(item);
         if (AppConfig.settings.autoMinimizeAfterRun) {
           window.api.minimizeWindow();
         }
@@ -1230,17 +1230,16 @@ async function runItem(item) {
       /* ================= APPLICATION ================= */
       case 'application': {
         const workingDir = getWorkingDirectory(item.command);
-        const result = await window.api.startApplication(item.command, item.launchParams || '', workingDir);
-        await logItemRun(item, 'LAUNCHED', String(result));
+        const result = await window.api.startApplicationTool({
+          name: item.name,
+          executable: item.command,
+          arguments: item.launchParams || '',
+          workingDirectory: workingDir,
+          runInTerminal: Boolean(item.runInTerminal)
+        });
+        await logItemRun(item, 'LAUNCHED', result.message);
+        await recordSuccessfulItemRun(item);
 
-        showNotification(
-          '成功',
-          String(result).includes('管理员权限')
-            ? `请在 UAC 窗口确认启动: ${item.name}`
-            : `应用程序已启动: ${item.name}`,
-          'success'
-        );
-        
         // 检查是否需要自动最小化
         if (AppConfig.settings.autoMinimizeAfterRun) {
           window.api.minimizeWindow();
@@ -1253,12 +1252,7 @@ async function runItem(item) {
       case 'folder': {
         await window.api.openPath(item.command);
         await logItemRun(item, 'SUCCESS', `${item.type === 'file' ? '文件' : '文件夹'}已打开`);
-        showNotification(
-          '成功',
-          `${item.type === 'file' ? '文件' : '文件夹'}已打开: ${item.name}`,
-          'success'
-        );
-        
+        await recordSuccessfulItemRun(item);
         // 检查是否需要自动最小化
         if (AppConfig.settings.autoMinimizeAfterRun) {
           window.api.minimizeWindow();
@@ -1268,14 +1262,13 @@ async function runItem(item) {
 
       default:
         await logItemRun(item, 'WARN', `未知项目类型：${item.type}`);
-        showNotification('提示', `未知项目类型: ${item.type}`, 'warning');
         return;
     }
   } catch (err) {
     console.error(err);
     const message = err?.message || String(err);
-    await logItemRun(item, 'ERROR', `执行失败：${message}`);
-    showNotification('错误', '执行失败: ' + message, 'error');
+    const alreadyRunning = message.includes('已在运行') || message.includes('正在启动');
+    await logItemRun(item, alreadyRunning ? 'WARN' : 'ERROR', `执行失败：${message}`);
   }
 }
 
@@ -1419,11 +1412,9 @@ function initContextMenu() {
           item.workingDir || ''
         );
         await logItemRun(item, 'LAUNCHED', '已提交管理员权限启动请求');
-        showNotification('成功', `请在 UAC 窗口确认启动: ${item.name}`, 'success');
       } catch (err) {
         console.error('以管理员身份运行失败:', err);
         await logItemRun(item, 'ERROR', `管理员启动失败：${String(err)}`);
-        showNotification('错误', '以管理员身份运行失败: ' + err, 'error');
         contextMenu.classList.add('hidden');
         return;
       }
@@ -1758,11 +1749,3 @@ async function reorderItems(startIndex, endIndex) {
     showNotification('错误', '保存排序失败: ' + error.message, 'error');
   }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  window.api.receive('runtime-tool-finished', result => {
-    if (result?.status !== 'ERROR') return;
-    const detail = result.detail ? `：${result.detail}` : '';
-    showNotification('运行异常', `${result.name || '工具'} 已退出${detail}`, 'error', { log: false });
-  });
-});

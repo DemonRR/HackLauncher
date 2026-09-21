@@ -8,8 +8,12 @@ import (
 )
 
 func TestValidateConfig(t *testing.T) {
-	if err := validateConfig(defaultConfig()); err != nil {
+	defaults := defaultConfig()
+	if err := validateConfig(defaults); err != nil {
 		t.Fatalf("default config should be valid: %v", err)
+	}
+	if got := defaults["settings"].(map[string]interface{})["initialSidebarView"]; got != "all" {
+		t.Fatalf("initialSidebarView default = %v, want all", got)
 	}
 
 	invalid := defaultConfig()
@@ -56,6 +60,53 @@ func TestStoreBackupAndRecovery(t *testing.T) {
 	corruptCopies, _ := filepath.Glob(filepath.Join(store.backupDir, "corrupt-*.json"))
 	if len(corruptCopies) != 1 {
 		t.Fatalf("expected one corrupt recovery copy, got %d", len(corruptCopies))
+	}
+}
+
+func TestManualBackupListAndRestore(t *testing.T) {
+	t.Setenv("HACKLAUNCHER_DATA_DIR", t.TempDir())
+	store, err := OpenStore()
+	if err != nil {
+		t.Fatalf("OpenStore() error = %v", err)
+	}
+	defer store.Close()
+
+	cfg, err := store.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg["settings"].(map[string]interface{})["theme"] = "dark"
+	if err := store.Save(cfg); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateBackup(cfg); err != nil {
+		t.Fatalf("CreateBackup() error = %v", err)
+	}
+	backups, err := store.ListBackups()
+	if err != nil || len(backups) == 0 {
+		t.Fatalf("ListBackups() = %#v, %v", backups, err)
+	}
+	var manual string
+	for _, backup := range backups {
+		if strings.HasPrefix(backup.Name, "config-manual-") {
+			manual = backup.Name
+			break
+		}
+	}
+	if manual == "" {
+		t.Fatal("manual backup was not listed")
+	}
+
+	cfg["settings"].(map[string]interface{})["theme"] = "light"
+	if err := store.Save(cfg); err != nil {
+		t.Fatal(err)
+	}
+	restored, err := store.RestoreBackup(manual)
+	if err != nil {
+		t.Fatalf("RestoreBackup() error = %v", err)
+	}
+	if restored["settings"].(map[string]interface{})["theme"] != "dark" {
+		t.Fatalf("restored theme = %v", restored["settings"])
 	}
 }
 
@@ -122,6 +173,9 @@ func TestLogRunEventWritesRuntimeAndErrorAudit(t *testing.T) {
 	}
 	if len(runtimeEntries) != 2 || len(errorEntries) != 1 {
 		t.Fatalf("unexpected audit counts: runtime=%d error=%d", len(runtimeEntries), len(errorEntries))
+	}
+	if errorEntries[0].Category != "RUN" || errorEntries[0].Tool != "Dirsearch" || errorEntries[0].Status != "ERROR" {
+		t.Fatalf("missing structured run fields: %#v", errorEntries[0])
 	}
 	if !strings.Contains(errorEntries[0].Message, "Dirsearch") || !strings.Contains(errorEntries[0].Message, "python") {
 		t.Fatalf("missing audit context: %q", errorEntries[0].Message)

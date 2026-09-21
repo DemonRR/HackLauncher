@@ -38,8 +38,8 @@
       
       <!-- 导出按钮 -->
       <div class="tooltip-container relative">
-        <button id="export-btn" class="flex items-center justify-center text-dark-2 hover:text-primary transition-custom text-sm w-8 h-8 mx-0">
-          <i class="fas fa-upload"></i>
+        <button id="export-btn" class="flex items-center justify-center text-dark-2 hover:text-primary transition-custom text-sm w-8 h-8 mx-0" aria-label="导出配置" title="导出配置">
+          <i class="fas fa-download"></i>
         </button>
         <div class="tooltip top-1/2 transform -translate-y-1/2 -translate-x-1/2 left-1/2">
           <div class="tooltip-content">导出配置</div>
@@ -48,15 +48,36 @@
       
       <!-- 导入按钮 -->
       <div class="tooltip-container relative">
-        <button id="import-btn" class="flex items-center justify-center text-dark-2 hover:text-primary transition-custom text-sm w-8 h-8 mx-0">
-          <i class="fas fa-download"></i>
+        <button id="import-btn" class="flex items-center justify-center text-dark-2 hover:text-primary transition-custom text-sm w-8 h-8 mx-0" aria-label="导入配置" title="导入配置">
+          <i class="fas fa-upload"></i>
         </button>
         <div class="tooltip top-1/2 transform -translate-y-1/2 -translate-x-1/2 left-1/2">
           <div class="tooltip-content">导入配置</div>
         </div>
       </div>
       
-      <!-- 设置按钮 -->
+      <!-- 日志按钮 -->
+      <div class="tooltip-container relative">
+        <button id="notification-center-btn" class="flex items-center justify-center text-dark-2 hover:text-primary transition-custom text-sm w-8 h-8 mx-0">
+          <i class="fas fa-bell"></i>
+          <span id="notification-unread-count" class="hidden">0</span>
+        </button>
+        <div class="tooltip top-1/2 transform -translate-y-1/2 -translate-x-1/2 left-1/2">
+          <div class="tooltip-content">通知记录</div>
+        </div>
+      </div>
+
+      <!-- 资产体检 -->
+      <div class="tooltip-container relative">
+        <button id="diagnostics-btn" class="flex items-center justify-center text-dark-2 hover:text-primary transition-custom text-sm w-8 h-8 mx-0">
+          <i class="fas fa-shield-alt"></i>
+        </button>
+        <div class="tooltip top-1/2 transform -translate-y-1/2 -translate-x-1/2 left-1/2">
+          <div class="tooltip-content">资产体检</div>
+        </div>
+      </div>
+
+      <!-- 日志按钮 -->
       <div class="tooltip-container relative">
         <button id="logs-btn" class="flex items-center justify-center text-dark-2 hover:text-primary transition-custom text-sm w-8 h-8 mx-0">
           <i class="fas fa-list-alt"></i>
@@ -95,6 +116,12 @@
       </button>
     </div>
   </div>
+
+  <aside id="notification-center" class="hidden" aria-label="通知记录">
+    <div class="notification-center-header"><div><strong>通知记录</strong><span>最近 50 条应用提示</span></div><button id="notification-history-clear">清空</button></div>
+    <div id="notification-history-list"></div>
+    <div id="notification-history-empty"><i class="far fa-bell"></i><span>暂无通知</span></div>
+  </aside>
 
   <!-- 主内容区 -->
   <main class="app-shell flex-grow px-2 py-1 pb-0 flex flex-col md:flex-row gap-6">
@@ -159,7 +186,7 @@
             <input 
               type="text" 
               id="search-input" 
-              placeholder="搜索名称或描述..." 
+              placeholder="搜索名称、描述、路径或类型..."
               class="pl-9 pr-4 py-2 rounded-lg border border-light-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
             >
             <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-light-3 search-icon"></i> <!-- 替换为 v5 类名 -->
@@ -215,7 +242,10 @@
   <div id="notification" class="fixed bg-white rounded-lg shadow-lg p-4 flex items-center max-w-sm z-50" role="status" aria-live="polite" aria-atomic="true">
     <div id="notification-icon" class="mr-3 text-xl flex-shrink-0"></div>
     <div class="flex-grow min-w-0">
-      <h3 id="notification-title" class="font-medium text-dark"></h3>
+      <div class="notification-heading">
+        <h3 id="notification-title" class="font-medium text-dark"></h3>
+        <span id="notification-repeat" class="hidden" aria-label="重复通知次数"></span>
+      </div>
       <p id="notification-message" class="text-sm text-dark-2 mt-1"></p>
     </div>
     <button id="notification-log-btn" class="ml-2 text-light-3 hover:text-primary p-1 rounded-full hover:bg-light-1 flex-shrink-0" title="打开日志中心">
@@ -225,6 +255,50 @@
       <i class="fa fa-times text-sm"></i>
     </button>
     <span id="notification-progress" aria-hidden="true"></span>
+  </div>
+
+  <!-- 工具资产体检 -->
+  <div id="diagnostics-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="diagnostics-dialog" role="dialog" aria-modal="true" aria-labelledby="diagnostics-title">
+      <div class="diagnostics-header">
+        <div>
+          <span class="settings-eyebrow">ASSET HEALTH CHECK</span>
+          <h3 id="diagnostics-title">工具资产体检</h3>
+          <p>批量检查路径、运行环境、启动参数与 Java 兼容性</p>
+        </div>
+        <button id="diagnostics-close" class="modal-close-btn" title="关闭"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="diagnostics-metrics">
+        <div><span>检查总数</span><strong id="diagnostics-total">0</strong></div>
+        <div class="healthy"><span>配置正常</span><strong id="diagnostics-healthy">0</strong></div>
+        <div class="warning"><span>需要关注</span><strong id="diagnostics-warning">0</strong></div>
+        <div class="error"><span>配置异常</span><strong id="diagnostics-error">0</strong></div>
+      </div>
+      <div class="diagnostics-toolbar">
+        <div class="diagnostics-filters">
+          <button class="active" data-diagnostic-filter="ALL">全部</button>
+          <button data-diagnostic-filter="ISSUES">仅看异常</button>
+        </div>
+        <div class="diagnostics-actions">
+          <button id="diagnostics-fix" class="diagnostics-fix" disabled><i class="fas fa-magic"></i> 一键修复 <span id="diagnostics-fix-count"></span></button>
+          <button id="diagnostics-copy"><i class="fas fa-copy"></i> 复制报告</button>
+          <button id="diagnostics-recheck" disabled><i class="fas fa-redo-alt"></i> 复查异常项 <span id="diagnostics-issue-count"></span></button>
+          <button id="diagnostics-run"><i class="fas fa-search"></i> 全量体检</button>
+        </div>
+      </div>
+      <div id="diagnostics-list" class="diagnostics-list"></div>
+      <div id="diagnostics-empty" class="diagnostics-empty hidden"><i class="fas fa-check-circle"></i><strong>没有发现配置异常</strong><span>当前工具资产均可通过基础启动检查</span></div>
+      <div class="diagnostics-footer"><span id="diagnostics-status">尚未开始检查</span><button id="diagnostics-done">完成</button></div>
+    </div>
+  </div>
+
+  <!-- 运行参数变量 -->
+  <div id="parameter-prompt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <form id="parameter-prompt-form" class="parameter-prompt-dialog">
+      <div class="parameter-prompt-header"><div><span class="settings-eyebrow">QUICK RUN</span><h3>填写运行参数</h3><p id="parameter-prompt-description">为本次运行填写变量，不会修改工具配置</p></div><button id="parameter-prompt-close" type="button" class="modal-close-btn"><i class="fas fa-times"></i></button></div>
+      <div id="parameter-prompt-fields" class="parameter-prompt-fields"></div>
+      <div class="parameter-prompt-footer"><button id="parameter-prompt-cancel" type="button">取消</button><button type="submit">继续运行</button></div>
+    </form>
   </div>
 
   <!-- 日志中心 -->
@@ -245,6 +319,7 @@
           <button data-log-level="WARN"><i class="fas fa-exclamation-triangle"></i> 警告日志 <span id="warn-log-count">0</span></button>
           <button data-log-level="ERROR"><i class="fas fa-exclamation-circle"></i> 错误日志 <span id="error-log-count">0</span></button>
         </div>
+        <div class="logs-search"><i class="fas fa-search"></i><input id="logs-search-input" type="search" placeholder="搜索工具、状态或错误详情"></div>
         <div class="logs-actions">
           <button id="logs-refresh-btn" title="刷新"><i class="fas fa-sync-alt"></i></button>
           <button id="logs-copy-btn" title="复制当前日志"><i class="fas fa-copy"></i></button>
@@ -386,6 +461,7 @@
           <div id="launch-params-container" class="mb-4 hidden">
             <label for="item-launch-params" class="block text-sm font-medium text-dark-2 mb-1">启动参数</label>
               <input type="text" id="item-launch-params" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入启动参数（可选）">
+            <p class="text-xs text-light-3 mt-1">支持 ${TARGET}、${WORDLIST}、${PROXY}、${OUTPUT} 等运行变量</p>
           </div>
           
           <!-- Java 程序参数输入 -->
@@ -447,6 +523,12 @@
           <div id="description-container" class="mb-4">
             <label for="item-description" class="block text-sm font-medium text-dark-2 mb-1">工具描述</label>
             <input type="text" id="item-description" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入工具描述（可选）">
+          </div>
+
+          <div class="mb-4">
+            <label for="item-tags" class="block text-sm font-medium text-dark-2 mb-1">工具标签</label>
+            <input type="text" id="item-tags" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="例如：Web、代理、内网（逗号分隔）">
+            <p class="text-xs text-light-3 mt-1">标签可用于搜索，一个工具最多保存 10 个标签</p>
           </div>
         </form>
       </div>
@@ -531,6 +613,7 @@
           <button type="button" class="active" data-settings-target="appearance"><i class="fas fa-palette"></i><span>外观</span></button>
           <button type="button" data-settings-target="window"><i class="fas fa-window-maximize"></i><span>窗口行为</span></button>
           <button type="button" data-settings-target="environment"><i class="fas fa-code"></i><span>运行环境</span></button>
+          <button type="button" data-settings-target="backup"><i class="fas fa-database"></i><span>备份恢复</span></button>
           <button type="button" data-settings-target="about"><i class="fas fa-info-circle"></i><span>关于</span></button>
         </nav>
         <div class="settings-panels">
@@ -602,12 +685,36 @@
             </div>
           </div>
 
+          <div class="initial-sidebar-view-setting">
+            <div>
+              <label for="initial-sidebar-view">启动时左侧菜单焦点</label>
+              <p>下次启动时默认打开并高亮对应的项目视图</p>
+            </div>
+            <select id="initial-sidebar-view">
+              <option value="all">全部项目</option>
+              <option value="recent">最近使用</option>
+            </select>
+          </div>
+
+          <div class="startup-diagnostics-setting">
+            <div class="startup-diagnostics-copy">
+              <span><i class="fas fa-stethoscope"></i></span>
+              <div><label for="auto-diagnostics-startup">启动时自动体检</label><p>每次启动仅检查一次；关闭后仍可从顶部或托盘手动体检。</p></div>
+            </div>
+            <input type="checkbox" id="auto-diagnostics-startup" checked aria-label="启动时自动体检">
+          </div>
+
           <div class="window-size-setting">
             <div>
               <label>初始窗口大小</label>
               <p>当前窗口 <strong id="current-window-size">读取中...</strong>，下次启动时应用保存的尺寸</p>
             </div>
             <button id="save-current-window-size" type="button"><i class="fas fa-expand-alt"></i> 保存当前大小</button>
+          </div>
+
+          <div class="notification-level-setting">
+            <div><label for="notification-level">通知提示级别</label><p>通知记录仍会保留，您可以减少非关键弹窗。</p></div>
+            <select id="notification-level"><option value="all">全部提示</option><option value="important">仅警告和错误</option></select>
           </div>
 
           <div class="hotkey-setting">
@@ -666,6 +773,19 @@
             </p>
           </div>
         </div>
+
+        <!-- 备份与恢复 -->
+        <div class="settings-section settings-backup mb-6" data-settings-section="backup">
+          <div class="backup-heading">
+            <div>
+              <h4><i class="fas fa-database"></i> 配置备份与恢复</h4>
+              <p>恢复前会自动保存当前配置，避免误操作造成数据丢失。</p>
+            </div>
+            <button id="create-config-backup" type="button"><i class="fas fa-plus"></i> 立即备份</button>
+          </div>
+          <div id="backup-list" class="backup-list"></div>
+          <div id="backup-empty" class="backup-empty hidden"><i class="fas fa-archive"></i><strong>暂无可用备份</strong><span>点击“立即备份”保存当前工具配置</span></div>
+        </div>
         
         <!-- 关于 -->
         <div class="settings-section settings-about mb-6" data-settings-section="about">
@@ -673,7 +793,7 @@
             <i class="fas fa-info-circle mr-2 text-primary"></i> 关于
           </h4>
           <div class="text-sm text-dark-2">
-            <p>版本: 1.1.3</p>
+            <p>版本: 1.1.4</p>
             <p class="mt-1">渗透武器库 - Windows 专用启动器管理工具</p>
             <p class="mt-1">作者: Demon</p>
             <p class="mt-1">公司: 浙江谦卦信息科技有限公司</p>
@@ -705,23 +825,14 @@
   <script src="js/config.js"></script>
   <script src="js/notifications.js"></script>
   <script src="js/categories.js"></script>
+  <script src="js/diagnostics.js"></script>
+  <script src="js/backups.js"></script>
+  <script src="js/parameter-templates.js"></script>
   <script src="js/items.js"></script>
   <script src="js/workspace.js"></script>
   <script src="js/logs.js"></script>
   <script src="js/app.js"></script>
   <script src="js/theme.js"></script>
   
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      await loadConfig();
-      
-      const savedThemeColor = AppConfig.settings?.themeColor;
-      if (savedThemeColor) {
-        setTimeout(() => {
-          applyThemeColor(savedThemeColor);
-        }, 100);
-      }
-    });
-  </script>
 </body>
 </html>

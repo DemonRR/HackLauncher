@@ -17,12 +17,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 初始化配置
     await loadConfig();
 
+    // 首次渲染前应用启动页设置，确保左侧高亮与项目列表一致。
+    currentCategoryId = AppConfig.settings?.initialSidebarView === 'recent' ? 'recent' : null;
+    showFavoritesOnly = false;
+
     // 移除加载提示
     document.body.removeChild(loadingElement);
 
     // 渲染UI
     renderCategories();
     renderItems();
+
+    // 后端会保证同一次应用进程最多执行一次自动体检。
+    if (typeof runStartupDiagnosticsOnce === 'function') {
+      setTimeout(() => runStartupDiagnosticsOnce(), 450);
+    }
 
     // 设置事件监听
     setupCategoryEvents();
@@ -108,11 +117,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
               // 确认覆盖现有配置
               document.getElementById('confirm-title').textContent = '确认导入';
-              document.getElementById('confirm-message').textContent = '导入将覆盖现有配置，是否继续？';
+              const currentItems = (AppConfig.items || []).length;
+              const incomingItems = (newConfig.items || []).length;
+              const currentCategories = (AppConfig.categories || []).length;
+              const incomingCategories = (newConfig.categories || []).length;
+              document.getElementById('confirm-message').textContent =
+                `当前 ${currentItems} 个工具/${currentCategories} 个分类，将替换为 ${incomingItems} 个工具/${incomingCategories} 个分类。导入前会自动备份当前配置。`;
               document.getElementById('confirm-ok-btn').textContent = '确认导入';
               document.getElementById('confirm-ok-btn').onclick = async () => {
                 const previousConfig = AppConfig;
                 try {
+                  await window.api.createConfigBackup();
                   AppConfig = newConfig;
                   await saveConfig();
                   renderCategories();
@@ -448,7 +463,10 @@ async function openSettingsModal() {
     // 加载窗口设置
     const closeBehavior = AppConfig.settings.closeBehavior || 'ask';
     const autoMinimize = AppConfig.settings.autoMinimizeAfterRun || false;
+    const initialSidebarView = AppConfig.settings.initialSidebarView === 'recent' ? 'recent' : 'all';
     const showWindowHotkey = AppConfig.settings.showWindowHotkey || 'Ctrl+Shift+H';
+    const notificationLevel = AppConfig.settings.notificationLevel || 'all';
+    const autoDiagnosticsOnStartup = AppConfig.settings.autoDiagnosticsOnStartup !== false;
     
     // 更新关闭行为单选按钮
     document.querySelectorAll('input[name="close-behavior"]').forEach(radio => {
@@ -457,7 +475,10 @@ async function openSettingsModal() {
     
     // 更新自动最小化复选框
     document.getElementById('auto-minimize').checked = autoMinimize;
+    document.getElementById('initial-sidebar-view').value = initialSidebarView;
     document.getElementById('show-window-hotkey').value = showWindowHotkey;
+    document.getElementById('notification-level').value = notificationLevel;
+    document.getElementById('auto-diagnostics-startup').checked = autoDiagnosticsOnStartup;
     await refreshCurrentWindowSize();
     
     document.getElementById('settings-modal').classList.remove('hidden');
@@ -553,7 +574,10 @@ async function saveSettings() {
     
     AppConfig.settings.closeBehavior = selectedCloseBehavior;
     AppConfig.settings.autoMinimizeAfterRun = autoMinimize;
+    AppConfig.settings.initialSidebarView = document.getElementById('initial-sidebar-view').value === 'recent' ? 'recent' : 'all';
     AppConfig.settings.showWindowHotkey = registeredHotkey;
+    AppConfig.settings.notificationLevel = document.getElementById('notification-level').value || 'all';
+    AppConfig.settings.autoDiagnosticsOnStartup = document.getElementById('auto-diagnostics-startup').checked;
     
     // 保存完整配置
     await saveConfig();

@@ -29,15 +29,21 @@ import (
 var iconExtractScript []byte
 
 type App struct {
-	ctx      context.Context
-	store    *Store
-	config   Config
-	hotkey   *globalHotkey
-	mu       sync.RWMutex
-	quitting atomic.Bool
+	ctx                      context.Context
+	store                    *Store
+	config                   Config
+	hotkey                   *globalHotkey
+	mu                       sync.RWMutex
+	quitting                 atomic.Bool
+	startupDiagnosticsOnce   sync.Once
+	startupDiagnosticsResult StartupDiagnosticResult
 }
 
-func NewApp() *App { return &App{config: defaultConfig(), hotkey: newGlobalHotkey()} }
+func NewApp() *App {
+	return &App{
+		config: defaultConfig(), hotkey: newGlobalHotkey(),
+	}
+}
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
@@ -158,8 +164,42 @@ func (a *App) SaveConfig(cfg Config) error {
 		return err
 	}
 	a.config = cloneConfig(cfg)
-	a.logf("INFO", "配置已保存")
 	return nil
+}
+
+func (a *App) GetConfigBackups() ([]BackupInfo, error) {
+	if a.store == nil {
+		return nil, errors.New("配置存储尚未初始化")
+	}
+	return a.store.ListBackups()
+}
+
+func (a *App) CreateConfigBackup() error {
+	if a.store == nil {
+		return errors.New("配置存储尚未初始化")
+	}
+	if err := a.store.CreateBackup(a.GetConfig()); err != nil {
+		a.logf("ERROR", "创建配置备份失败: %v", err)
+		return err
+	}
+	a.logf("INFO", "已创建手动配置备份")
+	return nil
+}
+
+func (a *App) RestoreConfigBackup(name string) (Config, error) {
+	if a.store == nil {
+		return nil, errors.New("配置存储尚未初始化")
+	}
+	cfg, err := a.store.RestoreBackup(name)
+	if err != nil {
+		a.logf("ERROR", "恢复配置备份失败，备份=%q: %v", name, err)
+		return nil, err
+	}
+	a.mu.Lock()
+	a.config = cloneConfig(cfg)
+	a.mu.Unlock()
+	a.logf("INFO", "配置备份恢复成功，备份=%q", name)
+	return cloneConfig(cfg), nil
 }
 
 func (a *App) GetCurrentWindowSize() map[string]int {
@@ -231,7 +271,6 @@ func (a *App) SaveEnvironment(env map[string]interface{}) error {
 		a.logf("ERROR", "保存环境配置失败: %v", err)
 		return err
 	}
-	a.logf("INFO", "环境配置已保存")
 	return nil
 }
 
@@ -621,66 +660,6 @@ func (a *App) ExecuteCommandAsAdmin(command, cwd string) (string, error) {
 	return "已请求管理员权限运行", nil
 }
 
-func (a *App) StartApplication(executable, rawArguments, cwd string) (string, error) {
-	executable = strings.TrimSpace(strings.Trim(executable, `"`))
-	if executable == "" {
-		err := errors.New("应用程序路径不能为空")
-		a.logf("ERROR", "应用程序校验失败: %v", err)
-		return "", err
-	}
-	info, err := os.Stat(executable)
-	if err != nil {
-		a.logf("ERROR", "应用程序路径校验失败，路径=%q: %v", executable, err)
-		return "", err
-	}
-	if info.IsDir() {
-		err := errors.New("应用程序路径指向文件夹")
-		a.logf("ERROR", "应用程序路径校验失败，路径=%q: %v", executable, err)
-		return "", err
-	}
-	arguments, err := splitCommandLine(rawArguments)
-	if err != nil {
-		a.logf("ERROR", "应用程序参数校验失败，路径=%q: %v", executable, err)
-		return "", err
-	}
-	if cwd == "" {
-		cwd = filepath.Dir(executable)
-	}
-	validatedCwd, err := validateWorkingDirectory(cwd)
-	if err != nil {
-		a.logf("ERROR", "应用程序工作目录校验失败，路径=%q，工作目录=%q: %v", executable, cwd, err)
-		return "", err
-	}
-	startedAt := time.Now()
-	a.logf("INFO", "应用程序准备启动，路径=%q，参数=%q，工作目录=%q", executable, strings.TrimSpace(rawArguments), validatedCwd)
-	cmd := exec.Command(executable, arguments...)
-	cmd.Dir = validatedCwd
-	if err := cmd.Start(); err != nil {
-		if isElevationRequired(err) {
-			a.logf("WARN", "应用程序要求管理员权限，切换到 UAC 启动，路径=%q", executable)
-			if elevatedErr := startElevatedApplication(executable, rawArguments, validatedCwd); elevatedErr != nil {
-				a.logf("ERROR", "管理员应用程序启动失败: %v", elevatedErr)
-				return "", elevatedErr
-			}
-			a.logf("INFO", "已请求管理员权限启动应用程序，路径=%q，耗时=%s", executable, time.Since(startedAt).Round(time.Millisecond))
-			return "已请求管理员权限启动应用程序", nil
-		}
-		a.logf("ERROR", "应用程序启动失败: %v", err)
-		return "", err
-	}
-	pid := cmd.Process.Pid
-	a.logf("INFO", "应用程序已启动，PID=%d，路径=%q，启动耗时=%s", pid, executable, time.Since(startedAt).Round(time.Millisecond))
-	go func() {
-		err := cmd.Wait()
-		if err != nil {
-			a.logf("ERROR", "应用程序异常退出，PID=%d，路径=%q，运行时长=%s，错误=%v", pid, executable, time.Since(startedAt).Round(time.Millisecond), err)
-		} else {
-			a.logf("INFO", "应用程序正常退出，PID=%d，路径=%q，运行时长=%s", pid, executable, time.Since(startedAt).Round(time.Millisecond))
-		}
-	}()
-	return fmt.Sprintf("应用程序已启动（PID %d）", pid), nil
-}
-
 func (a *App) StartApplicationAsAdmin(executable, rawArguments, cwd string) (string, error) {
 	executable = strings.TrimSpace(strings.Trim(executable, `"`))
 	if executable == "" {
@@ -803,16 +782,31 @@ func (a *App) OpenPath(path string) error {
 		a.logf("ERROR", "文件系统目标打开失败: %v", err)
 		return err
 	}
-	if _, err := os.Stat(path); err != nil {
+	info, err := os.Stat(path)
+	if err != nil {
 		a.logf("ERROR", "文件系统目标打开失败，路径=%q: %v", path, err)
 		return err
 	}
-	if err := exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", path).Start(); err != nil {
+	workingDirectory := path
+	if !info.IsDir() {
+		workingDirectory = filepath.Dir(path)
+	}
+	cmd := newAssociatedPathCommand(path, workingDirectory)
+	if err := cmd.Start(); err != nil {
 		a.logf("ERROR", "文件系统目标打开失败，路径=%q: %v", path, err)
 		return err
 	}
 	a.logf("INFO", "文件系统目标已打开，路径=%q", path)
 	return nil
+}
+
+func newAssociatedPathCommand(path, workingDirectory string) *exec.Cmd {
+	cmd := exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", path)
+	cmd.Dir = workingDirectory
+	// Suppress only a possible helper console. Do not pass SW_HIDE because the
+	// associated target may legitimately be a visible GUI application.
+	prepareBackgroundProcess(cmd)
+	return cmd
 }
 
 func (a *App) CheckPathExists(path string) bool { _, err := os.Stat(path); return err == nil }
@@ -875,11 +869,9 @@ func (a *App) LogRunEvent(itemName, itemType, status, detail string) {
 	if status == "" {
 		status = "INFO"
 	}
-	if detail == "" {
-		a.logf(level, "运行审计 | 工具=%q | 类型=%s | 状态=%s", itemName, itemType, status)
-		return
+	if a.store != nil {
+		a.store.LogRunEvent(level, itemName, itemType, status, detail)
 	}
-	a.logf(level, "运行审计 | 工具=%q | 类型=%s | 状态=%s | 详情=%s", itemName, itemType, status, detail)
 }
 
 func (a *App) logf(level, format string, args ...interface{}) {
@@ -904,6 +896,7 @@ func (a *App) GetExeIcon(exePath string) (string, error) {
 	defer os.Remove(script)
 	defer os.Remove(temp)
 	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-exePath", exePath, "-outputPath", temp)
+	prepareHiddenHelperProcess(cmd)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return "", fmt.Errorf("提取图标失败: %s", decodeOutput(output))
 	}

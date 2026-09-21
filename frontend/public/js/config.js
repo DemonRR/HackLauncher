@@ -17,9 +17,12 @@ let AppConfig = {
     animations: true,
     closeBehavior: 'ask',
     autoMinimizeAfterRun: false,
+    initialSidebarView: 'all',
     showWindowHotkey: 'Ctrl+Shift+H',
     initialWindowWidth: 1190,
-    initialWindowHeight: 680
+    initialWindowHeight: 680,
+    notificationLevel: 'all',
+    autoDiagnosticsOnStartup: true
   },
   environment: {
     python: '',
@@ -49,7 +52,7 @@ function normalizeImportedConfig(config) {
     file: 'file', folder: 'folder', directory: 'folder', url: 'url', website: 'url',
     '应用程序': 'application', '命令行': 'command', '文件': 'file', '文件夹': 'folder', '网页': 'url'
   };
-  const terminalTypes = new Set(['command', 'python', 'java']);
+  const terminalTypes = new Set(['command', 'python', 'java', 'application']);
 
   config.items = config.items.filter(item => item && typeof item === 'object').map(item => {
     const originalType = String(item.type || '').trim();
@@ -70,6 +73,9 @@ function normalizeImportedConfig(config) {
       item.launchParams = [item.arguments, item.pythonArgs, item.javaArgs].find(value => typeof value === 'string') || '';
       corrections++;
     }
+    item.tags = Array.isArray(item.tags)
+      ? [...new Set(item.tags.filter(tag => typeof tag === 'string').map(tag => tag.trim()).filter(Boolean))].slice(0, 10)
+      : [];
     if (terminalTypes.has(type)) {
       item.runInTerminal = Boolean(item.runInTerminal);
     } else if ('runInTerminal' in item) {
@@ -155,7 +161,6 @@ async function loadConfig() {
         await window.api.saveConfig(config);
         console.info(`已自动修正 ${migration.corrections} 个旧配置兼容字段`);
       }
-      showNotification('成功', '配置加载成功', 'success');
       // 应用主题设置
     applyTheme(config.settings.theme);
     } else {
@@ -183,7 +188,6 @@ async function saveConfig() {
     // 保存到主进程
     await window.api.saveConfig(AppConfig);
     
-    showNotification('成功', '配置已保存', 'success');
   } catch (error) {
     console.error('保存配置失败:', error);
     showNotification('错误', '保存配置失败: ' + error.message, 'error');

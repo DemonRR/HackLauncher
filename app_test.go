@@ -46,6 +46,18 @@ func TestSplitCommandLineRejectsUnclosedQuote(t *testing.T) {
 	}
 }
 
+func TestAssociatedPathCommandUsesTargetDirectory(t *testing.T) {
+	target := `F:\Tools\Burp Suite\CN_Burp.VBS`
+	wantDirectory := `F:\Tools\Burp Suite`
+	cmd := newAssociatedPathCommand(target, wantDirectory)
+	if cmd.Dir != wantDirectory {
+		t.Fatalf("associated file working directory = %q, want %q", cmd.Dir, wantDirectory)
+	}
+	if len(cmd.Args) != 3 || cmd.Args[2] != target {
+		t.Fatalf("unexpected associated file command: %#v", cmd.Args)
+	}
+}
+
 func TestTerminalStaysOpenIntegration(t *testing.T) {
 	if os.Getenv("HACKLAUNCHER_TERMINAL_TEST") != "1" {
 		t.Skip("set HACKLAUNCHER_TERMINAL_TEST=1 to run the Windows console integration test")

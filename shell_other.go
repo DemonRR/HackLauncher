@@ -13,3 +13,5 @@ func newVisibleTerminalCommand(shell, scriptPath string) *exec.Cmd {
 }
 
 func prepareBackgroundProcess(_ *exec.Cmd) {}
+
+func prepareHiddenHelperProcess(_ *exec.Cmd) {}
