@@ -771,10 +771,10 @@ function setupItemEvents() {
       document.getElementById('item-command-error').classList.remove('hidden');
       isValid = false;
     } else {
-      // 检查路径或命令中是否包含CMD特殊符号
-      const specialChars = /[&|<>()^]/;
+      // 检查路径或命令中是否包含CMD特殊符号（含引号、百分号、反引号等常见绕过字符）
+      const specialChars = /[&|<>()^"'`%!;\n\r]/;
       if (itemType !== 'url' && specialChars.test(itemCommand)) {
-        document.getElementById('item-command-error').textContent = '路径或命令中包含特殊符号(&|<>()^)，请修改后重试';
+        document.getElementById('item-command-error').textContent = '路径或命令中包含特殊符号(&|<>()^"\'`%!;)，请修改后重试';
         document.getElementById('item-command-error').classList.remove('hidden');
         isValid = false;
       } else {
