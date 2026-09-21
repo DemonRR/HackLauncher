@@ -38,8 +38,8 @@ HackLauncher（渗透武器库）用于集中管理、检索、检查和启动�
 
 完整工具箱包含 HackLauncher 及配套安全工具资源，可通过夸克网盘下载：
 
-- 网盘链接：[https://pan.quark.cn/s/9e408697afec](https://pan.quark.cn/s/9e408697afec)
-- 提取码：`LQ2u`
+- 网盘链接：[115网盘下载](https://115cdn.com/s/swsg13j3h99)
+- 提取码：`bd22`
 
 > 工具仅用于已获授权的安全测试、教学研究和应急响应。请遵守所在地法律法规及目标系统授权范围。
 
