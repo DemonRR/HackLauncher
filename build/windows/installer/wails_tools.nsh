@@ -14,7 +14,7 @@
     !define INFO_PRODUCTNAME "HackLauncher"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "1.1.6"
+    !define INFO_PRODUCTVERSION "1.1.7"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "Copyright © 2026 浙江谦卦信息科技有限公司"

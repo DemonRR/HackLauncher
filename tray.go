@@ -10,8 +10,8 @@ import (
 //go:embed build/windows/icon.ico
 var trayIcon []byte
 
-func (a *App) startTray() {
-	systray.Run(func() {
+func (a *App) registerTray() {
+	systray.Register(func() {
 		systray.SetIcon(trayIcon)
 		systray.SetTitle("HackLauncher")
 		systray.SetTooltip("渗透武器库")
@@ -25,18 +25,28 @@ func (a *App) startTray() {
 			for {
 				select {
 				case <-show.ClickedCh:
+					a.logf("INFO", "系统托盘菜单触发：显示主窗口")
 					a.showMainWindow()
 				case <-diagnostics.ClickedCh:
+					a.logf("INFO", "系统托盘菜单触发：工具资产体检")
 					a.showMainWindow()
-					runtime.EventsEmit(a.ctx, "open-diagnostics")
+					if a.ctx != nil {
+						runtime.EventsEmit(a.ctx, "open-diagnostics")
+					}
 				case <-logs.ClickedCh:
+					a.logf("INFO", "系统托盘菜单触发：打开日志中心")
 					a.showMainWindow()
-					runtime.EventsEmit(a.ctx, "open-log-center")
+					if a.ctx != nil {
+						runtime.EventsEmit(a.ctx, "open-log-center")
+					}
 				case <-quit.ClickedCh:
+					a.logf("INFO", "系统托盘菜单触发：退出程序")
 					a.ConfirmQuit()
 					return
 				}
 			}
 		}()
-	}, func() {})
+	}, func() {
+		a.logf("INFO", "系统托盘消息窗口已退出")
+	})
 }

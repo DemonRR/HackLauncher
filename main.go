@@ -31,6 +31,9 @@ func main() {
 	if cacheDir, err := os.UserCacheDir(); err == nil {
 		webviewDataPath = filepath.Join(cacheDir, "HackLauncher", "WebView2")
 	}
+	// systray.Register must run on the locked main OS thread. Wails then owns
+	// the shared Windows message loop and dispatches both app and tray events.
+	app.registerTray()
 	err := wails.Run(&options.App{
 		Title:                    "渗透武器库",
 		Width:                    windowWidth,
@@ -48,6 +51,7 @@ func main() {
 		SingleInstanceLock: &options.SingleInstanceLock{
 			UniqueId: "com.demonrr.hacklauncher",
 			OnSecondInstanceLaunch: func(_ options.SecondInstanceData) {
+				app.logf("INFO", "检测到重复启动，正在通过单实例回调唤醒主窗口")
 				app.showMainWindow()
 			},
 		},

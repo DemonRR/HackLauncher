@@ -71,7 +71,7 @@ func (a *App) startup(ctx context.Context) {
 	if _, err := a.registerConfiguredShowHotkey(); err != nil {
 		a.logf("ERROR", "窗口唤醒快捷键注册失败: %v", err)
 	}
-	go a.startTray()
+	a.logf("INFO", "系统托盘已在主 OS 线程注册")
 }
 
 func (a *App) shutdown(_ context.Context) {
