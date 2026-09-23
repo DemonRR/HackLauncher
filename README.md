@@ -31,6 +31,7 @@ HackLauncher（渗透武器库）用于集中管理、检索、检查和启动�
 ### v1.1.5
 
 - 新增可配置的 `${TOOLS_ROOT}` 便携工具目录，修复路径重复迁移问题，并精简新建工具时的变量提示。
+- 修复暗色模式下新建/编辑项目弹窗的表单显示异常，优化便携路径变量的布局与示例说明。
 
 ## 界面展示
 
@@ -99,7 +100,7 @@ HackLauncher 会根据自身位置自动识别武器库根目录，并将配套�
 新增或编辑工具时仅提供两个便携路径变量，无需额外定义：
 
 - `${TOOLS_ROOT}`：适用于 Tools 内的工具，例如 `${TOOLS_ROOT}\ScanTools\nuclei.exe`
-- `${TOOLKIT_ROOT}`：适用于武器库根目录下的文件，例如 `${TOOLKIT_ROOT}\README.md`
+- `${TOOLKIT_ROOT}`：适用于武器库根目录下的文件，例如 `${TOOLKIT_ROOT}\Tools\ScanTools\TscanPlus\TscanPlus.exe`
 
 通过文件选择器添加 Tools 内的程序时，HackLauncher 会自动转换路径，通常不需要手写变量。
 

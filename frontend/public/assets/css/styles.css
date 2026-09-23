@@ -2786,20 +2786,40 @@ body {
 }
 .variable-reference-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
   padding: 0 12px 12px;
 }
-.variable-reference-grid > div { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+.variable-reference-grid > div {
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  gap: 3px 9px;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid #e5eaf1;
+  border-radius: 8px;
+  background: #fff;
+}
 .variable-reference-grid code {
-  flex: 0 0 auto;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
   color: var(--theme-color);
   font-family: Consolas, "SFMono-Regular", monospace;
   font-size: 10px;
   font-weight: 700;
 }
 .variable-reference-grid span { color: #78869a; font-size: 10px; line-height: 1.35; }
-.variable-reference-grid b { color: #66758a; font-family: Consolas, "SFMono-Regular", monospace; font-size: 9px; font-weight: 600; }
+.variable-reference-grid b {
+  grid-column: 2;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #66758a;
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.4;
+}
 .variable-reference-note { margin: 0 12px 11px; color: #8995a6; font-size: 9px; }
 .variable-reference-note i { margin-right: 4px; color: var(--theme-color); }
 
@@ -2844,6 +2864,46 @@ body.dark .variable-reference { border-color: #2c3a50; background: #101b2d; }
 body.dark .variable-reference-title { color: #c3ccda; }
 body.dark .variable-reference-grid span { color: #929eb0; }
 body.dark .variable-reference-grid b { color: #b7c1d0; }
+body.dark .variable-reference-grid > div { border-color: #2c3a50; background: #162238; }
+
+/* Item dialog dark theme: keep these rules after the unified light form rules. */
+body.dark #item-modal .item-modal-dialog {
+  border-color: #3a485e !important;
+  background: #121d30 !important;
+  color: #e7edf6;
+}
+body.dark #item-modal .item-modal-header,
+body.dark #item-modal .item-modal-footer { border-color: #2f3d53 !important; background: #121d30; }
+body.dark #item-modal .item-modal-body { background: #121d30; }
+body.dark #item-modal h3 { color: #f1f5fa; }
+body.dark #item-modal label,
+body.dark #item-modal #run-in-terminal-option span { color: #c7d0dd !important; }
+body.dark #item-modal input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+body.dark #item-modal textarea,
+body.dark #item-modal select {
+  border-color: #3a4960 !important;
+  background: #0f1a2c !important;
+  color: #e7edf6 !important;
+  color-scheme: dark;
+}
+body.dark #item-modal input::placeholder,
+body.dark #item-modal textarea::placeholder { color: #718198 !important; opacity: 1; }
+body.dark #item-modal select option { background: #0f1a2c; color: #e7edf6; }
+body.dark #item-modal input:focus,
+body.dark #item-modal textarea:focus,
+body.dark #item-modal select:focus {
+  border-color: var(--theme-color) !important;
+  box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 22, 93, 255), 0.16) !important;
+}
+body.dark #item-modal .text-light-3 { color: #8998ad !important; }
+body.dark #item-modal .modal-close-btn,
+body.dark #item-modal #item-modal-close {
+  border-color: #3a4960 !important;
+  background: #162238 !important;
+  color: #c6d0dd !important;
+}
+body.dark #item-modal .modal-close-btn:hover,
+body.dark #item-modal #item-modal-close:hover { background: #1d2c43 !important; color: #fff !important; }
 body.dark .metric-icon.blue { background: rgba(43, 110, 243, 0.15); }
 body.dark .metric-icon.violet { background: rgba(119, 85, 217, 0.16); }
 body.dark .metric-icon.amber { background: rgba(217, 138, 18, 0.14); }

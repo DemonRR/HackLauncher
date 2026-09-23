@@ -385,9 +385,9 @@
 
   <!-- 添加/编辑项目模态框 -->
   <div id="item-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] flex flex-col transform transition-all" style="min-width: 300px;">
+    <div class="item-modal-dialog bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] flex flex-col transform transition-all" style="min-width: 300px;">
       <!-- 固定的标题栏 -->
-      <div class="flex justify-between items-center p-6 border-b border-light-2">
+      <div class="item-modal-header flex justify-between items-center p-6 border-b border-light-2">
         <h3 id="item-modal-title" class="text-lg font-semibold">添加项目</h3>
         <button onclick="document.getElementById('item-modal').classList.add('hidden')" class="modal-close-btn text-light-3 hover:text-dark-2 transition-custom">
           <i class="fa fa-times"></i>
@@ -395,7 +395,7 @@
       </div>
       
       <!-- 可滚动的内容区域 -->
-      <div class="flex-grow overflow-y-auto p-6">
+      <div class="item-modal-body flex-grow overflow-y-auto p-6">
         <form id="item-form">
           <input type="hidden" id="item-id">
           
@@ -458,8 +458,8 @@
           <div class="variable-reference mb-4">
             <div class="variable-reference-title"><i class="fas fa-code mr-1"></i> 便携路径变量（无需额外定义）</div>
             <div class="variable-reference-grid">
-              <div><code>${TOOLS_ROOT}</code><span>Tools 目录。例：<b>${TOOLS_ROOT}\ScanTools\nuclei.exe</b></span></div>
-              <div><code>${TOOLKIT_ROOT}</code><span>武器库根目录。例：<b>${TOOLKIT_ROOT}\README.md</b></span></div>
+              <div><code>${TOOLS_ROOT}</code><span>Tools 工具目录</span><b>示例：${TOOLS_ROOT}\ScanTools\nuclei.exe</b></div>
+              <div><code>${TOOLKIT_ROOT}</code><span>整个武器库根目录</span><b>示例：${TOOLKIT_ROOT}\Tools\ScanTools\TscanPlus\TscanPlus.exe</b></div>
             </div>
             <p class="variable-reference-note"><i class="fas fa-info-circle"></i> 通过文件选择器添加 Tools 内的程序时会自动转换，通常不需要手写变量。</p>
           </div>
@@ -534,7 +534,7 @@
       </div>
       
       <!-- 固定的底部按钮区域 -->
-      <div class="border-t border-light-2 p-3">
+      <div class="item-modal-footer border-t border-light-2 p-3">
         <div class="flex justify-end space-x-3">
           <button type="button" id="item-modal-close" class="px-4 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom">取消</button>
           <button type="submit" id="item-submit-btn" form="item-form" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">添加项目</button>
