@@ -25,6 +25,7 @@
     logRunEvent: (itemName, itemType, status, detail = '') => backend().LogRunEvent(itemName, itemType, status, detail),
     saveEnvironment: (env) => backend().SaveEnvironment(env),
     getEnvironment: () => backend().GetEnvironment(),
+    getPortablePathInfo: () => backend().GetPortablePathInfo(),
     getEnvironmentStatus: () => backend().GetEnvironmentStatus(),
     runStartupDiagnostics: () => backend().RunStartupDiagnostics(),
     diagnoseTools: () => backend().DiagnoseTools(),

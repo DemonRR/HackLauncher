@@ -58,6 +58,14 @@ func (a *App) startup(ctx context.Context) {
 		runtime.LogErrorf(ctx, "load config: %v", err)
 		return
 	}
+	applyConfiguredToolsRoot(cfg)
+	if makeConfigPortable(cfg) {
+		if err := store.Save(cfg); err != nil {
+			runtime.LogErrorf(ctx, "save portable path migration: %v", err)
+		} else {
+			runtime.LogInfo(ctx, "已将配套工具路径转换为可移动路径")
+		}
+	}
 	a.config = cfg
 	a.logf("INFO", "Wails 应用启动，配置加载完成")
 	if _, err := a.registerConfiguredShowHotkey(); err != nil {
@@ -154,6 +162,8 @@ func (a *App) SaveConfig(cfg Config) error {
 	}
 	cfg = cloneConfig(cfg)
 	mergeConfigDefaults(cfg)
+	applyConfiguredToolsRoot(cfg)
+	makeConfigPortable(cfg)
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.store == nil {
@@ -194,6 +204,12 @@ func (a *App) RestoreConfigBackup(name string) (Config, error) {
 	if err != nil {
 		a.logf("ERROR", "恢复配置备份失败，备份=%q: %v", name, err)
 		return nil, err
+	}
+	applyConfiguredToolsRoot(cfg)
+	if makeConfigPortable(cfg) {
+		if err := a.store.Save(cfg); err != nil {
+			return nil, fmt.Errorf("迁移备份中的便携路径失败: %w", err)
+		}
 	}
 	a.mu.Lock()
 	a.config = cloneConfig(cfg)
@@ -252,6 +268,18 @@ func (a *App) GetEnvironment() map[string]interface{} {
 	return result
 }
 
+func (a *App) GetPortablePathInfo() map[string]interface{} {
+	automatic := automaticallyDetectedPortablePathRoots()
+	resolved := currentPortablePathRoots()
+	return map[string]interface{}{
+		"toolkitRoot":         resolved.Toolkit,
+		"toolsRoot":           resolved.Tools,
+		"automaticToolsRoot":  automatic.Tools,
+		"configuredToolsRoot": configuredToolsRoot(),
+		"automatic":           configuredToolsRoot() == "",
+	}
+}
+
 func (a *App) SaveEnvironment(env map[string]interface{}) error {
 	if env == nil {
 		return errors.New("环境配置不能为空")
@@ -264,6 +292,8 @@ func (a *App) SaveEnvironment(env map[string]interface{}) error {
 		return err
 	}
 	a.config["environment"] = copyEnv
+	applyConfiguredToolsRoot(a.config)
+	makeConfigPortable(a.config)
 	if a.store == nil {
 		return errors.New("配置存储尚未初始化")
 	}
@@ -312,7 +342,7 @@ func (a *App) GetEnvironmentStatus() map[string]interface{} {
 }
 
 func pythonExecutablePath(configured string) string {
-	configured = strings.TrimSpace(strings.Trim(configured, `"`))
+	configured = resolvePortablePath(configured)
 	if configured == "" {
 		return ""
 	}
@@ -331,7 +361,7 @@ func pythonExecutablePath(configured string) string {
 }
 
 func javaExecutablePath(configured string) string {
-	configured = strings.TrimSpace(strings.Trim(configured, `"`))
+	configured = resolvePortablePath(configured)
 	if configured == "" {
 		return ""
 	}
@@ -404,7 +434,7 @@ func (w *cappedOutput) String() string {
 }
 
 func validateWorkingDirectory(cwd string) (string, error) {
-	cwd = strings.TrimSpace(cwd)
+	cwd = resolvePortablePath(cwd)
 	if cwd == "" {
 		return "", nil
 	}
@@ -419,6 +449,7 @@ func validateWorkingDirectory(cwd string) (string, error) {
 }
 
 func (a *App) ExecuteCommand(command, cwd string) (string, error) {
+	command = resolvePortableText(command)
 	if strings.TrimSpace(command) == "" {
 		err := errors.New("命令不能为空")
 		a.logf("ERROR", "命令校验失败: %v", err)
@@ -447,6 +478,8 @@ func (a *App) ExecuteCommand(command, cwd string) (string, error) {
 }
 
 func (a *App) ExecuteCommandInTerminal(command, cwd, preferredJavaPath string) (string, error) {
+	command = resolvePortableText(command)
+	preferredJavaPath = resolvePortablePath(preferredJavaPath)
 	if strings.TrimSpace(command) == "" {
 		err := errors.New("命令不能为空")
 		a.logf("ERROR", "终端命令校验失败: %v", err)
@@ -636,6 +669,7 @@ func terminalScriptContent(command, pythonPath, javaPath string) string {
 }
 
 func (a *App) ExecuteCommandAsAdmin(command, cwd string) (string, error) {
+	command = resolvePortableText(command)
 	if strings.TrimSpace(command) == "" {
 		err := errors.New("命令不能为空")
 		a.logf("ERROR", "管理员命令校验失败: %v", err)
@@ -661,7 +695,8 @@ func (a *App) ExecuteCommandAsAdmin(command, cwd string) (string, error) {
 }
 
 func (a *App) StartApplicationAsAdmin(executable, rawArguments, cwd string) (string, error) {
-	executable = strings.TrimSpace(strings.Trim(executable, `"`))
+	executable = resolvePortablePath(executable)
+	rawArguments = resolvePortableText(rawArguments)
 	if executable == "" {
 		err := errors.New("应用程序路径不能为空")
 		a.logf("ERROR", "管理员应用程序校验失败: %v", err)
@@ -745,6 +780,8 @@ func splitCommandLine(input string) ([]string, error) {
 func (a *App) ExecuteWithEnvironment(item map[string]interface{}) (string, error) {
 	command, _ := item["command"].(string)
 	arguments, _ := item["arguments"].(string)
+	command = resolvePortableText(command)
+	arguments = resolvePortableText(arguments)
 	kind, _ := item["type"].(string)
 	runInTerminal, _ := item["runInTerminal"].(bool)
 	a.logf("INFO", "环境运行请求，类型=%q，终端=%t，目标=%q", kind, runInTerminal, command)
@@ -775,7 +812,7 @@ func (a *App) OpenURL(rawURL string) error {
 }
 
 func (a *App) OpenPath(path string) error {
-	path = strings.TrimSpace(strings.Trim(path, `"`))
+	path = resolvePortablePath(path)
 	a.logf("INFO", "文件系统目标准备打开，路径=%q", path)
 	if path == "" {
 		err := errors.New("路径不能为空")
@@ -809,7 +846,10 @@ func newAssociatedPathCommand(path, workingDirectory string) *exec.Cmd {
 	return cmd
 }
 
-func (a *App) CheckPathExists(path string) bool { _, err := os.Stat(path); return err == nil }
+func (a *App) CheckPathExists(path string) bool {
+	_, err := os.Stat(resolvePortablePath(path))
+	return err == nil
+}
 
 func (a *App) BrowsePath(kind string) (string, error) {
 	if kind == "file" {
@@ -881,6 +921,7 @@ func (a *App) logf(level, format string, args ...interface{}) {
 }
 
 func (a *App) GetExeIcon(exePath string) (string, error) {
+	exePath = resolvePortablePath(exePath)
 	if !strings.EqualFold(filepath.Ext(exePath), ".exe") {
 		return "", errors.New("请选择 EXE 文件")
 	}

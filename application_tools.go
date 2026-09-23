@@ -33,7 +33,7 @@ func (a *App) StartApplication(executable, rawArguments, cwd string) (string, er
 }
 
 func (a *App) StartApplicationTool(request ApplicationToolRequest) (ApplicationToolResult, error) {
-	executable := strings.TrimSpace(strings.Trim(request.Executable, `"`))
+	executable := resolvePortablePath(request.Executable)
 	if executable == "" {
 		err := errors.New("应用程序路径不能为空")
 		a.logf("ERROR", "应用程序校验失败: %v", err)
@@ -49,7 +49,8 @@ func (a *App) StartApplicationTool(request ApplicationToolRequest) (ApplicationT
 		a.logf("ERROR", "应用程序路径校验失败，路径=%q: %v", executable, err)
 		return ApplicationToolResult{}, err
 	}
-	arguments, err := splitCommandLine(request.Arguments)
+	resolvedArguments := resolvePortableText(request.Arguments)
+	arguments, err := splitCommandLine(resolvedArguments)
 	if err != nil {
 		a.logf("ERROR", "应用程序参数校验失败，路径=%q: %v", executable, err)
 		return ApplicationToolResult{}, err
@@ -78,7 +79,7 @@ func (a *App) StartApplicationTool(request ApplicationToolRequest) (ApplicationT
 	if err := cmd.Start(); err != nil {
 		if isElevationRequired(err) {
 			a.logf("WARN", "应用程序要求管理员权限，切换到 UAC 启动，路径=%q", executable)
-			if elevatedErr := startElevatedApplication(executable, request.Arguments, validatedCwd); elevatedErr != nil {
+			if elevatedErr := startElevatedApplication(executable, resolvedArguments, validatedCwd); elevatedErr != nil {
 				a.logf("ERROR", "管理员应用程序启动失败: %v", elevatedErr)
 				return ApplicationToolResult{}, elevatedErr
 			}

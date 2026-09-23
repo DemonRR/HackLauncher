@@ -48,7 +48,7 @@ func (a *App) ExecutePythonTool(request RuntimeToolRequest) (RuntimeToolResult, 
 	if err != nil {
 		return RuntimeToolResult{}, err
 	}
-	programArgs, err := splitCommandLine(request.ProgramArgs)
+	programArgs, err := splitCommandLine(resolvePortableText(request.ProgramArgs))
 	if err != nil {
 		return RuntimeToolResult{}, fmt.Errorf("Python 参数无效: %w", err)
 	}
@@ -76,11 +76,11 @@ func (a *App) ExecuteJavaTool(request RuntimeToolRequest) (RuntimeToolResult, er
 	if requiredJava > javaMajor {
 		return RuntimeToolResult{}, fmt.Errorf("%s 需要 Java %d+（class file version %d），当前环境为 Java %d（%s）", filepath.Base(target), requiredJava, classMajor, javaMajor, versionText)
 	}
-	jvmArgs, err := splitCommandLine(request.RuntimeArgs)
+	jvmArgs, err := splitCommandLine(resolvePortableText(request.RuntimeArgs))
 	if err != nil {
 		return RuntimeToolResult{}, fmt.Errorf("JVM 参数无效: %w", err)
 	}
-	programArgs, err := splitCommandLine(request.ProgramArgs)
+	programArgs, err := splitCommandLine(resolvePortableText(request.ProgramArgs))
 	if err != nil {
 		return RuntimeToolResult{}, fmt.Errorf("Java 程序参数无效: %w", err)
 	}
@@ -167,7 +167,7 @@ func (a *App) executeRuntimeTool(kind, name, executable string, args []string, c
 }
 
 func validateRuntimeTarget(target, cwd, extension string) (string, string, error) {
-	target = strings.TrimSpace(strings.Trim(target, `"`))
+	target = resolvePortablePath(target)
 	info, err := os.Stat(target)
 	if err != nil {
 		return "", "", fmt.Errorf("目标文件不可用: %w", err)

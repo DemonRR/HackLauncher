@@ -445,14 +445,54 @@ async function browseJavaEnvPath(inputElement) {
   }
 }
 
+let portablePathInfo = null;
+
+function renderToolsRootHelp() {
+  const input = document.getElementById('tools-root');
+  const help = document.getElementById('tools-root-help');
+  if (!input || !help) return;
+  const configured = input.value.trim();
+  if (configured) {
+    help.textContent = `手动指定：${configured}；保存后 \${TOOLS_ROOT} 将解析到此目录`;
+    return;
+  }
+  const automatic = portablePathInfo?.automaticToolsRoot || portablePathInfo?.toolsRoot || '';
+  help.textContent = automatic
+    ? `自动检测：${automatic}`
+    : '留空后将根据 HackLauncher.exe 的位置自动检测同级 Tools 目录';
+}
+
+async function browseToolsRoot() {
+  try {
+    const path = await window.api.browsePath('folder');
+    if (path) {
+      document.getElementById('tools-root').value = path;
+      renderToolsRootHelp();
+    }
+  } catch (error) {
+    showNotification('错误', '浏览工具根目录失败: ' + (error?.message || String(error)), 'error');
+  }
+}
+
+function resetToolsRoot() {
+  document.getElementById('tools-root').value = '';
+  renderToolsRootHelp();
+}
+
 // 打开设置模态框
 async function openSettingsModal() {
   try {
     // 从主进程获取最新的环境配置
-    const envConfig = await window.api.getEnvironment();
+    const [envConfig, pathInfo] = await Promise.all([
+      window.api.getEnvironment(),
+      window.api.getPortablePathInfo()
+    ]);
+    portablePathInfo = pathInfo;
     
     // 更新界面
     document.getElementById('python-path').value = envConfig.python || '';
+    document.getElementById('tools-root').value = envConfig.toolsRoot || '';
+    renderToolsRootHelp();
     
     // 渲染 Java 环境列表
     renderJavaEnvironments(envConfig.javaEnvironments || []);
@@ -549,6 +589,7 @@ async function saveSettings() {
       });
 
     const envConfig = {
+      toolsRoot: document.getElementById('tools-root').value.trim(),
       python: document.getElementById('python-path').value.trim(),
       javaEnvironments: javaEnvironments,
       defaultJavaEnvironmentId: defaultJavaEnvironmentId,

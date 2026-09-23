@@ -46,6 +46,8 @@ export function GetExeIcon(arg1:string):Promise<string>;
 
 export function GetLogs(arg1:string,arg2:number):Promise<Array<main.LogEntry>>;
 
+export function GetPortablePathInfo():Promise<Record<string, any>>;
+
 export function LogFrontend(arg1:string,arg2:string):Promise<void>;
 
 export function LogRunEvent(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;

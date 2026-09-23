@@ -58,6 +58,7 @@ func (a *App) AutoFixTools() (AutoFixReport, error) {
 			target = cleanTarget
 			reasons = append(reasons, "清理路径引号")
 		}
+		resolvedTarget := resolvePortablePath(target)
 		if strings.TrimSpace(name) == "" && target != "" {
 			item["name"] = filepath.Base(target)
 			name, _ = item["name"].(string)
@@ -81,8 +82,8 @@ func (a *App) AutoFixTools() (AutoFixReport, error) {
 			}
 		}
 
-		if info, err := os.Stat(target); err == nil {
-			correctedType := inferredToolType(kind, target, info.IsDir())
+		if info, err := os.Stat(resolvedTarget); err == nil {
+			correctedType := inferredToolType(kind, resolvedTarget, info.IsDir())
 			if correctedType != kind {
 				item["type"] = correctedType
 				kind = correctedType
@@ -98,8 +99,8 @@ func (a *App) AutoFixTools() (AutoFixReport, error) {
 			reasons = append(reasons, "切换到可用 Python")
 		}
 
-		if kind == "java" && strings.EqualFold(filepath.Ext(target), ".jar") {
-			required, _, err := requiredJavaMajor(target)
+		if kind == "java" && strings.EqualFold(filepath.Ext(resolvedTarget), ".jar") {
+			required, _, err := requiredJavaMajor(resolvedTarget)
 			if err == nil {
 				currentID, _ := item["javaEnvironmentId"].(string)
 				if currentID == "" {

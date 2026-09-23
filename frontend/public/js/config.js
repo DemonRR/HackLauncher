@@ -26,6 +26,7 @@ let AppConfig = {
   },
   environment: {
     python: '',
+    toolsRoot: '',
     javaEnvironments: [],
     defaultJavaEnvironmentId: '',
     customPaths: []
@@ -103,6 +104,7 @@ function normalizeImportedConfig(config) {
   });
 
   config.environment.python = typeof config.environment.python === 'string' ? config.environment.python : '';
+  config.environment.toolsRoot = typeof config.environment.toolsRoot === 'string' ? config.environment.toolsRoot : '';
   config.environment.javaEnvironments = Array.isArray(config.environment.javaEnvironments)
     ? config.environment.javaEnvironments.filter(env => env && typeof env === 'object').map(env => ({
         ...env,

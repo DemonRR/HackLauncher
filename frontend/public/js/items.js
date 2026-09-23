@@ -1131,14 +1131,6 @@ async function recordSuccessfulItemRun(item) {
 // 运行项目（最终完整版，稳定可交付）
 async function runItem(item) {
   try {
-    if (typeof resolveItemTemplates === 'function') {
-      const resolvedItem = await resolveItemTemplates(item);
-      if (!resolvedItem) {
-        await logItemRun(item, 'CANCELLED', '用户取消填写运行参数');
-        return;
-      }
-      item = resolvedItem;
-    }
     await logItemRun(item, 'START', `目标=${item?.command || ''}`);
     switch (item.type) {
 

@@ -184,7 +184,7 @@ func defaultConfig() Config {
 			"autoDiagnosticsOnStartup": true,
 		},
 		"environment": map[string]interface{}{
-			"python": "", "java": "", "javaEnvironments": []interface{}{},
+			"python": "", "java": "", "toolsRoot": "", "javaEnvironments": []interface{}{},
 			"defaultJavaEnvironmentId": "", "customPaths": []interface{}{},
 		},
 		"sortOrders":    map[string]interface{}{"all": []interface{}{}, "favorites": []interface{}{}},

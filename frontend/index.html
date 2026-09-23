@@ -292,15 +292,6 @@
     </div>
   </div>
 
-  <!-- 运行参数变量 -->
-  <div id="parameter-prompt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <form id="parameter-prompt-form" class="parameter-prompt-dialog">
-      <div class="parameter-prompt-header"><div><span class="settings-eyebrow">QUICK RUN</span><h3>填写运行参数</h3><p id="parameter-prompt-description">为本次运行填写变量，不会修改工具配置</p></div><button id="parameter-prompt-close" type="button" class="modal-close-btn"><i class="fas fa-times"></i></button></div>
-      <div id="parameter-prompt-fields" class="parameter-prompt-fields"></div>
-      <div class="parameter-prompt-footer"><button id="parameter-prompt-cancel" type="button">取消</button><button type="submit">继续运行</button></div>
-    </form>
-  </div>
-
   <!-- 日志中心 -->
   <div id="logs-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="logs-dialog bg-white w-full flex flex-col">
@@ -461,7 +452,16 @@
           <div id="launch-params-container" class="mb-4 hidden">
             <label for="item-launch-params" class="block text-sm font-medium text-dark-2 mb-1">启动参数</label>
               <input type="text" id="item-launch-params" class="w-full px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="输入启动参数（可选）">
-            <p class="text-xs text-light-3 mt-1">支持 ${TARGET}、${WORDLIST}、${PROXY}、${OUTPUT} 等运行变量</p>
+            <p class="text-xs text-light-3 mt-1">可直接填写参数；路径中可以使用下方两个便携变量</p>
+          </div>
+
+          <div class="variable-reference mb-4">
+            <div class="variable-reference-title"><i class="fas fa-code mr-1"></i> 便携路径变量（无需额外定义）</div>
+            <div class="variable-reference-grid">
+              <div><code>${TOOLS_ROOT}</code><span>Tools 目录。例：<b>${TOOLS_ROOT}\ScanTools\nuclei.exe</b></span></div>
+              <div><code>${TOOLKIT_ROOT}</code><span>武器库根目录。例：<b>${TOOLKIT_ROOT}\README.md</b></span></div>
+            </div>
+            <p class="variable-reference-note"><i class="fas fa-info-circle"></i> 通过文件选择器添加 Tools 内的程序时会自动转换，通常不需要手写变量。</p>
           </div>
           
           <!-- Java 程序参数输入 -->
@@ -741,6 +741,21 @@
           <h4 class="text-md font-medium text-dark mb-3 flex items-center">
             <i class="fas fa-code mr-2 text-primary"></i> 环境配置
           </h4>
+
+          <!-- 便携工具根目录 -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-dark-2 mb-1">工具根目录 <code>${TOOLS_ROOT}</code></label>
+            <div class="flex space-x-2">
+              <input type="text" id="tools-root" oninput="renderToolsRootHelp()" class="flex-grow px-3 py-2 border border-light-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="留空时自动检测 Tools 目录">
+              <button type="button" onclick="browseToolsRoot()" class="px-3 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom" title="选择工具根目录">
+                <i class="fas fa-folder-open"></i>
+              </button>
+              <button type="button" onclick="resetToolsRoot()" class="px-3 py-2 border border-light-2 rounded-lg hover:bg-light-1 transition-custom" title="恢复自动检测">
+                <i class="fas fa-undo"></i>
+              </button>
+            </div>
+            <p id="tools-root-help" class="text-xs text-light-3 mt-1">正在读取工具目录…</p>
+          </div>
           
           <!-- Python 路径设置 -->
           <div class="mb-4">
@@ -751,7 +766,7 @@
                 <i class="fas fa-folder-open"></i>
               </button>
             </div>
-            <p class="text-xs text-light-3 mt-1">例如: C:\Python39\python.exe</p>
+            <p class="text-xs text-light-3 mt-1">配套目录中的路径会自动保存为 <code>${TOOLS_ROOT}</code>，整套武器库换盘后无需修改</p>
           </div>
           
           <!-- Java 环境管理 -->
@@ -769,7 +784,7 @@
               未配置 Java 环境，添加至少一个 Java 环境以便为项目选择版本
             </p>
             <p class="text-xs text-light-3 mt-1">
-              提示：至少要有一个默认环境
+              提示：至少要有一个默认环境；Tools 内的 Java 路径会自动转为便携路径
             </p>
           </div>
         </div>
@@ -793,7 +808,7 @@
             <i class="fas fa-info-circle mr-2 text-primary"></i> 关于
           </h4>
           <div class="text-sm text-dark-2">
-            <p>版本: 1.1.4</p>
+            <p>版本: 1.1.5</p>
             <p class="mt-1">渗透武器库 - Windows 专用启动器管理工具</p>
             <p class="mt-1">作者: Demon</p>
             <p class="mt-1">公司: 浙江谦卦信息科技有限公司</p>
@@ -827,7 +842,6 @@
   <script src="js/categories.js"></script>
   <script src="js/diagnostics.js"></script>
   <script src="js/backups.js"></script>
-  <script src="js/parameter-templates.js"></script>
   <script src="js/items.js"></script>
   <script src="js/workspace.js"></script>
   <script src="js/logs.js"></script>

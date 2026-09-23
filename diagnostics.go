@@ -123,7 +123,13 @@ func (a *App) diagnoseTool(item map[string]interface{}, javaVersions map[string]
 	name, _ := item["name"].(string)
 	kind, _ := item["type"].(string)
 	target, _ := item["command"].(string)
-	target = strings.TrimSpace(strings.Trim(target, `"`))
+	if kind == "command" {
+		target = strings.TrimSpace(resolvePortableText(target))
+	} else if kind != "url" {
+		target = resolvePortablePath(target)
+	} else {
+		target = strings.TrimSpace(target)
+	}
 	result := ToolDiagnostic{ItemID: id, Name: name, Type: kind, Path: target, Status: "HEALTHY", Summary: "配置正常"}
 	fail := func(code, summary string, err error) ToolDiagnostic {
 		result.Status, result.Code, result.Summary = "ERROR", code, summary
