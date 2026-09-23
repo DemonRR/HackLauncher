@@ -21,7 +21,7 @@ type Config map[string]interface{}
 const (
 	currentSchemaVersion = 1
 	maxConfigBytes       = 20 << 20
-	maxConfigBackups     = 10
+	maxConfigBackups     = 3
 	backupInterval       = 15 * time.Minute
 )
 
@@ -74,7 +74,12 @@ func OpenStore() (*Store, error) {
 		db.Close()
 		return nil, err
 	}
-	return &Store{db: db, dir: dir, dbPath: dbPath, logDir: logDir, backupDir: backupDir}, nil
+	store := &Store{db: db, dir: dir, dbPath: dbPath, logDir: logDir, backupDir: backupDir}
+	if err := store.pruneBackups(); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("清理历史配置备份失败: %w", err)
+	}
+	return store, nil
 }
 
 func portableDataDir() (string, bool, error) {

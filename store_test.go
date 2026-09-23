@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -107,6 +108,34 @@ func TestManualBackupListAndRestore(t *testing.T) {
 	}
 	if restored["settings"].(map[string]interface{})["theme"] != "dark" {
 		t.Fatalf("restored theme = %v", restored["settings"])
+	}
+}
+
+func TestStoreKeepsOnlyThreeConfigBackups(t *testing.T) {
+	t.Setenv("HACKLAUNCHER_DATA_DIR", t.TempDir())
+	store, err := OpenStore()
+	if err != nil {
+		t.Fatalf("OpenStore() error = %v", err)
+	}
+	defer store.Close()
+
+	cfg, err := store.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 5; i++ {
+		cfg["settings"].(map[string]interface{})["themeColor"] = fmt.Sprintf("#%06d", i)
+		if err := store.CreateBackup(cfg); err != nil {
+			t.Fatalf("CreateBackup(%d) error = %v", i, err)
+		}
+	}
+
+	backups, err := store.ListBackups()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(backups) != maxConfigBackups {
+		t.Fatalf("backup count = %d, want %d", len(backups), maxConfigBackups)
 	}
 }
 
