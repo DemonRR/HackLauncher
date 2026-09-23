@@ -2792,8 +2792,8 @@ body {
 }
 .variable-reference-grid > div {
   display: grid;
-  grid-template-columns: 118px minmax(0, 1fr);
-  gap: 3px 9px;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 10px;
   min-width: 0;
   padding: 8px 9px;
   border: 1px solid #e5eaf1;
@@ -2802,16 +2802,17 @@ body {
 }
 .variable-reference-grid code {
   grid-column: 1;
-  grid-row: 1 / span 2;
-  align-self: center;
+  grid-row: 1;
+  align-self: start;
   color: var(--theme-color);
   font-family: Consolas, "SFMono-Regular", monospace;
   font-size: 10px;
   font-weight: 700;
 }
-.variable-reference-grid span { color: #78869a; font-size: 10px; line-height: 1.35; }
+.variable-reference-grid span { grid-column: 2; grid-row: 1; color: #78869a; font-size: 10px; line-height: 1.35; }
 .variable-reference-grid b {
-  grid-column: 2;
+  grid-column: 1 / -1;
+  grid-row: 2;
   min-width: 0;
   overflow-wrap: anywhere;
   color: #66758a;
@@ -2822,6 +2823,11 @@ body {
 }
 .variable-reference-note { margin: 0 12px 11px; color: #8995a6; font-size: 9px; }
 .variable-reference-note i { margin-right: 4px; color: var(--theme-color); }
+
+.item-modal-dialog {
+  width: min(560px, 92vw) !important;
+  max-width: 560px !important;
+}
 
 #notification {
   border: 1px solid var(--enterprise-border);
@@ -2904,6 +2910,252 @@ body.dark #item-modal #item-modal-close {
 }
 body.dark #item-modal .modal-close-btn:hover,
 body.dark #item-modal #item-modal-close:hover { background: #1d2c43 !important; color: #fff !important; }
+
+/* Comprehensive dark-theme component layer.
+   Keep this section after all light component definitions to prevent cascade regressions. */
+body.dark {
+  --dark-canvas: #0b1322;
+  --dark-surface: #121d30;
+  --dark-surface-raised: #162238;
+  --dark-control: #0f1a2c;
+  --dark-hover: #1b2a41;
+  --dark-border: #2f3d53;
+  --dark-border-strong: #3b4a61;
+  --dark-text: #e7edf6;
+  --dark-text-muted: #a1adbd;
+  --dark-text-subtle: #78879c;
+  color-scheme: dark;
+}
+
+/* Native form controls */
+body.dark input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+body.dark select,
+body.dark textarea {
+  border-color: var(--dark-border-strong) !important;
+  background-color: var(--dark-control) !important;
+  color: var(--dark-text) !important;
+  caret-color: var(--dark-text);
+}
+body.dark input::placeholder,
+body.dark textarea::placeholder { color: var(--dark-text-subtle) !important; opacity: 1; }
+body.dark select option { background: var(--dark-control); color: var(--dark-text); }
+body.dark input:focus,
+body.dark select:focus,
+body.dark textarea:focus {
+  border-color: var(--theme-color) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 22, 93, 255), 0.16) !important;
+}
+body.dark input:disabled,
+body.dark select:disabled,
+body.dark textarea:disabled {
+  border-color: #29364a !important;
+  background: #111b2b !important;
+  color: #68778c !important;
+  cursor: not-allowed;
+  opacity: 1;
+}
+body.dark input[readonly] { background: #111c2e !important; color: #cbd4e1 !important; }
+
+/* Shared modal surfaces */
+body.dark #category-modal > .bg-white,
+body.dark #item-modal > .bg-white,
+body.dark #confirm-modal > .bg-white,
+body.dark #close-confirm-modal > .bg-white,
+body.dark .settings-dialog,
+body.dark .diagnostics-dialog,
+body.dark .logs-dialog,
+body.dark .logs-clear-dialog {
+  border-color: var(--dark-border-strong) !important;
+  background: var(--dark-surface) !important;
+  color: var(--dark-text);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.52) !important;
+}
+body.dark #category-modal > .bg-white > .border-b,
+body.dark #category-modal > .bg-white > .border-t,
+body.dark #confirm-modal .border-t,
+body.dark #close-confirm-modal .border-t,
+body.dark .settings-header,
+body.dark .settings-footer,
+body.dark .diagnostics-header,
+body.dark .diagnostics-toolbar,
+body.dark .diagnostics-footer,
+body.dark .logs-header,
+body.dark .logs-toolbar,
+body.dark .logs-footer { border-color: var(--dark-border) !important; }
+body.dark #category-modal h3,
+body.dark #confirm-modal h3,
+body.dark #close-confirm-modal h3,
+body.dark .settings-header h3,
+body.dark .diagnostics-header h3,
+body.dark .logs-header h3,
+body.dark .logs-clear-dialog h3 { color: #f3f6fb !important; }
+body.dark #category-modal label,
+body.dark .settings-dialog label { color: #c8d1de !important; }
+body.dark #confirm-modal p,
+body.dark #close-confirm-modal p,
+body.dark .settings-header p,
+body.dark .diagnostics-header p,
+body.dark .logs-header p,
+body.dark .logs-clear-dialog p { color: var(--dark-text-muted) !important; }
+body.dark #category-modal .modal-close-btn,
+body.dark .settings-header .modal-close-btn,
+body.dark .diagnostics-header .modal-close-btn,
+body.dark .logs-header .modal-close-btn {
+  border-color: var(--dark-border-strong) !important;
+  background: var(--dark-surface-raised) !important;
+  color: #c8d1de !important;
+}
+
+/* Neutral dialog and settings buttons */
+body.dark #category-modal button:not([type="submit"]),
+body.dark #confirm-cancel-btn,
+body.dark #close-confirm-minimize,
+body.dark #close-confirm-cancel,
+body.dark .settings-footer button:first-child,
+body.dark .settings-environment button:not(.text-primary),
+body.dark .java-environment-item button,
+body.dark #reset-show-window-hotkey {
+  border-color: var(--dark-border-strong) !important;
+  background: var(--dark-surface-raised) !important;
+  color: #c8d1de !important;
+}
+body.dark #category-modal button:not([type="submit"]):hover,
+body.dark #confirm-cancel-btn:hover,
+body.dark #close-confirm-minimize:hover,
+body.dark #close-confirm-cancel:hover,
+body.dark .settings-footer button:first-child:hover,
+body.dark .settings-environment button:not(.text-primary):hover,
+body.dark .java-environment-item button:hover,
+body.dark #reset-show-window-hotkey:hover {
+  border-color: #4b5c74 !important;
+  background: var(--dark-hover) !important;
+  color: #fff !important;
+}
+
+/* Settings components */
+body.dark .settings-body { background: #0d1727 !important; }
+body.dark .settings-section { border-color: var(--dark-border) !important; background: var(--dark-surface) !important; }
+body.dark .settings-section > h4,
+body.dark .hotkey-setting-heading label,
+body.dark .window-size-setting label,
+body.dark .backup-heading h4 { color: var(--dark-text) !important; }
+body.dark .settings-nav { border-color: var(--dark-border); background: #101b2d; }
+body.dark .settings-nav::before { color: #728198; }
+body.dark .settings-nav button { color: #a9b4c3; }
+body.dark .settings-nav button:hover { background: var(--dark-hover); color: #fff; }
+body.dark .settings-nav button.active { background: rgba(var(--theme-color-rgb, 22, 93, 255), 0.16); color: var(--theme-color); }
+body.dark .settings-dialog .close-behavior-options > label,
+body.dark .notification-level-setting,
+body.dark .initial-sidebar-view-setting,
+body.dark .startup-diagnostics-setting,
+body.dark .window-size-setting,
+body.dark .hotkey-setting,
+body.dark .settings-dialog .java-environment-item {
+  border-color: var(--dark-border) !important;
+  background: var(--dark-surface-raised) !important;
+}
+body.dark .settings-dialog .close-behavior-options > label:hover { border-color: #485a73 !important; background: var(--dark-hover) !important; }
+body.dark .settings-dialog .close-behavior-options > label:has(input:checked) {
+  border-color: rgba(var(--theme-color-rgb, 22, 93, 255), 0.55) !important;
+  background: rgba(var(--theme-color-rgb, 22, 93, 255), 0.13) !important;
+}
+body.dark #settings-modal .settings-radio-indicator { border-color: #526079; background: var(--dark-control); }
+body.dark .settings-dialog .text-dark,
+body.dark .settings-dialog .text-dark-2,
+body.dark .settings-dialog .settings-about p { color: #c4cedb !important; }
+body.dark .settings-dialog .text-light-3,
+body.dark .window-size-setting p,
+body.dark .hotkey-setting-heading p,
+body.dark .hotkey-help,
+body.dark .backup-heading p,
+body.dark .backup-row small,
+body.dark .notification-level-setting p,
+body.dark .initial-sidebar-view-setting p,
+body.dark .startup-diagnostics-copy p { color: var(--dark-text-muted) !important; }
+body.dark .settings-environment code { color: #70a5ff; }
+body.dark .settings-dialog .color-option { border-color: var(--dark-surface-raised) !important; box-shadow: 0 0 0 1px #4a5870; }
+body.dark .backup-row { border-color: var(--dark-border); background: var(--dark-surface-raised); }
+body.dark .backup-row > span { background: #1b2b46; color: #82aaff; }
+body.dark .backup-row button { border-color: var(--dark-border-strong); background: var(--dark-control); color: #bdc7d5; }
+body.dark .backup-row button.confirming { border-color: #9b6e24; background: #3a2b16; color: #f0bd67; }
+body.dark .backup-load-error { background: #351c24; color: #ff9ea4; }
+
+/* Diagnostics and log center */
+body.dark .diagnostics-metrics,
+body.dark .diagnostics-footer,
+body.dark .logs-table-header,
+body.dark .logs-footer { border-color: var(--dark-border); background: #0e192a; }
+body.dark .diagnostics-metrics > div { border-color: var(--dark-border); background: var(--dark-surface-raised); }
+body.dark .diagnostics-filters,
+body.dark .logs-filter { background: var(--dark-control); }
+body.dark .diagnostics-filters button,
+body.dark .logs-filter button { color: #9eabbd; }
+body.dark .diagnostics-filters button:hover,
+body.dark .logs-filter button:hover { background: var(--dark-hover); color: #e8eef7; }
+body.dark .diagnostics-filters button.active,
+body.dark .logs-filter button.active { background: #20304a; color: var(--theme-color); box-shadow: none; }
+body.dark .logs-filter button span { background: #293950; color: #c4cedb; }
+body.dark .diagnostics-actions button,
+body.dark .logs-actions button { border-color: var(--dark-border-strong); background: var(--dark-surface-raised); color: #b7c2d0; }
+body.dark .diagnostics-actions button:hover,
+body.dark .logs-actions button:hover { background: var(--dark-hover); color: #fff; }
+body.dark .diagnostics-actions .diagnostics-fix:disabled { border-color: #29364a; background: #111b2b; color: #65748a; }
+body.dark .diagnostic-row,
+body.dark .log-row { border-color: #27354a; }
+body.dark .diagnostic-row:hover,
+body.dark .log-row:hover { background: #17253a; }
+body.dark .diagnostic-status,
+body.dark .log-level { background: #16382f; color: #70d8b2; }
+body.dark .status-warning .diagnostic-status,
+body.dark .level-warn .log-level { background: #3a2b16; color: #f0bd67; }
+body.dark .status-error .diagnostic-status,
+body.dark .level-error .log-level { background: #3a2028; color: #ff9da3; }
+body.dark .diagnostic-identity small,
+body.dark .diagnostic-message small,
+body.dark .log-row,
+body.dark .log-row time,
+body.dark .logs-empty,
+body.dark .diagnostics-empty { color: var(--dark-text-muted); }
+body.dark .diagnostics-empty strong,
+body.dark .logs-empty strong { color: #dce5f1; }
+body.dark .logs-search { border-color: var(--dark-border-strong); background: var(--dark-control); }
+body.dark .logs-search input { border: 0 !important; background: transparent !important; box-shadow: none !important; }
+body.dark .logs-empty i { background: #173127; }
+body.dark .logs-actions button.danger:hover { border-color: #78414a; background: #351c24; color: #ff8f96; }
+body.dark .logs-clear-icon { background: #351c24; color: #ff8f96; }
+
+/* Notifications, menus, tooltips and workspace controls */
+body.dark #notification-center { border-color: var(--dark-border); background: var(--dark-surface); }
+body.dark .notification-center-header { border-color: var(--dark-border); background: #0e192a; }
+body.dark .notification-center-header button { color: #a6b2c2; }
+body.dark .notification-center-header button:hover { background: var(--dark-hover); color: #ff959b; }
+body.dark .notification-history-row { border-color: #27354a; }
+body.dark .notification-history-row:hover { background: #17253a; }
+body.dark .notification-history-row > span { background: color-mix(in srgb, var(--history-color) 18%, #162238); }
+body.dark #notification-history-empty { color: var(--dark-text-muted); }
+body.dark #notification {
+  border-color: var(--dark-border-strong);
+  background: var(--dark-surface-raised) !important;
+  color: var(--dark-text);
+}
+body.dark .context-menu { border-color: var(--dark-border-strong); background: var(--dark-surface-raised); color: #c8d1de; }
+body.dark .context-menu-item:hover { background: var(--dark-hover); }
+body.dark .item-tooltip { border-color: #45556d; background: #1a2940; color: #e1e8f1; }
+body.dark #icon-image-dropzone { border-color: var(--dark-border-strong); background: var(--dark-control); }
+body.dark #icon-image-dropzone:hover { background: var(--dark-hover); }
+body.dark .toolbar-select,
+body.dark .enterprise-search input { border-color: var(--dark-border-strong) !important; background: var(--dark-control) !important; color: var(--dark-text) !important; }
+body.dark .enterprise-search kbd,
+body.dark .view-switch,
+body.dark #refresh-btn { border-color: var(--dark-border); background: var(--dark-surface-raised) !important; color: #b7c2d0; }
+body.dark .view-switch button { color: #8493a8; }
+body.dark .view-switch button:hover { color: #dce5f1; }
+body.dark .view-switch button.active { background: #20304a !important; color: var(--theme-color); }
+body.dark #empty-state h3 { color: var(--dark-text) !important; }
+body.dark #empty-state p { color: var(--dark-text-muted) !important; }
+body.dark ::-webkit-scrollbar-thumb { background: #435169; }
+body.dark ::-webkit-scrollbar-thumb:hover { background: #56657d; }
 body.dark .metric-icon.blue { background: rgba(43, 110, 243, 0.15); }
 body.dark .metric-icon.violet { background: rgba(119, 85, 217, 0.16); }
 body.dark .metric-icon.amber { background: rgba(217, 138, 18, 0.14); }

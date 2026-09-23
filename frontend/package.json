@@ -1,7 +1,7 @@
 {
   "name": "hacklauncher-frontend",
   "private": true,
-  "version": "1.1.5",
+  "version": "1.1.6",
   "type": "module",
   "scripts": {
     "build:css": "tailwindcss -c ./tailwind.config.cjs -i ./public/assets/css/tailwind-input.css -o ./public/assets/css/tailwind.css --minify",
