@@ -1,6 +1,11 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -212,8 +217,12 @@ func (s *Store) Load() (Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	plain, decErr := decryptConfig(raw)
+	if decErr != nil {
+		plain = []byte(raw)
+	}
 	var cfg Config
-	decodeErr := json.Unmarshal([]byte(raw), &cfg)
+	decodeErr := json.Unmarshal(plain, &cfg)
 	if decodeErr == nil {
 		mergeConfigDefaults(cfg)
 		decodeErr = validateConfig(cfg)
@@ -253,8 +262,12 @@ func (s *Store) Save(cfg Config) error {
 	}
 
 	var previous string
-	if err := s.db.QueryRow(`SELECT value FROM app_state WHERE key = 'config'`).Scan(&previous); err == nil && previous != string(raw) {
-		if time.Since(s.lastBackup) >= backupInterval {
+	if err := s.db.QueryRow(`SELECT value FROM app_state WHERE key = 'config'`).Scan(&previous); err == nil {
+		prevPlain, decErr := decryptConfig(previous)
+		if decErr != nil {
+			prevPlain = []byte(previous)
+		}
+		if string(prevPlain) != string(raw) && time.Since(s.lastBackup) >= backupInterval {
 			if err := s.writeRecoveryCopy("config", []byte(previous)); err == nil {
 				s.lastBackup = time.Now()
 				_ = s.pruneBackups()
@@ -273,9 +286,60 @@ func (s *Store) writeRaw(cfg Config) error {
 }
 
 func (s *Store) writeRawBytes(raw []byte) error {
-	_, err := s.db.Exec(`INSERT INTO app_state(key, value, updated_at) VALUES('config', ?, CURRENT_TIMESTAMP)
-		ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=CURRENT_TIMESTAMP`, string(raw))
+	enc, err := encryptConfig(raw)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(`INSERT INTO app_state(key, value, updated_at) VALUES('config', ?, CURRENT_TIMESTAMP)
+		ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=CURRENT_TIMESTAMP`, enc)
 	return err
+}
+
+// encryptionKey derives a stable per-installation key so app_state values are
+// not stored as plaintext inside the SQLite file.
+func encryptionKey() []byte {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		dir = os.TempDir()
+	}
+	sum := sha256.Sum256([]byte("HackLauncher-app-state-key-v1|" + dir))
+	return sum[:]
+}
+
+func encryptConfig(plain []byte) (string, error) {
+	block, err := aes.NewCipher(encryptionKey())
+	if err != nil {
+		return "", err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(gcm.Seal(nonce, nonce, plain, nil)), nil
+}
+
+func decryptConfig(raw string) ([]byte, error) {
+	data, err := base64.StdEncoding.DecodeString(raw)
+	if err != nil {
+		return nil, err
+	}
+	block, err := aes.NewCipher(encryptionKey())
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	if len(data) < gcm.NonceSize() {
+		return nil, errors.New("加密数据损坏")
+	}
+	nonce, ciphertext := data[:gcm.NonceSize()], data[gcm.NonceSize():]
+	return gcm.Open(nil, nonce, ciphertext, nil)
 }
 
 func (s *Store) Close() error { return s.db.Close() }
